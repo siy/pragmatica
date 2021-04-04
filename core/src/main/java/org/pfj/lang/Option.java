@@ -151,7 +151,7 @@ public interface Option<T> {
 	 *
 	 * @return either value stored in current instance or provided replacement value if current instance is empty
 	 */
-	default T otherwise(T replacement) {
+	default T or(T replacement) {
 		return reduce(() -> replacement, v -> v);
 	}
 
@@ -163,31 +163,26 @@ public interface Option<T> {
 	 *
 	 * @return either value stored in current instance or value returned by provided supplier if current instance is empty
 	 */
-	default T otherwiseGet(Supplier<T> supplier) {
+	default T or(Supplier<T> supplier) {
 		return reduce(supplier, v -> v);
 	}
 
 	/**
-	 * Logical <code>OR</code> between current instance and instance of same type provided by specified supplier. First present
-	 * instance is returned. Note that if current instance is not empty then supplier is not invoked.
+	 * Check if current instance is present.
 	 *
-	 * @param supplier Supplier which provides new instance in case if current instance is empty
-	 *
-	 * @return first present instance, either current one or one returned by provided supplier
+	 * @return {@code true} if instance is present and {@code false} otherwise.
 	 */
-	default Option<T> or(Supplier<Option<T>> supplier) {
-		return reduce(supplier, v -> this);
+	default boolean isPresent() {
+		return reduce(() -> false, __ -> true);
 	}
 
 	/**
-	 * Logical <code>OR</code> between current instance and provided instance of same type. First present instance is returned.
+	 * Check if current instance is empty.
 	 *
-	 * @param replacement Replacement instance which is returned in case if current instance is empty
-	 *
-	 * @return first present instance, either current one or one returned by provided supplier
+	 * @return {@code true} if instance is empty and {@code false} otherwise.
 	 */
-	default Option<T> or(Option<T> replacement) {
-		return reduce(() -> replacement, v -> this);
+	default boolean isEmpty() {
+		return reduce(() -> true, __ -> false);
 	}
 
 	/**
@@ -367,81 +362,34 @@ public interface Option<T> {
 	 *
 	 * @return first present option or empty option if all input options are empty.
 	 */
-	static <T> Option<T> any(Option<T> op1, Option<T> op2) {
-		return op1.or(op2);
+	@SafeVarargs
+	static <T> Option<T> any(Option<T>... ops) {
+		for(var option : ops) {
+			if (option.isPresent()) {
+				return option;
+			}
+		}
+		return empty();
 	}
 
 	/**
 	 * Find first present option among ones passed as parameters.
+	 * Unlike {@link #any(Option[])} method, only first parameter is evaluated eagerly,
+	 * others are evaluated lazily and only if previous evaluated instances were empty.
 	 *
 	 * @return first present option or empty option if all input options are empty.
 	 */
-	static <T> Option<T> any(Option<T> op1, Option<T> op2, Option<T> op3) {
-		return op1.or(op2).or(op3);
-	}
-
-	/**
-	 * Find first present option among ones passed as parameters.
-	 *
-	 * @return first present option or empty option if all input options are empty.
-	 */
-	static <T> Option<T> any(Option<T> op1, Option<T> op2, Option<T> op3, Option<T> op4) {
-		return op1.or(op2).or(op3).or(op4);
-	}
-
-	/**
-	 * Find first present option among ones passed as parameters.
-	 *
-	 * @return first present option or empty option if all input options are empty.
-	 */
-	static <T> Option<T> any(Option<T> op1, Option<T> op2, Option<T> op3, Option<T> op4, Option<T> op5) {
-		return op1.or(op2).or(op3).or(op4).or(op5);
-	}
-
-	/**
-	 * Find first present option among ones passed as parameters.
-	 *
-	 * @return first present option or empty option if all input options are empty.
-	 */
-	static <T> Option<T> any(
-		Option<T> op1, Option<T> op2, Option<T> op3, Option<T> op4, Option<T> op5, Option<T> op6
-	) {
-		return op1.or(op2).or(op3).or(op4).or(op5).or(op6);
-	}
-
-	/**
-	 * Find first present option among ones passed as parameters.
-	 *
-	 * @return first present option or empty option if all input options are empty.
-	 */
-	static <T> Option<T> any(
-		Option<T> op1, Option<T> op2, Option<T> op3, Option<T> op4, Option<T> op5, Option<T> op6, Option<T> op7
-	) {
-		return op1.or(op2).or(op3).or(op4).or(op5).or(op6).or(op7);
-	}
-
-	/**
-	 * Find first present option among ones passed as parameters.
-	 *
-	 * @return first present option or empty option if all input options are empty.
-	 */
-	static <T> Option<T> any(
-		Option<T> op1, Option<T> op2, Option<T> op3, Option<T> op4,
-		Option<T> op5, Option<T> op6, Option<T> op7, Option<T> op8
-	) {
-		return op1.or(op2).or(op3).or(op4).or(op5).or(op6).or(op7).or(op8);
-	}
-
-	/**
-	 * Find first present option among ones passed as parameters.
-	 *
-	 * @return first present option or empty option if all input options are empty.
-	 */
-	static <T> Option<T> any(
-		Option<T> op1, Option<T> op2, Option<T> op3, Option<T> op4, Option<T> op5,
-		Option<T> op6, Option<T> op7, Option<T> op8, Option<T> op9
-	) {
-		return op1.or(op2).or(op3).or(op4).or(op5).or(op6).or(op7).or(op8).or(op9);
+	@SafeVarargs
+	static <T> Option<T> any(Option<T> op, Supplier<Option<T>>... ops) {
+		return op.reduce(() -> {
+			for(var option : ops) {
+				var result = option.get();
+				if (result.isPresent()) {
+					return result;
+				}
+			}
+			return op;
+		}, __ -> op);
 	}
 
 	/**

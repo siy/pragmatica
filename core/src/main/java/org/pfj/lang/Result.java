@@ -102,29 +102,26 @@ public interface Result<T> {
 	}
 
 	/**
-	 * Combine current instance with another result. If current instance holds
-	 * success then result is equivalent to current instance, otherwise other
-	 * instance (passed as {@code replacement} parameter) is returned.
+	 * Return value stored in current instance if current instance is success or replacement value otherwise.
 	 *
-	 * @param replacement Value to return if current instance contains failure operation result
+	 * @param replacement value to return if current instance is failure.
 	 *
-	 * @return current instance in case of success or replacement instance in case of failure.
+	 * @return value stored in current instance, if instance is success.
 	 */
-	default Result<T> or(Result<T> replacement) {
-		return reduce(t -> replacement, t -> this);
+	default T or(T replacement) {
+		return reduce(t -> replacement, t -> t);
 	}
 
 	/**
-	 * Combine current instance with another result. If current instance holds
-	 * success then result is equivalent to current instance, otherwise instance provided by
-	 * specified supplier is returned.
+	 * Return value stored in current instance if current instance is success or replacement value otherwise.
+	 * Unlike {@link #or(Object)} method, replacement value is evaluated lazily.
 	 *
-	 * @param supplier Supplier for replacement instance if current instance contains failure operation result
+	 * @param supplier supplier for the value to return if current instance is failure.
 	 *
-	 * @return current instance in case of success or result returned by supplier in case of failure.
+	 * @return value stored in current instance, if instance is success.
 	 */
-	default Result<T> or(Supplier<Result<T>> supplier) {
-		return reduce(t -> supplier.get(), t -> this);
+	default T or(Supplier<T> supplier) {
+		return reduce(t -> supplier.get(), t -> t);
 	}
 
 	/**
@@ -205,6 +202,15 @@ public interface Result<T> {
 	 */
 	default Optional<T> toOptional() {
 		return reduce(t1 -> Optional.empty(), Optional::of);
+	}
+
+	//TODO: docs
+	default boolean isSuccess() {
+		return reduce(__ -> false, __ -> true);
+	}
+
+	default boolean isFailure() {
+		return reduce(__ -> true, __ -> false);
 	}
 
 	/**
@@ -315,6 +321,7 @@ public interface Result<T> {
 		);
 	}
 
+	//TODO: docs
 	static <T> Result<List<T>> flatten(List<Result<T>> resultList) {
 		var failure = new Failure[1];
 		var values = new ArrayList<T>();
@@ -323,6 +330,31 @@ public interface Result<T> {
 
 		return failure[0] != null ? Result.fail(failure[0])
 								  : Result.ok(values);
+	}
+
+	static <T> Result<T> any(Result<T>... results) {
+		for (var result : results) {
+			if (result.isSuccess()) {
+				return result;
+			}
+		}
+		return fail("No success results found");
+	}
+
+	static <T> Result<T> any(Result<T> first, Supplier<Result<T>>... suppliers) {
+		if (first.isSuccess()) {
+			return first;
+		}
+
+		for (var supplier : suppliers) {
+			var result = supplier.get();
+
+			if (result.isSuccess()) {
+				return result;
+			}
+		}
+
+		return first;
 	}
 
 	/**

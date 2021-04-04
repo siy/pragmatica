@@ -174,20 +174,20 @@ class OptionTest {
 
 	@Test
 	void valueCanBeObtainedFromOption() {
-		assertEquals(321L, present(321L).otherwise(123L));
-		assertEquals(123L, empty().otherwise(123L));
+		assertEquals(321L, present(321L).or(123L));
+		assertEquals(123L, empty().or(123L));
 	}
 
 	@Test
 	void valueCanBeLazilyObtainedFromOption() {
 		var flag = new AtomicBoolean(false);
-		assertEquals(321L, present(321L).otherwiseGet(() -> {
+		assertEquals(321L, present(321L).or(() -> {
 			flag.set(true);
 			return 123L;
 		}));
 		assertFalse(flag.get());
 
-		assertEquals(123L, empty().otherwiseGet(() -> {
+		assertEquals(123L, empty().or(() -> {
 			flag.set(true);
 			return 123L;
 		}));
@@ -239,21 +239,21 @@ class OptionTest {
 	}
 
 	@Test
-	void orReturnsReplacementIfOptionIsEmpty() {
-		present(1).or(present(2))
+	void anyReturnsFirstPresentOption() {
+		any(present(1), present(2))
 			.whenEmpty(Assertions::fail)
 			.whenPresent(value -> assertEquals(1, value));
 
-		empty().or(present(2))
+		any(empty(), present(2))
 			.whenEmpty(Assertions::fail)
 			.whenPresent(value -> assertEquals(2, value));
 	}
 
 	@Test
-	void orLazilyEvaluatesReplacement() {
+	void anyLazilyEvaluatesOtherOptions() {
 		var flag = new AtomicBoolean(false);
 
-		present(1).or(
+		any(present(1),
 			() -> {
 				flag.set(true);
 				return present(2);
@@ -263,7 +263,7 @@ class OptionTest {
 
 		assertFalse(flag.get());
 
-		empty().or(
+		any(empty(),
 			() -> {
 				flag.set(true);
 				return present(2);
