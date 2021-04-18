@@ -40,6 +40,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import static org.pfj.lang.Tuple.tuple;
@@ -204,13 +205,53 @@ public interface Result<T> {
 		return reduce(t1 -> Optional.empty(), Optional::of);
 	}
 
-	//TODO: docs
+	/**
+	 * Check if instance is success.
+	 *
+	 * @return {@code true} if instance is success and {@code false} otherwise
+	 */
 	default boolean isSuccess() {
 		return reduce(__ -> false, __ -> true);
 	}
 
+	/**
+	 * Check if instance is failure.
+	 *
+	 * @return {@code true} if instance is failure and {@code false} otherwise
+	 */
 	default boolean isFailure() {
 		return reduce(__ -> true, __ -> false);
+	}
+
+	/**
+	 * Filter instance against provided predicate. If predicate returns {@code true} then
+	 * instance remains unchanged. If predicate returns {@code false}, then failure instance in created
+	 * using given message.
+	 *
+	 * @param predicate predicate to invoke
+	 * @param message message for failure instance
+	 *
+	 * @return current instance if predicate returns {@code true} or
+	 * 	failure instance if predicate returns {@code false}
+	 */
+	default Result<T> filter(Predicate<T> predicate, String message) {
+		return reduce(v -> this, v -> predicate.test(v) ? this : fail(message));
+	}
+
+	/**
+	 * Filter instance against provided predicate. If predicate returns {@code true} then
+	 * instance remains unchanged. If predicate returns {@code false}, then failure instance in created
+	 * using given message.
+	 *
+	 * @param predicate predicate to invoke
+	 * @param message message for failure instance
+	 * @param args additional parameters for message
+	 *
+	 * @return current instance if predicate returns {@code true} or
+	 * 	failure instance if predicate returns {@code false}
+	 */
+	default Result<T> filter(Predicate<T> predicate, String message, Object... args) {
+		return reduce(v -> this, v -> predicate.test(v) ? this : fail(message, args));
 	}
 
 	/**
@@ -310,6 +351,14 @@ public interface Result<T> {
 		return fail(Failure.failure(format, params));
 	}
 
+	/**
+	 * Compare two instances for equality.
+	 *
+	 * @param one first instance to compare
+	 * @param two second instance to compare
+	 *
+	 * @return {@code true} if both instances are equal and {@code false} otherwise.
+	 */
 	static boolean equals(Result<?> one, Result<?> two) {
 		if (one == two) {
 			return true;
@@ -321,7 +370,14 @@ public interface Result<T> {
 		);
 	}
 
-	//TODO: docs
+	/**
+	 * Transform list of {@link Result} instances into {@link Result} with list of values.
+	 *
+	 * @param resultList input list
+	 *
+	 * @return success instance if all {@link Result} instances in list are successes or
+	 * 	failure instance with any instances in list is a failure
+	 */
 	static <T> Result<List<T>> flatten(List<Result<T>> resultList) {
 		var failure = new Failure[1];
 		var values = new ArrayList<T>();
@@ -332,6 +388,13 @@ public interface Result<T> {
 								  : Result.ok(values);
 	}
 
+	/**
+	 * Find and return first success instance among provided.
+	 *
+	 * @param results input results
+	 *
+	 * @return first success instance among provided
+	 */
 	static <T> Result<T> any(Result<T>... results) {
 		for (var result : results) {
 			if (result.isSuccess()) {
@@ -341,6 +404,14 @@ public interface Result<T> {
 		return fail("No success results found");
 	}
 
+	/**
+	 * Lazy version of the {@link #any(Result[])}.
+	 *
+	 * @param first first instance to check
+	 * @param suppliers suppliers which provide instances for check
+	 *
+	 * @return first success instance among provided
+	 */
 	static <T> Result<T> any(Result<T> first, Supplier<Result<T>>... suppliers) {
 		if (first.isSuccess()) {
 			return first;

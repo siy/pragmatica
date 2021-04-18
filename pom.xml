@@ -139,8 +139,6 @@
                     <target>${java.release}</target>
                     <compilerArgs>
                         <arg>${java.enable-preview}</arg>
-                        <arg>--add-exports</arg>
-                        <arg>java.base/jdk.internal.misc=org.reactivetoolbox.io.async</arg>
                     </compilerArgs>
                 </configuration>
             </plugin>
