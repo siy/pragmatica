@@ -21,6 +21,15 @@ package org.pfj.lang;
  * Note that these functions are not supposed to throw any exceptions
  */
 public interface Functions {
+	static <T> T id(T value) {
+		return value;
+	}
+
+	@FunctionalInterface
+	interface ThrowingSupplier<T> {
+		T get() throws Throwable;
+	}
+
 	@FunctionalInterface
 	interface FN0<R> {
 		R apply();
@@ -39,7 +48,7 @@ public interface Functions {
 		}
 
 		static <T> FN1<T, T> id() {
-			return v -> v;
+			return Functions::id;
 		}
 	}
 

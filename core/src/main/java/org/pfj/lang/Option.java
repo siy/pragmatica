@@ -152,7 +152,7 @@ public interface Option<T> {
 	 * @return either value stored in current instance or provided replacement value if current instance is empty
 	 */
 	default T or(T replacement) {
-		return reduce(() -> replacement, v -> v);
+		return reduce(() -> replacement, Functions::id);
 	}
 
 	/**
@@ -164,7 +164,7 @@ public interface Option<T> {
 	 * @return either value stored in current instance or value returned by provided supplier if current instance is empty
 	 */
 	default T or(Supplier<T> supplier) {
-		return reduce(supplier, v -> v);
+		return reduce(supplier, Functions::id);
 	}
 
 	/**

@@ -25,6 +25,7 @@ import org.pfj.lang.Functions.FN6;
 import org.pfj.lang.Functions.FN7;
 import org.pfj.lang.Functions.FN8;
 import org.pfj.lang.Functions.FN9;
+import org.pfj.lang.Functions.ThrowingSupplier;
 import org.pfj.lang.Tuple.Tuple1;
 import org.pfj.lang.Tuple.Tuple2;
 import org.pfj.lang.Tuple.Tuple3;
@@ -338,6 +339,17 @@ public interface Result<T> {
 	}
 
 	/**
+	 * Create a failure instance from exception.
+	 *
+	 * @param throwable source of information about failure.
+	 *
+	 * @return created instance
+	 */
+	static <R> Result<R> fail(Throwable throwable) {
+		return fail(throwable.getMessage());
+	}
+
+	/**
 	 * Create an instance of failure operation result.
 	 *
 	 * @param format failure message format.
@@ -349,6 +361,22 @@ public interface Result<T> {
 	 */
 	static <R> Result<R> fail(String format, Object... params) {
 		return fail(Failure.failure(format, params));
+	}
+
+	/**
+	 * Wrap value returned by provided lambda into success {@link Result} if call succeeds
+	 * or into failure {@link Result} if call throws exception.
+	 *
+	 * @param supplier the call to wrap
+	 *
+	 * @return result of execution of the provided lambda wrapped into {@link Result}
+	 */
+	static <R> Result<R> lift(ThrowingSupplier<R> supplier) {
+		try {
+			return ok(supplier.get());
+		} catch (Throwable e) {
+			return fail(e);
+		}
 	}
 
 	/**
