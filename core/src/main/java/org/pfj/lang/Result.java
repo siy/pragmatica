@@ -104,29 +104,6 @@ public interface Result<T> {
 	}
 
 	/**
-	 * Return value stored in current instance if current instance is success or replacement value otherwise.
-	 *
-	 * @param replacement value to return if current instance is failure.
-	 *
-	 * @return value stored in current instance, if instance is success.
-	 */
-	default T or(T replacement) {
-		return reduce(t -> replacement, t -> t);
-	}
-
-	/**
-	 * Return value stored in current instance if current instance is success or replacement value otherwise.
-	 * Unlike {@link #or(Object)} method, replacement value is evaluated lazily.
-	 *
-	 * @param supplier supplier for the value to return if current instance is failure.
-	 *
-	 * @return value stored in current instance, if instance is success.
-	 */
-	default T or(Supplier<T> supplier) {
-		return reduce(t -> supplier.get(), t -> t);
-	}
-
-	/**
 	 * Pass successful operation result value into provided consumer.
 	 *
 	 * @param consumer Consumer to pass value to
@@ -228,6 +205,9 @@ public interface Result<T> {
 	 * Filter instance against provided predicate. If predicate returns {@code true} then
 	 * instance remains unchanged. If predicate returns {@code false}, then failure instance in created
 	 * using given message.
+	 * <p>
+	 * Note that message may contain a placeholder {@code {0}} which will be replaced with value
+	 * stored in the instance.
 	 *
 	 * @param predicate predicate to invoke
 	 * @param message message for failure instance
@@ -236,23 +216,7 @@ public interface Result<T> {
 	 * 	failure instance if predicate returns {@code false}
 	 */
 	default Result<T> filter(Predicate<T> predicate, String message) {
-		return reduce(v -> this, v -> predicate.test(v) ? this : fail(message));
-	}
-
-	/**
-	 * Filter instance against provided predicate. If predicate returns {@code true} then
-	 * instance remains unchanged. If predicate returns {@code false}, then failure instance in created
-	 * using given message.
-	 *
-	 * @param predicate predicate to invoke
-	 * @param message message for failure instance
-	 * @param args additional parameters for message
-	 *
-	 * @return current instance if predicate returns {@code true} or
-	 * 	failure instance if predicate returns {@code false}
-	 */
-	default Result<T> filter(Predicate<T> predicate, String message, Object... args) {
-		return reduce(v -> this, v -> predicate.test(v) ? this : fail(message, args));
+		return reduce(v -> this, v -> predicate.test(v) ? this : fail(message, v));
 	}
 
 	/**

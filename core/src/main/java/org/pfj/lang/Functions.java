@@ -21,8 +21,23 @@ package org.pfj.lang;
  * Note that these functions are not supposed to throw any exceptions
  */
 public interface Functions {
+	/**
+	 * Universal identity function.
+	 *
+	 * @param value input value
+	 *
+	 * @return input value.
+	 */
 	static <T> T id(T value) {
 		return value;
+	}
+
+	/**
+	 * Universal consumer of values which does nothing with them.
+	 *
+	 * @param value
+	 */
+	static <T> void blackHole(T value) {
 	}
 
 	@FunctionalInterface

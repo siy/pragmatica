@@ -11,7 +11,7 @@
 ![GitHub top language](https://img.shields.io/github/languages/top/siy/pragmatica?style=plastic)
 ![GitHub last commit](https://img.shields.io/github/last-commit/siy/pragmatica?color=red&style=plastic)
 
-<a href="https://medium.com/@sergiy.yevtushenko"><img src="https://img.shields.io/badge/medium-%2312100E.svg?&style=for-the-badge&logo=medium&logoColor=white" height=25></a> 
+<a href="https://sergiy-yevtushenko.medium.com/"><img src="https://img.shields.io/badge/medium-%2312100E.svg?&style=for-the-badge&logo=medium&logoColor=white" height=25></a> 
 <a href="https://dev.to/siy"><img src="https://img.shields.io/badge/DEV.TO-%230A0A0A.svg?&style=for-the-badge&logo=dev-dot-to&logoColor=white" height=25></a>
 
 # Pragmatic Functional Java Essentials

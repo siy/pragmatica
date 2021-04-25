@@ -36,7 +36,6 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <java.release>16</java.release>
-        <java.enable-preview>--enable-preview</java.enable-preview>
 
         <!-- Testing -->
         <junit.version>5.7.0</junit.version>
@@ -55,10 +54,6 @@
     </dependencyManagement>
 
     <dependencies>
-        <!-- Toolbox-wide dependencies -->
-        <!-- Logging -->
-
-        <!-- Testing -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-engine</artifactId>
@@ -86,12 +81,6 @@
             <version>${junit.params.version}</version>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-api</artifactId>
-            <version>${junit.version}</version>
-            <scope>compile</scope>
-        </dependency>
     </dependencies>
 
     <build>
@@ -100,7 +89,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-surefire-plugin</artifactId>
-                    <version>3.0.0-M4</version>
+                    <version>3.0.0-M5</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -137,9 +126,6 @@
                     <showWarnings>true</showWarnings>
                     <source>${java.release}</source>
                     <target>${java.release}</target>
-                    <compilerArgs>
-                        <arg>${java.enable-preview}</arg>
-                    </compilerArgs>
                 </configuration>
             </plugin>
 
