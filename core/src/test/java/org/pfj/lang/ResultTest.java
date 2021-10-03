@@ -11,56 +11,59 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.pfj.lang.Causes.cause;
+import static org.pfj.lang.Causes.with1;
+import static org.pfj.lang.Result.success;
 
 class ResultTest {
 	@Test
 	void successResultsAreEqualIfValueEqual() {
-		assertEquals(Result.ok("123"), Result.ok(123).map(Objects::toString));
-		assertNotEquals(Result.ok("321"), Result.ok(123).map(Objects::toString));
+		assertEquals(success("123"), success(123).map(Objects::toString));
+		assertNotEquals(success("321"), success(123).map(Objects::toString));
 	}
 
 	@Test
 	void failureResultsAreEqualIfFailureIsEqual() {
-		assertEquals(Result.fail("123"), Result.ok(123).filter(v -> v < 0, "{0}"));
-		assertNotEquals(Result.fail("321"), Result.ok(123).filter(v -> v < 0, "{0}"));
+		assertEquals(Result.failure(cause("123")), success(123).filter(with1("{0}"), v -> v < 0));
+		assertNotEquals(Result.failure(cause("321")), success(123).filter(with1("{0}"), v -> v < 0));
 	}
 
 	@Test
 	void successResultCanBeTransformedWithMap() {
-		Result.ok(123).map(Objects::toString)
+		success(123).map(Objects::toString)
 			.onFailureDo(Assertions::fail)
 			.onSuccess(value -> assertEquals("123", value));
 	}
 
 	@Test
 	void successResultCanBeTransformedWithFlatMap() {
-		Result.ok(123).flatMap(v -> Result.ok(v.toString()))
+		success(123).flatMap(v -> success(v.toString()))
 			.onFailureDo(Assertions::fail)
 			.onSuccess(value -> assertEquals("123", value));
 	}
 
 	@Test
 	void failureResultRemainsUnchangedAfterMap() {
-		Result.<Integer>fail("Some error").map(Objects::toString)
+		Result.<Integer>failure(cause("Some error")).map(Objects::toString)
 			.onFailure(failure -> assertEquals("Some error", failure.message()))
 			.onSuccessDo(Assertions::fail);
 	}
 
 	@Test
 	void failureResultRemainsUnchangedAfterFlatMap() {
-		Result.<Integer>fail("Some error").flatMap(v -> Result.ok(v.toString()))
+		Result.<Integer>failure(cause("Some error")).flatMap(v -> success(v.toString()))
 			.onFailure(failure -> assertEquals("Some error", failure.message()))
 			.onSuccessDo(Assertions::fail);
 	}
 
 	@Test
 	void onlyOneMethodIsInvokedOnApply() {
-		Result.ok(321).apply(
+		success(321).apply(
 			failure -> fail(failure.message()),
 			Functions::blackHole
 		);
 
-		Result.fail("Some error").apply(
+		Result.failure(cause("Some error")).apply(
 			Functions::blackHole,
 			value -> fail(value.toString())
 		);
@@ -68,10 +71,10 @@ class ResultTest {
 
 	@Test
 	void onSuccessIsInvokedForSuccessResult() {
-		Result.ok(123)
+		success(123)
 			.onFailureDo(Assertions::fail)
 			.onSuccess(value -> assertEquals(123, value));
-		Result.<Integer>fail("123")
+		Result.<Integer>failure(cause("123"))
 			.onFailure(failure -> assertEquals("123", failure.message()))
 			.onSuccess(value -> fail(value.toString()));
 	}
@@ -80,7 +83,7 @@ class ResultTest {
 	void onSuccessDoIsInvokedForSuccessResult() {
 		var flag1 = new AtomicBoolean(false);
 
-		Result.ok(123)
+		success(123)
 			.onFailureDo(Assertions::fail)
 			.onSuccessDo(() -> flag1.set(true));
 
@@ -88,7 +91,7 @@ class ResultTest {
 
 		var flag2 = new AtomicBoolean(false);
 
-		Result.<Integer>fail("123")
+		Result.<Integer>failure(cause("123"))
 			.onFailureDo(() -> flag2.set(true))
 			.onSuccessDo(Assertions::fail);
 
@@ -97,10 +100,10 @@ class ResultTest {
 
 	@Test
 	void onFailureIsInvokedForFailure() {
-		Result.ok(123)
+		success(123)
 			.onFailure(failure -> Assertions.fail(failure.message()))
 			.onSuccess(value -> assertEquals(123, value));
-		Result.<Integer>fail("123")
+		Result.<Integer>failure(cause("123"))
 			.onFailure(failure -> assertEquals("123", failure.message()))
 			.onSuccess(value -> fail(value.toString()));
 	}
@@ -109,7 +112,7 @@ class ResultTest {
 	void onFailureDoIsInvokedForFailureResult() {
 		var flag1 = new AtomicBoolean(false);
 
-		Result.ok(123)
+		success(123)
 			.onFailureDo(Assertions::fail)
 			.onSuccessDo(() -> flag1.set(true));
 
@@ -117,7 +120,7 @@ class ResultTest {
 
 		var flag2 = new AtomicBoolean(false);
 
-		Result.<Integer>fail("123")
+		Result.<Integer>failure(cause("123"))
 			.onFailureDo(() -> flag2.set(true))
 			.onSuccessDo(Assertions::fail);
 
@@ -126,13 +129,13 @@ class ResultTest {
 
 	@Test
 	void resultCanBeConvertedToOption() {
-		Result.ok(123).toOption()
+		success(123).toOption()
 			.whenPresent(value -> assertEquals(123, value))
 			.whenEmpty(Assertions::fail);
 
 		var flag1 = new AtomicBoolean(false);
 
-		Result.<Integer>fail("123").toOption()
+		Result.<Integer>failure(cause("123")).toOption()
 			.whenPresent(__ -> Assertions.fail("Should not happen"))
 			.whenEmpty(() -> flag1.set(true));
 
@@ -141,18 +144,18 @@ class ResultTest {
 
 	@Test
 	void resultStatusCanBeChecked() {
-		assertTrue(Result.ok(321).isSuccess());
-		assertFalse(Result.ok(321).isFailure());
-		assertFalse(Result.fail("321").isSuccess());
-		assertTrue(Result.fail("321").isFailure());
+		assertTrue(success(321).isSuccess());
+		assertFalse(success(321).isFailure());
+		assertFalse(Result.failure(cause("321")).isSuccess());
+		assertTrue(Result.failure(cause("321")).isFailure());
 	}
 
 	@Test
 	void successResultCanBeFiltered() {
-		Result.ok(231)
+		success(231)
 			.onSuccess(value -> assertEquals(231, value))
 			.onFailureDo(Assertions::fail)
-			.filter(value -> value > 321, "Value {0} is below threshold")
+			.filter(Causes.with1("Value {0} is below threshold"), value -> value > 321)
 			.onSuccessDo(Assertions::fail)
 			.onFailure(failure -> assertEquals("Value 231 is below threshold", failure.message()));
 	}

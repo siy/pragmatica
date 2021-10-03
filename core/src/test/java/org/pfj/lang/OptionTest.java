@@ -29,6 +29,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.pfj.lang.Causes.cause;
 import static org.pfj.lang.Option.all;
 import static org.pfj.lang.Option.any;
 import static org.pfj.lang.Option.empty;
@@ -39,7 +40,7 @@ class OptionTest {
 	@Test
 	void emptyOptionsAreEqual() {
 		assertEquals(empty(), empty());
-		assertEquals("Option()", empty().toString());
+		assertEquals("None()", empty().toString());
 	}
 
 	@Test
@@ -48,8 +49,7 @@ class OptionTest {
 		assertNotEquals(present(321), present(123));
 		assertNotEquals(empty(), present(1));
 		assertNotEquals(present(1), empty());
-		assertEquals("Option(1)", present(1).toString());
-		assertEquals(32, present(1).hashCode());
+		assertEquals("Some(1)", present(1).toString());
 	}
 
 	@Test
@@ -205,25 +205,17 @@ class OptionTest {
 	}
 
 	@Test
-	void presentOptionCanBeConvertedToSuccessResultInDifferentWays() {
-		option(1).toResult("Not expected")
-			.onSuccess(value -> assertEquals(1, value))
-			.onFailureDo(Assertions::fail);
-
-		option(1).toResult("Not expected {}", " parameter ")
-			.onSuccess(value -> assertEquals(1, value))
-			.onFailureDo(Assertions::fail);
-
-		option(1).toResult(Failure.failure("Not expected"))
+	void presentOptionCanBeConvertedToSuccessResult() {
+		option(1).toResult(cause("Not expected"))
 			.onSuccess(value -> assertEquals(1, value))
 			.onFailureDo(Assertions::fail);
 	}
 
 	@Test
 	void emptyOptionCanBeConvertedToFailureResult() {
-		option(null).toResult("Expected")
+		option(null).toResult(cause("Expected"))
 			.onSuccess(value -> fail("Should not be a success"))
-			.onFailure(failure -> assertEquals("Expected", failure.message()));
+			.onFailure(cause -> assertEquals("Expected", cause.message()));
 	}
 
 	@Test
