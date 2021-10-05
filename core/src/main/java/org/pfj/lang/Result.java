@@ -19,7 +19,6 @@ package org.pfj.lang;
 import org.pfj.lang.Functions.*;
 import org.pfj.lang.Result.Failure;
 import org.pfj.lang.Result.Success;
-import org.pfj.lang.Tuple.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -306,42 +305,31 @@ public sealed interface Result<T> permits Success, Failure {
     /**
      * Find and return first success instance among provided.
      *
-     * @param noSuccessResultsCause the failure to use if no success results found
-     * @param results               input results
+     * @param first     first input result
+     * @param results   remaining input results
      *
      * @return first success instance among provided
      */
-    static <T> Result<T> any(Cause noSuccessResultsCause, Result<T>... results) {
+    @SafeVarargs
+    static <T> Result<T> any(Result<T> first, Result<T>... results) {
+        if (first.isSuccess()) {
+            return first;
+        }
+
         for (var result : results) {
             if (result.isSuccess()) {
                 return result;
             }
         }
-        return failure(noSuccessResultsCause);
+
+        return first;
     }
 
     /**
-     * Find and return first success instance among provided.
-     *
-     * @param noSuccessResultsFailure the failure to use if no success results found
-     * @param results                 input results
-     *
-     * @return first success instance among provided
-     */
-    static <T> Result<T> any(Supplier<Cause> noSuccessResultsFailure, Result<T>... results) {
-        for (var result : results) {
-            if (result.isSuccess()) {
-                return result;
-            }
-        }
-        return failure(noSuccessResultsFailure.get());
-    }
-
-    /**
-     * Lazy version of the {@link #any(Result[])}.
+     * Lazy version of the {@link #any(Result, Result[])}.
      *
      * @param first     first instance to check
-     * @param suppliers suppliers which provide instances for check
+     * @param suppliers suppliers which provide remaining instances for check
      *
      * @return first success instance among provided
      */

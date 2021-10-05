@@ -16,3 +16,8 @@
 
 # Pragmatic Functional Java Essentials
 Minimal set of Java classes necessary to apply [Pragmatic Functional Java](https://github.com/siy/pragmatica/wiki) approaches in practice.
+
+Current version requires _Java 17_ to build and run.
+
+Instead of using this library as a dependency, it is highly suggested to just copy classes into your own codebase
+and adapt it to your needs.

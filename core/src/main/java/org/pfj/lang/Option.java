@@ -19,7 +19,6 @@ package org.pfj.lang;
 import org.pfj.lang.Functions.*;
 import org.pfj.lang.Option.None;
 import org.pfj.lang.Option.Some;
-import org.pfj.lang.Tuple.*;
 
 import java.util.Optional;
 import java.util.function.Consumer;

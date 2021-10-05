@@ -19,6 +19,7 @@ package org.pfj.lang;
 import org.pfj.lang.Functions.*;
 
 import java.util.Objects;
+import java.util.function.Supplier;
 
 import static java.util.Objects.hash;
 
@@ -29,7 +30,7 @@ public interface Tuple {
     int size();
 
     interface Tuple0 extends Tuple {
-        <T> T map(FN0<T> mapper);
+        <T> T map(Supplier<T> mapper);
 
         default int size() {
             return 0;
@@ -50,6 +51,10 @@ public interface Tuple {
         default int size() {
             return 2;
         }
+
+        T1 first();
+
+        T2 last();
     }
 
     interface Tuple3<T1, T2, T3> extends Tuple {
@@ -110,8 +115,8 @@ public interface Tuple {
 
     Tuple0 UNIT = new Tuple0() {
         @Override
-        public <T> T map(FN0<T> mapper) {
-            return mapper.apply();
+        public <T> T map(Supplier<T> mapper) {
+            return mapper.get();
         }
 
         @Override
@@ -134,6 +139,10 @@ public interface Tuple {
         return UNIT;
     }
 
+    static Tuple0 unit() {
+        return UNIT;
+    }
+
     static <T1> Tuple1<T1> tuple(T1 param1) {
         return new Tuple1<>() {
             @Override
@@ -148,8 +157,7 @@ public interface Tuple {
                 }
 
                 return (obj instanceof Tuple1<?> tuple1)
-                        ? tuple1.map(v1 -> Objects.equals(v1, param1))
-                        : false;
+                        && tuple1.map(v1 -> Objects.equals(v1, param1));
             }
 
             @Override
@@ -180,10 +188,7 @@ public interface Tuple {
                 }
 
                 return (obj instanceof Tuple2<?, ?> tuple2)
-                        ? tuple2.map((v1, v2) ->
-                        Objects.equals(v1, param1)
-                                && Objects.equals(v2, param2))
-                        : false;
+                        && tuple2.map((v1, v2) -> Objects.equals(v1, param1) && Objects.equals(v2, param2));
             }
 
             @Override
@@ -194,6 +199,16 @@ public interface Tuple {
             @Override
             public String toString() {
                 return "Tuple(" + param1.toString() + ", " + param2.toString() + ")";
+            }
+
+            @Override
+            public T1 first() {
+                return param1;
+            }
+
+            @Override
+            public T2 last() {
+                return param2;
             }
         };
     }
@@ -212,11 +227,10 @@ public interface Tuple {
                 }
 
                 return (obj instanceof Tuple3<?, ?, ?> tuple3)
-                        ? tuple3.map((v1, v2, v3) ->
-                        Objects.equals(v1, param1)
+                        && tuple3.map((v1, v2, v3) ->
+                                Objects.equals(v1, param1)
                                 && Objects.equals(v2, param2)
-                                && Objects.equals(v3, param3))
-                        : false;
+                                && Objects.equals(v3, param3));
             }
 
             @Override
@@ -245,12 +259,11 @@ public interface Tuple {
                 }
 
                 return (obj instanceof Tuple4<?, ?, ?, ?> tuple4)
-                        ? tuple4.map((v1, v2, v3, v4) ->
-                        Objects.equals(v1, param1)
+                        && tuple4.map((v1, v2, v3, v4) ->
+                                Objects.equals(v1, param1)
                                 && Objects.equals(v2, param2)
                                 && Objects.equals(v3, param3)
-                                && Objects.equals(v4, param4))
-                        : false;
+                                && Objects.equals(v4, param4));
             }
 
             @Override
@@ -283,13 +296,12 @@ public interface Tuple {
                 }
 
                 return (obj instanceof Tuple5<?, ?, ?, ?, ?> tuple5)
-                        ? tuple5.map((v1, v2, v3, v4, v5) ->
-                        Objects.equals(v1, param1)
+                        && tuple5.map((v1, v2, v3, v4, v5) ->
+                                Objects.equals(v1, param1)
                                 && Objects.equals(v2, param2)
                                 && Objects.equals(v3, param3)
                                 && Objects.equals(v4, param4)
-                                && Objects.equals(v5, param5))
-                        : false;
+                                && Objects.equals(v5, param5));
             }
 
             @Override
@@ -323,14 +335,13 @@ public interface Tuple {
                 }
 
                 return (obj instanceof Tuple6<?, ?, ?, ?, ?, ?> tuple6)
-                        ? tuple6.map((v1, v2, v3, v4, v5, v6) ->
-                        Objects.equals(v1, param1)
+                        && tuple6.map((v1, v2, v3, v4, v5, v6) ->
+                                Objects.equals(v1, param1)
                                 && Objects.equals(v2, param2)
                                 && Objects.equals(v3, param3)
                                 && Objects.equals(v4, param4)
                                 && Objects.equals(v5, param5)
-                                && Objects.equals(v6, param6))
-                        : false;
+                                && Objects.equals(v6, param6));
             }
 
             @Override
@@ -365,15 +376,14 @@ public interface Tuple {
                 }
 
                 return (obj instanceof Tuple7<?, ?, ?, ?, ?, ?, ?> tuple7)
-                        ? tuple7.map((v1, v2, v3, v4, v5, v6, v7) ->
-                        Objects.equals(v1, param1)
+                        && tuple7.map((v1, v2, v3, v4, v5, v6, v7) ->
+                                Objects.equals(v1, param1)
                                 && Objects.equals(v2, param2)
                                 && Objects.equals(v3, param3)
                                 && Objects.equals(v4, param4)
                                 && Objects.equals(v5, param5)
                                 && Objects.equals(v6, param6)
-                                && Objects.equals(v7, param7))
-                        : false;
+                                && Objects.equals(v7, param7));
             }
 
             @Override
@@ -409,16 +419,15 @@ public interface Tuple {
                 }
 
                 return (obj instanceof Tuple8<?, ?, ?, ?, ?, ?, ?, ?> tuple8)
-                        ? tuple8.map((v1, v2, v3, v4, v5, v6, v7, v8) ->
-                        Objects.equals(v1, param1)
+                        && tuple8.map((v1, v2, v3, v4, v5, v6, v7, v8) ->
+                                Objects.equals(v1, param1)
                                 && Objects.equals(v2, param2)
                                 && Objects.equals(v3, param3)
                                 && Objects.equals(v4, param4)
                                 && Objects.equals(v5, param5)
                                 && Objects.equals(v6, param6)
                                 && Objects.equals(v7, param7)
-                                && Objects.equals(v8, param8))
-                        : false;
+                                && Objects.equals(v8, param8));
             }
 
             @Override
@@ -454,8 +463,8 @@ public interface Tuple {
                 }
 
                 return (obj instanceof Tuple9<?, ?, ?, ?, ?, ?, ?, ?, ?> tuple9)
-                        ? tuple9.map((v1, v2, v3, v4, v5, v6, v7, v8, v9) ->
-                        Objects.equals(v1, param1)
+                        && tuple9.map((v1, v2, v3, v4, v5, v6, v7, v8, v9) ->
+                                Objects.equals(v1, param1)
                                 && Objects.equals(v2, param2)
                                 && Objects.equals(v3, param3)
                                 && Objects.equals(v4, param4)
@@ -463,8 +472,7 @@ public interface Tuple {
                                 && Objects.equals(v6, param6)
                                 && Objects.equals(v7, param7)
                                 && Objects.equals(v8, param8)
-                                && Objects.equals(v9, param9))
-                        : false;
+                                && Objects.equals(v9, param9));
             }
 
             @Override
@@ -481,5 +489,4 @@ public interface Tuple {
             }
         };
     }
-
 }

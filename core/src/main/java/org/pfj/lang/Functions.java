@@ -35,7 +35,7 @@ public interface Functions {
     /**
      * Universal consumer of values which does nothing with them.
      *
-     * @param value
+     * @param value value to consume
      */
     static <T> void blackHole(T value) {
     }
@@ -43,11 +43,6 @@ public interface Functions {
     @FunctionalInterface
     interface ThrowingSupplier<T> {
         T get() throws Throwable;
-    }
-
-    @FunctionalInterface
-    interface FN0<R> {
-        R apply();
     }
 
     @FunctionalInterface
