@@ -243,6 +243,11 @@ public sealed interface Result<T> permits Success, Failure {
         public String toString() {
             return "Success(" + value.toString() + ")";
         }
+
+        @Override
+        public T value() {
+            throw new UnsupportedOperationException("Value should not be accessed directly");
+        }
     }
 
     /**
@@ -265,6 +270,11 @@ public sealed interface Result<T> permits Success, Failure {
         @Override
         public String toString() {
             return "Failure(" + value + ")";
+        }
+
+        @Override
+        public Cause value() {
+            throw new UnsupportedOperationException("Cause should not be accessed directly");
         }
     }
 

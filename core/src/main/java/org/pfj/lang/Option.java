@@ -259,6 +259,11 @@ public sealed interface Option<T> permits Some, None {
         public String toString() {
             return "Some(" + value.toString() + ")";
         }
+
+        @Override
+        public T value() {
+            throw new UnsupportedOperationException("Value should not be accessed directly");
+        }
     }
 
     record None<T>() implements Option<T> {
