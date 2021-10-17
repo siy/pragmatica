@@ -22,6 +22,7 @@ import org.pfj.lang.Result.Success;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -233,20 +234,35 @@ public sealed interface Result<T> permits Success, Failure {
         return new Success<>(value);
     }
 
-    record Success<T>(T value) implements Result<T> {
+    final class Success<T> implements Result<T> {
+        private final T value;
+
+        private Success(T value) {
+            this.value = value;
+        }
+
         @Override
         public <R> R fold(FN1<? extends R, ? super Cause> failureMapper, FN1<? extends R, ? super T> successMapper) {
             return successMapper.apply(value);
         }
 
         @Override
-        public String toString() {
-            return "Success(" + value.toString() + ")";
+        public boolean equals(Object o) {
+            if (this == o) {
+                return true;
+            }
+
+            return o instanceof Success<?> success && value.equals(success.value);
         }
 
         @Override
-        public T value() {
-            throw new UnsupportedOperationException("Value should not be accessed directly");
+        public int hashCode() {
+            return Objects.hash(value);
+        }
+
+        @Override
+        public String toString() {
+            return "Success(" + value.toString() + ")";
         }
     }
 
@@ -261,20 +277,35 @@ public sealed interface Result<T> permits Success, Failure {
         return new Failure<>(value);
     }
 
-    record Failure<T>(Cause value) implements Result<T> {
+    final class Failure<T> implements Result<T> {
+        private final Cause value;
+
+        private Failure(Cause value) {
+            this.value = value;
+        }
+
         @Override
         public <R> R fold(FN1<? extends R, ? super Cause> failureMapper, FN1<? extends R, ? super T> successMapper) {
             return failureMapper.apply(value);
         }
 
         @Override
-        public String toString() {
-            return "Failure(" + value + ")";
+        public boolean equals(Object o) {
+            if (this == o) {
+                return true;
+            }
+
+            return o instanceof Failure<?> failure && value.equals(failure.value);
         }
 
         @Override
-        public Cause value() {
-            throw new UnsupportedOperationException("Cause should not be accessed directly");
+        public int hashCode() {
+            return Objects.hash(value);
+        }
+
+        @Override
+        public String toString() {
+            return "Failure(" + value + ")";
         }
     }
 
@@ -315,8 +346,8 @@ public sealed interface Result<T> permits Success, Failure {
     /**
      * Find and return first success instance among provided.
      *
-     * @param first     first input result
-     * @param results   remaining input results
+     * @param first   first input result
+     * @param results remaining input results
      *
      * @return first success instance among provided
      */
@@ -397,13 +428,13 @@ public sealed interface Result<T> permits Success, Failure {
      * @return {@link Mapper4} prepared for further transformation.
      */
     static <T1, T2, T3, T4> Mapper4<T1, T2, T3, T4> all(
-            Result<T1> value1, Result<T2> value2, Result<T3> value3, Result<T4> value4
+        Result<T1> value1, Result<T2> value2, Result<T3> value3, Result<T4> value4
     ) {
         return () -> value1.flatMap(
-                vv1 -> value2.flatMap(
-                        vv2 -> value3.flatMap(
-                                vv3 -> value4.flatMap(
-                                        vv4 -> success(tuple(vv1, vv2, vv3, vv4))))));
+            vv1 -> value2.flatMap(
+                vv2 -> value3.flatMap(
+                    vv3 -> value4.flatMap(
+                        vv4 -> success(tuple(vv1, vv2, vv3, vv4))))));
     }
 
     /**
@@ -413,14 +444,14 @@ public sealed interface Result<T> permits Success, Failure {
      * @return {@link Mapper5} prepared for further transformation.
      */
     static <T1, T2, T3, T4, T5> Mapper5<T1, T2, T3, T4, T5> all(
-            Result<T1> value1, Result<T2> value2, Result<T3> value3, Result<T4> value4, Result<T5> value5
+        Result<T1> value1, Result<T2> value2, Result<T3> value3, Result<T4> value4, Result<T5> value5
     ) {
         return () -> value1.flatMap(
-                vv1 -> value2.flatMap(
-                        vv2 -> value3.flatMap(
-                                vv3 -> value4.flatMap(
-                                        vv4 -> value5.flatMap(
-                                                vv5 -> success(tuple(vv1, vv2, vv3, vv4, vv5)))))));
+            vv1 -> value2.flatMap(
+                vv2 -> value3.flatMap(
+                    vv3 -> value4.flatMap(
+                        vv4 -> value5.flatMap(
+                            vv5 -> success(tuple(vv1, vv2, vv3, vv4, vv5)))))));
     }
 
     /**
@@ -430,16 +461,16 @@ public sealed interface Result<T> permits Success, Failure {
      * @return {@link Mapper6} prepared for further transformation.
      */
     static <T1, T2, T3, T4, T5, T6> Mapper6<T1, T2, T3, T4, T5, T6> all(
-            Result<T1> value1, Result<T2> value2, Result<T3> value3,
-            Result<T4> value4, Result<T5> value5, Result<T6> value6
+        Result<T1> value1, Result<T2> value2, Result<T3> value3,
+        Result<T4> value4, Result<T5> value5, Result<T6> value6
     ) {
         return () -> value1.flatMap(
-                vv1 -> value2.flatMap(
-                        vv2 -> value3.flatMap(
-                                vv3 -> value4.flatMap(
-                                        vv4 -> value5.flatMap(
-                                                vv5 -> value6.flatMap(
-                                                        vv6 -> success(tuple(vv1, vv2, vv3, vv4, vv5, vv6))))))));
+            vv1 -> value2.flatMap(
+                vv2 -> value3.flatMap(
+                    vv3 -> value4.flatMap(
+                        vv4 -> value5.flatMap(
+                            vv5 -> value6.flatMap(
+                                vv6 -> success(tuple(vv1, vv2, vv3, vv4, vv5, vv6))))))));
     }
 
     /**
@@ -449,18 +480,18 @@ public sealed interface Result<T> permits Success, Failure {
      * @return {@link Mapper7} prepared for further transformation.
      */
     static <T1, T2, T3, T4, T5, T6, T7> Mapper7<T1, T2, T3, T4, T5, T6, T7> all(
-            Result<T1> value1, Result<T2> value2, Result<T3> value3,
-            Result<T4> value4, Result<T5> value5, Result<T6> value6,
-            Result<T7> value7
+        Result<T1> value1, Result<T2> value2, Result<T3> value3,
+        Result<T4> value4, Result<T5> value5, Result<T6> value6,
+        Result<T7> value7
     ) {
         return () -> value1.flatMap(
-                vv1 -> value2.flatMap(
-                        vv2 -> value3.flatMap(
-                                vv3 -> value4.flatMap(
-                                        vv4 -> value5.flatMap(
-                                                vv5 -> value6.flatMap(
-                                                        vv6 -> value7.flatMap(
-                                                                vv7 -> success(tuple(vv1, vv2, vv3, vv4, vv5, vv6, vv7)))))))));
+            vv1 -> value2.flatMap(
+                vv2 -> value3.flatMap(
+                    vv3 -> value4.flatMap(
+                        vv4 -> value5.flatMap(
+                            vv5 -> value6.flatMap(
+                                vv6 -> value7.flatMap(
+                                    vv7 -> success(tuple(vv1, vv2, vv3, vv4, vv5, vv6, vv7)))))))));
     }
 
     /**
@@ -470,19 +501,19 @@ public sealed interface Result<T> permits Success, Failure {
      * @return {@link Mapper8} prepared for further transformation.
      */
     static <T1, T2, T3, T4, T5, T6, T7, T8> Mapper8<T1, T2, T3, T4, T5, T6, T7, T8> all(
-            Result<T1> value1, Result<T2> value2, Result<T3> value3,
-            Result<T4> value4, Result<T5> value5, Result<T6> value6,
-            Result<T7> value7, Result<T8> value8
+        Result<T1> value1, Result<T2> value2, Result<T3> value3,
+        Result<T4> value4, Result<T5> value5, Result<T6> value6,
+        Result<T7> value7, Result<T8> value8
     ) {
         return () -> value1.flatMap(
-                vv1 -> value2.flatMap(
-                        vv2 -> value3.flatMap(
-                                vv3 -> value4.flatMap(
-                                        vv4 -> value5.flatMap(
-                                                vv5 -> value6.flatMap(
-                                                        vv6 -> value7.flatMap(
-                                                                vv7 -> value8.flatMap(
-                                                                        vv8 -> success(tuple(vv1, vv2, vv3, vv4, vv5, vv6, vv7, vv8))))))))));
+            vv1 -> value2.flatMap(
+                vv2 -> value3.flatMap(
+                    vv3 -> value4.flatMap(
+                        vv4 -> value5.flatMap(
+                            vv5 -> value6.flatMap(
+                                vv6 -> value7.flatMap(
+                                    vv7 -> value8.flatMap(
+                                        vv8 -> success(tuple(vv1, vv2, vv3, vv4, vv5, vv6, vv7, vv8))))))))));
     }
 
     /**
@@ -492,20 +523,20 @@ public sealed interface Result<T> permits Success, Failure {
      * @return {@link Mapper9} prepared for further transformation.
      */
     static <T1, T2, T3, T4, T5, T6, T7, T8, T9> Mapper9<T1, T2, T3, T4, T5, T6, T7, T8, T9> all(
-            Result<T1> value1, Result<T2> value2, Result<T3> value3,
-            Result<T4> value4, Result<T5> value5, Result<T6> value6,
-            Result<T7> value7, Result<T8> value8, Result<T9> value9
+        Result<T1> value1, Result<T2> value2, Result<T3> value3,
+        Result<T4> value4, Result<T5> value5, Result<T6> value6,
+        Result<T7> value7, Result<T8> value8, Result<T9> value9
     ) {
         return () -> value1.flatMap(
-                vv1 -> value2.flatMap(
-                        vv2 -> value3.flatMap(
-                                vv3 -> value4.flatMap(
-                                        vv4 -> value5.flatMap(
-                                                vv5 -> value6.flatMap(
-                                                        vv6 -> value7.flatMap(
-                                                                vv7 -> value8.flatMap(
-                                                                        vv8 -> value9.flatMap(
-                                                                                vv9 -> success(tuple(vv1, vv2, vv3, vv4, vv5, vv6, vv7, vv8, vv9)))))))))));
+            vv1 -> value2.flatMap(
+                vv2 -> value3.flatMap(
+                    vv3 -> value4.flatMap(
+                        vv4 -> value5.flatMap(
+                            vv5 -> value6.flatMap(
+                                vv6 -> value7.flatMap(
+                                    vv7 -> value8.flatMap(
+                                        vv8 -> value9.flatMap(
+                                            vv9 -> success(tuple(vv1, vv2, vv3, vv4, vv5, vv6, vv7, vv8, vv9)))))))))));
     }
 
     /**

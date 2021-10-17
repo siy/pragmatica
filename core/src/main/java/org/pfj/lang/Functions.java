@@ -46,6 +46,11 @@ public interface Functions {
     }
 
     @FunctionalInterface
+    interface FN0<R> {
+        R apply();
+    }
+
+    @FunctionalInterface
     interface FN1<R, T1> {
         R apply(T1 param1);
 

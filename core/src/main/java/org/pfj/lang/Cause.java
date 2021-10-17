@@ -24,4 +24,8 @@ public interface Cause {
      * Message associated with the failure.
      */
     String message();
+
+    default <T> Result<T> result() {
+        return Result.failure(this);
+    }
 }

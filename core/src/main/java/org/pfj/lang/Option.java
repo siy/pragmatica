@@ -20,6 +20,7 @@ import org.pfj.lang.Functions.*;
 import org.pfj.lang.Option.None;
 import org.pfj.lang.Option.Some;
 
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -249,24 +250,39 @@ public sealed interface Option<T> permits Some, None {
         return new Some<>(value);
     }
 
-    record Some<T>(T value) implements Option<T> {
+    final class Some<T> implements Option<T> {
+        private final T value;
+
+        private Some(T value) {
+            this.value = value;
+        }
+
         @Override
         public <R> R fold(Supplier<? extends R> emptyMapper, FN1<? extends R, ? super T> presentMapper) {
             return presentMapper.apply(value);
         }
 
         @Override
-        public String toString() {
-            return "Some(" + value.toString() + ")";
+        public boolean equals(Object o) {
+            if (this == o) {
+                return true;
+            }
+
+            return o instanceof Some<?> some && value.equals(some.value);
         }
 
         @Override
-        public T value() {
-            throw new UnsupportedOperationException("Value should not be accessed directly");
+        public int hashCode() {
+            return Objects.hash(value);
+        }
+
+        @Override
+        public String toString() {
+            return "Some(" + value.toString() + ")";
         }
     }
 
-    record None<T>() implements Option<T> {
+    final class None<T> implements Option<T> {
         @Override
         public <R> R fold(Supplier<? extends R> emptyMapper, FN1<? extends R, ? super T> presentMapper) {
             return emptyMapper.get();
@@ -353,13 +369,13 @@ public sealed interface Option<T> permits Some, None {
      * @return {@link Mapper4} prepared for further transformation.
      */
     static <T1, T2, T3, T4> Mapper4<T1, T2, T3, T4> all(
-            Option<T1> op1, Option<T2> op2, Option<T3> op3, Option<T4> op4
+        Option<T1> op1, Option<T2> op2, Option<T3> op3, Option<T4> op4
     ) {
         return () -> op1.flatMap(
-                v1 -> op2.flatMap(
-                        v2 -> op3.flatMap(
-                                v3 -> op4.flatMap(
-                                        v4 -> Option.option(tuple(v1, v2, v3, v4))))));
+            v1 -> op2.flatMap(
+                v2 -> op3.flatMap(
+                    v3 -> op4.flatMap(
+                        v4 -> Option.option(tuple(v1, v2, v3, v4))))));
     }
 
     /**
@@ -369,14 +385,14 @@ public sealed interface Option<T> permits Some, None {
      * @return {@link Mapper5} prepared for further transformation.
      */
     static <T1, T2, T3, T4, T5> Mapper5<T1, T2, T3, T4, T5> all(
-            Option<T1> op1, Option<T2> op2, Option<T3> op3, Option<T4> op4, Option<T5> op5
+        Option<T1> op1, Option<T2> op2, Option<T3> op3, Option<T4> op4, Option<T5> op5
     ) {
         return () -> op1.flatMap(
-                v1 -> op2.flatMap(
-                        v2 -> op3.flatMap(
-                                v3 -> op4.flatMap(
-                                        v4 -> op5.flatMap(
-                                                v5 -> option(tuple(v1, v2, v3, v4, v5)))))));
+            v1 -> op2.flatMap(
+                v2 -> op3.flatMap(
+                    v3 -> op4.flatMap(
+                        v4 -> op5.flatMap(
+                            v5 -> option(tuple(v1, v2, v3, v4, v5)))))));
     }
 
     /**
@@ -386,16 +402,16 @@ public sealed interface Option<T> permits Some, None {
      * @return {@link Mapper6} prepared for further transformation.
      */
     static <T1, T2, T3, T4, T5, T6> Mapper6<T1, T2, T3, T4, T5, T6> all(
-            Option<T1> op1, Option<T2> op2, Option<T3> op3,
-            Option<T4> op4, Option<T5> op5, Option<T6> op6
+        Option<T1> op1, Option<T2> op2, Option<T3> op3,
+        Option<T4> op4, Option<T5> op5, Option<T6> op6
     ) {
         return () -> op1.flatMap(
-                v1 -> op2.flatMap(
-                        v2 -> op3.flatMap(
-                                v3 -> op4.flatMap(
-                                        v4 -> op5.flatMap(
-                                                v5 -> op6.flatMap(
-                                                        v6 -> option(tuple(v1, v2, v3, v4, v5, v6))))))));
+            v1 -> op2.flatMap(
+                v2 -> op3.flatMap(
+                    v3 -> op4.flatMap(
+                        v4 -> op5.flatMap(
+                            v5 -> op6.flatMap(
+                                v6 -> option(tuple(v1, v2, v3, v4, v5, v6))))))));
     }
 
     /**
@@ -405,8 +421,8 @@ public sealed interface Option<T> permits Some, None {
      * @return {@link Mapper7} prepared for further transformation.
      */
     static <T1, T2, T3, T4, T5, T6, T7> Mapper7<T1, T2, T3, T4, T5, T6, T7> all(
-            Option<T1> op1, Option<T2> op2, Option<T3> op3, Option<T4> op4,
-            Option<T5> op5, Option<T6> op6, Option<T7> op7
+        Option<T1> op1, Option<T2> op2, Option<T3> op3, Option<T4> op4,
+        Option<T5> op5, Option<T6> op6, Option<T7> op7
     ) {
         return () -> op1.flatMap(
                 v1 -> op2.flatMap(
@@ -463,15 +479,15 @@ public sealed interface Option<T> permits Some, None {
 
     /**
      * Helper interface for convenient {@link Tuple1} transformation.
-	 * In case if you need to return a tuple, it might be more convenient to return this interface instead.
-	 * For example, instead of this:
-	 * <blockquote><pre>
-	 *     return tuple(value, ...);
-	 * </pre></blockquote>
-	 * return this:
-	 * <blockquote><pre>
-	 *     return () -> tuple(value, ...);
-	 * </pre></blockquote>
+     * In case if you need to return a tuple, it might be more convenient to return this interface instead.
+     * For example, instead of this:
+     * <blockquote><pre>
+     *     return tuple(value, ...);
+     * </pre></blockquote>
+     * return this:
+     * <blockquote><pre>
+     *     return () -> tuple(value, ...);
+     * </pre></blockquote>
      */
     @FunctionalInterface
     interface Mapper1<T1> {
@@ -488,15 +504,15 @@ public sealed interface Option<T> permits Some, None {
 
     /**
      * Helper interface for convenient {@link Tuple2} transformation.
-	 * In case if you need to return a tuple, it might be more convenient to return this interface instead.
-	 * For example, instead of this:
-	 * <blockquote><pre>
-	 *     return tuple(value, ...);
-	 * </pre></blockquote>
-	 * return this:
-	 * <blockquote><pre>
-	 *     return () -> tuple(value, ...);
-	 * </pre></blockquote>
+     * In case if you need to return a tuple, it might be more convenient to return this interface instead.
+     * For example, instead of this:
+     * <blockquote><pre>
+     *     return tuple(value, ...);
+     * </pre></blockquote>
+     * return this:
+     * <blockquote><pre>
+     *     return () -> tuple(value, ...);
+     * </pre></blockquote>
      */
     @FunctionalInterface
     interface Mapper2<T1, T2> {
@@ -513,15 +529,15 @@ public sealed interface Option<T> permits Some, None {
 
     /**
      * Helper interface for convenient {@link Tuple3} transformation.
-	 * In case if you need to return a tuple, it might be more convenient to return this interface instead.
-	 * For example, instead of this:
-	 * <blockquote><pre>
-	 *     return tuple(value, ...);
-	 * </pre></blockquote>
-	 * return this:
-	 * <blockquote><pre>
-	 *     return () -> tuple(value, ...);
-	 * </pre></blockquote>
+     * In case if you need to return a tuple, it might be more convenient to return this interface instead.
+     * For example, instead of this:
+     * <blockquote><pre>
+     *     return tuple(value, ...);
+     * </pre></blockquote>
+     * return this:
+     * <blockquote><pre>
+     *     return () -> tuple(value, ...);
+     * </pre></blockquote>
      */
     @FunctionalInterface
     interface Mapper3<T1, T2, T3> {
@@ -538,15 +554,15 @@ public sealed interface Option<T> permits Some, None {
 
     /**
      * Helper interface for convenient {@link Tuple4} transformation.
-	 * In case if you need to return a tuple, it might be more convenient to return this interface instead.
-	 * For example, instead of this:
-	 * <blockquote><pre>
-	 *     return tuple(value, ...);
-	 * </pre></blockquote>
-	 * return this:
-	 * <blockquote><pre>
-	 *     return () -> tuple(value, ...);
-	 * </pre></blockquote>
+     * In case if you need to return a tuple, it might be more convenient to return this interface instead.
+     * For example, instead of this:
+     * <blockquote><pre>
+     *     return tuple(value, ...);
+     * </pre></blockquote>
+     * return this:
+     * <blockquote><pre>
+     *     return () -> tuple(value, ...);
+     * </pre></blockquote>
      */
     @FunctionalInterface
     interface Mapper4<T1, T2, T3, T4> {
@@ -563,15 +579,15 @@ public sealed interface Option<T> permits Some, None {
 
     /**
      * Helper interface for convenient {@link Tuple5} transformation.
-	 * In case if you need to return a tuple, it might be more convenient to return this interface instead.
-	 * For example, instead of this:
-	 * <blockquote><pre>
-	 *     return tuple(value, ...);
-	 * </pre></blockquote>
-	 * return this:
-	 * <blockquote><pre>
-	 *     return () -> tuple(value, ...);
-	 * </pre></blockquote>
+     * In case if you need to return a tuple, it might be more convenient to return this interface instead.
+     * For example, instead of this:
+     * <blockquote><pre>
+     *     return tuple(value, ...);
+     * </pre></blockquote>
+     * return this:
+     * <blockquote><pre>
+     *     return () -> tuple(value, ...);
+     * </pre></blockquote>
      */
     @FunctionalInterface
     interface Mapper5<T1, T2, T3, T4, T5> {
@@ -588,15 +604,15 @@ public sealed interface Option<T> permits Some, None {
 
     /**
      * Helper interface for convenient {@link Tuple6} transformation.
-	 * In case if you need to return a tuple, it might be more convenient to return this interface instead.
-	 * For example, instead of this:
-	 * <blockquote><pre>
-	 *     return tuple(value, ...);
-	 * </pre></blockquote>
-	 * return this:
-	 * <blockquote><pre>
-	 *     return () -> tuple(value, ...);
-	 * </pre></blockquote>
+     * In case if you need to return a tuple, it might be more convenient to return this interface instead.
+     * For example, instead of this:
+     * <blockquote><pre>
+     *     return tuple(value, ...);
+     * </pre></blockquote>
+     * return this:
+     * <blockquote><pre>
+     *     return () -> tuple(value, ...);
+     * </pre></blockquote>
      */
     @FunctionalInterface
     interface Mapper6<T1, T2, T3, T4, T5, T6> {
@@ -613,15 +629,15 @@ public sealed interface Option<T> permits Some, None {
 
     /**
      * Helper interface for convenient {@link Tuple7} transformation.
-	 * In case if you need to return a tuple, it might be more convenient to return this interface instead.
-	 * For example, instead of this:
-	 * <blockquote><pre>
-	 *     return tuple(value, ...);
-	 * </pre></blockquote>
-	 * return this:
-	 * <blockquote><pre>
-	 *     return () -> tuple(value, ...);
-	 * </pre></blockquote>
+     * In case if you need to return a tuple, it might be more convenient to return this interface instead.
+     * For example, instead of this:
+     * <blockquote><pre>
+     *     return tuple(value, ...);
+     * </pre></blockquote>
+     * return this:
+     * <blockquote><pre>
+     *     return () -> tuple(value, ...);
+     * </pre></blockquote>
      */
     @FunctionalInterface
     interface Mapper7<T1, T2, T3, T4, T5, T6, T7> {
@@ -638,15 +654,15 @@ public sealed interface Option<T> permits Some, None {
 
     /**
      * Helper interface for convenient {@link Tuple8} transformation.
-	 * In case if you need to return a tuple, it might be more convenient to return this interface instead.
-	 * For example, instead of this:
-	 * <blockquote><pre>
-	 *     return tuple(value, ...);
-	 * </pre></blockquote>
-	 * return this:
-	 * <blockquote><pre>
-	 *     return () -> tuple(value, ...);
-	 * </pre></blockquote>
+     * In case if you need to return a tuple, it might be more convenient to return this interface instead.
+     * For example, instead of this:
+     * <blockquote><pre>
+     *     return tuple(value, ...);
+     * </pre></blockquote>
+     * return this:
+     * <blockquote><pre>
+     *     return () -> tuple(value, ...);
+     * </pre></blockquote>
      */
     @FunctionalInterface
     interface Mapper8<T1, T2, T3, T4, T5, T6, T7, T8> {
@@ -663,15 +679,15 @@ public sealed interface Option<T> permits Some, None {
 
     /**
      * Helper interface for convenient {@link Tuple9} transformation.
-	 * In case if you need to return a tuple, it might be more convenient to return this interface instead.
-	 * For example, instead of this:
-	 * <blockquote><pre>
-	 *     return tuple(value, ...);
-	 * </pre></blockquote>
-	 * return this:
-	 * <blockquote><pre>
-	 *     return () -> tuple(value, ...);
-	 * </pre></blockquote>
+     * In case if you need to return a tuple, it might be more convenient to return this interface instead.
+     * For example, instead of this:
+     * <blockquote><pre>
+     *     return tuple(value, ...);
+     * </pre></blockquote>
+     * return this:
+     * <blockquote><pre>
+     *     return () -> tuple(value, ...);
+     * </pre></blockquote>
      */
     @FunctionalInterface
     interface Mapper9<T1, T2, T3, T4, T5, T6, T7, T8, T9> {
