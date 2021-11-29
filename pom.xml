@@ -41,6 +41,7 @@
         <junit.version>5.7.0</junit.version>
         <junit.params.version>5.7.0</junit.params.version>
         <junit.platform.version>1.7.0</junit.platform.version>
+        <jmh.version>1.21</jmh.version>
     </properties>
 
     <dependencyManagement>
@@ -79,6 +80,13 @@
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-params</artifactId>
             <version>${junit.params.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.openjdk.jmh</groupId>
+            <artifactId>jmh-generator-annprocess</artifactId>
+            <version>${jmh.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
