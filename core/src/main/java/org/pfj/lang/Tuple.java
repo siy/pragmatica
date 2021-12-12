@@ -113,34 +113,8 @@ public interface Tuple {
         }
     }
 
-    Tuple0 UNIT = new Tuple0() {
-        @Override
-        public <T> T map(Supplier<T> mapper) {
-            return mapper.get();
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            return obj instanceof Tuple0;
-        }
-
-        @Override
-        public int hashCode() {
-            return super.hashCode();
-        }
-
-        @Override
-        public String toString() {
-            return "Tuple0()";
-        }
-    };
-
     static Tuple0 tuple() {
-        return UNIT;
-    }
-
-    static Tuple0 unit() {
-        return UNIT;
+        return Unit.unit();
     }
 
     static <T1> Tuple1<T1> tuple(T1 param1) {

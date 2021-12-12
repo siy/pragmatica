@@ -14,7 +14,7 @@ import java.security.SecureRandom;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
-//@Disabled
+@Disabled
 public class ResultPerformanceTest {
     private static final int MAX_LEN = 255;
     private static final Random RANDOM = new SecureRandom();

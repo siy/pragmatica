@@ -181,7 +181,7 @@ public sealed interface Option<T> permits Some, None {
      * @return created instance
      */
     default Result<T> toResult(Cause cause) {
-        return fold(() -> Result.failure(cause), Result::success);
+        return fold(cause::result, Result::success);
     }
 
     /**

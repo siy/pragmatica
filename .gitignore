@@ -10,6 +10,8 @@ target
 .settings
 .springBeans
 .sts4-cache
+.m2
+.bash_history
 
 ### IntelliJ IDEA ###
 .idea
