@@ -16,20 +16,16 @@
 
 package org.pfj.io.uring;
 
-import org.pfj.io.async.net.AddressFamily;
-import org.pfj.io.async.net.SocketFlag;
-import org.pfj.io.async.net.SocketOption;
-import org.pfj.io.async.net.SocketType;
-import org.pfj.io.uring.struct.raw.RawSocketAddressIn;
-import org.pfj.io.uring.struct.raw.RawSocketAddressIn6;
 import org.pfj.io.uring.utils.LibraryLoader;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+/**
+ * Native interface to Linux IO URING
+ */
 final class Uring {
-    private static final Logger LOG = LoggerFactory.getLogger(Uring.class);
+    //private static final Logger LOG = LoggerFactory.getLogger(Uring.class);
 
-    private Uring() {}
+    private Uring() {
+    }
 
     // Actual size of struct io_uring is 160 bytes at the moment of writing: May 2020
     public static final long SIZE = 256;
@@ -38,7 +34,7 @@ final class Uring {
         try {
             LibraryLoader.fromJar("/liburingnative.so");
         } catch (final Exception e) {
-            LOG.error("Error while loading JNI library for Uring class: ", e);
+            //LOG.error("Error while loading JNI library for Uring class: ", e);
             System.exit(-1);
         }
     }
@@ -59,6 +55,7 @@ final class Uring {
     public static native long spaceLeft(long baseAddress);
 
     public static native long nextSQEntry(long baseAddress);
+
     public static native int peekSQEntries(long baseAddress, long submissionsAddress, long count);
 
     public static native long submitAndWait(long baseAddress, int waitNr);
@@ -68,12 +65,9 @@ final class Uring {
     /**
      * Create socket. This call is a combination of socket(2) and setsockopt(2).
      *
-     * @param domain
-     *         Socket domain. Refer to {@link AddressFamily} for set of recognized values.
-     * @param type
-     *         Socket type and open flags. Refer to {@link SocketType} for possible types. The {@link SocketFlag} flags can be OR-ed if necessary.
-     * @param options
-     *         Socket option1s. Only subset of possible options are supported. Refer to {@link SocketOption} for details.
+     * @param domain  Socket domain. Refer to {@link org.pfj.io.async.net.AddressFamily} for set of recognized values.
+     * @param type    Socket type and open flags. Refer to {@link org.pfj.io.async.net.SocketType} for possible types. The {@link org.pfj.io.async.net.SocketFlag} flags can be OR-ed if necessary.
+     * @param options Socket option1s. Only subset of possible options are supported. Refer to {@link org.pfj.io.async.net.SocketOption} for details.
      * @return socket (>0) or error (<0)
      */
     public static native int socket(int domain, int type, int options);
@@ -81,14 +75,10 @@ final class Uring {
     /**
      * Configure socket for listening at specified address, port and with specified depth of backlog queue. It's a combination of bind(2) and listen(2) calls.
      *
-     * @param socket
-     *         Socket to configure.
-     * @param address
-     *         Memory address with prepared socket address structure (See {@link RawSocketAddressIn} and {@link RawSocketAddressIn6} for more details}.
-     * @param len
-     *         Size of the prepared socket address structure.
-     * @param queueDepth
-     *         Set backlog queue dept.
+     * @param socket     Socket to configure.
+     * @param address    Memory address with prepared socket address structure (See {@link org.pfj.io.uring.struct.raw.RawSocketAddressIn} and {@link org.pfj.io.uring.struct.raw.RawSocketAddressIn6} for more details}.
+     * @param len        Size of the prepared socket address structure.
+     * @param queueDepth Set backlog queue dept.
      * @return 0 for success and negative value of error code in case of error.
      */
     public static native int prepareForListen(int socket, long address, int len, int queueDepth);
