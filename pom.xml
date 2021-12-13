@@ -14,7 +14,7 @@
 
     <packaging>pom</packaging>
 
-    <name>Pragmatic Functional Java Essentials</name>
+    <name>Pragmatic Functional Java Essentials (parent)</name>
     <description>Pragmatic Functional Java Essentials</description>
     <url>http://www.pragmatica.org</url>
 
