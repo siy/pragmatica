@@ -16,15 +16,15 @@
 
 package org.pfj.io.async.file.stat;
 
-import org.pfj.io.Bitmask;
-import org.pfj.io.async.Submitter;
+import org.pfj.io.async.uring.Bitmask;
+import org.pfj.io.async.Proactor;
 import org.pfj.io.async.file.FileDescriptor;
 
 import java.nio.file.Path;
 import java.util.EnumSet;
 
 /**
- * Flags which control behavior of {@link Submitter#stat(Path, EnumSet, EnumSet)} and {@link Submitter#stat(FileDescriptor, EnumSet, EnumSet)}
+ * Flags which control behavior of {@link Proactor#stat(Path, EnumSet, EnumSet)} and {@link Proactor#stat(FileDescriptor, EnumSet, EnumSet)}
  * methods.
  * <p>
  * Note that {@link #EMPTY_PATH} is used internally. This flag controls what is used to point to file - path or file descriptor.

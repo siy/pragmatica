@@ -16,7 +16,7 @@
 
 package org.pfj.io.async.file;
 
-import org.pfj.io.Bitmask;
+import org.pfj.io.async.uring.Bitmask;
 
 /**
  * File open flags.

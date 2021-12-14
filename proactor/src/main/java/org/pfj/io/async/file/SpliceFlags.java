@@ -16,7 +16,7 @@
 
 package org.pfj.io.async.file;
 
-import org.pfj.io.Bitmask;
+import org.pfj.io.async.uring.Bitmask;
 
 public enum SpliceFlags implements Bitmask {
     MOVE(1),        /* SPLICE_F_MOVE    : Move pages instead of copying.  */

@@ -16,10 +16,9 @@
 
 package org.pfj.io.async.net;
 
-import org.pfj.lang.Option;
 import org.pfj.lang.Result;
 
-import static org.pfj.io.NativeFailureType.EPFNOSUPPORT;
+import static org.pfj.io.async.SystemError.EPFNOSUPPORT;
 import static org.pfj.lang.Option.option;
 
 /**

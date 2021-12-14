@@ -18,7 +18,7 @@ package org.pfj.io.async.net;
 
 import org.pfj.lang.Result;
 
-import static org.pfj.io.NativeFailureType.EFAULT;
+import static org.pfj.io.async.SystemError.EFAULT;
 
 //TODO: move to InetAddress and make it sealed
 public class Inet6Address implements InetAddress {

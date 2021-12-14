@@ -56,14 +56,8 @@ public class FileDescriptor {
 
     @Override
     public boolean equals(final Object o) {
-        if (this == o) {
-            return true;
-        }
-
-        if (o instanceof FileDescriptor other) {
-            return fd == other.fd && type == other.type;
-        }
-        return false;
+        return this == o || o instanceof FileDescriptor other
+            && fd == other.fd && type == other.type;
     }
 
     @Override

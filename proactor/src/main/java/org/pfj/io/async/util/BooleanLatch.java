@@ -16,7 +16,7 @@
 
 package org.pfj.io.async.util;
 
-import org.pfj.io.scheduler.Timeout;
+import org.pfj.io.async.Timeout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

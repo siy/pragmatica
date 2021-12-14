@@ -16,7 +16,7 @@
 
 package org.pfj.io.async.file.stat;
 
-import org.pfj.io.Bitmask;
+import org.pfj.io.async.uring.Bitmask;
 
 import java.util.EnumSet;
 

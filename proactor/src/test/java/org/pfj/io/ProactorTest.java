@@ -18,6 +18,7 @@ package org.pfj.io;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.pfj.io.async.Proactor;
 import org.pfj.io.async.common.OffsetT;
 import org.pfj.io.async.common.SizeT;
 import org.pfj.io.async.file.FileDescriptor;
@@ -25,7 +26,7 @@ import org.pfj.io.async.file.FilePermission;
 import org.pfj.io.async.file.OpenFlags;
 import org.pfj.io.async.net.*;
 import org.pfj.io.async.util.OffHeapBuffer;
-import org.pfj.io.scheduler.Timeout;
+import org.pfj.io.async.Timeout;
 import org.pfj.lang.Option;
 import org.pfj.lang.Result;
 import org.pfj.io.async.net.AddressFamily;
@@ -41,8 +42,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.EnumSet;
-import java.util.Optional;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -58,7 +57,7 @@ class ProactorTest {
     void nopCanBeSubmitted() {
         final var finalResult = new AtomicReference<Result<?>>();
 
-        proactor.nop((result, submitter) -> finalResult.set(result));
+        proactor.nop((result, __) -> finalResult.set(result));
 
         waitForResult(finalResult);
 
@@ -71,7 +70,7 @@ class ProactorTest {
     @Test
     void delayCanBeSubmitted() {
         final var finalResult = new AtomicReference<Result<Duration>>();
-        proactor.delay((result, submitter) -> finalResult.set(result), Timeout.timeout(100).millis());
+        proactor.delay((result, __) -> finalResult.set(result), Timeout.timeout(100).millis());
 
         waitForResult(finalResult);
 
@@ -84,9 +83,12 @@ class ProactorTest {
     @Test
     void fileCanBeOpenedAndClosed() {
         final var fileDescriptor = new AtomicReference<Result<FileDescriptor>>();
+        final var fileName = "target/classes/" + Proactor.class.getName().replace('.', '/') + ".class";
 
-        proactor.open((result, submitter) -> fileDescriptor.set(result),
-            Path.of("target/classes/org/pfj/io/Proactor.class"),
+        System.out.println("Trying to open " + fileName);
+
+        proactor.open((result, __) -> fileDescriptor.set(result),
+            Path.of(fileName),
             EnumSet.of(OpenFlags.READ_ONLY),
             EnumSet.noneOf(FilePermission.class),
             empty());
@@ -100,7 +102,7 @@ class ProactorTest {
 
         final var closeResult = new AtomicReference<Result<Unit>>();
         fileDescriptor.get()
-            .onSuccess(fd -> proactor.closeFileDescriptor(((result, submitter) -> closeResult.set(result)), fd, empty()));
+            .onSuccess(fd -> proactor.closeFileDescriptor(((result, __) -> closeResult.set(result)), fd, empty()));
 
         waitForResult(closeResult);
 
@@ -124,7 +126,7 @@ class ProactorTest {
                 buffer.clear().used(buffer.size());
 
                 var socketResult = new AtomicReference<Result<FileDescriptor>>();
-                proactor.socket((result, submitter) -> socketResult.set(result),
+                proactor.socket((result, __) -> socketResult.set(result),
                     AddressFamily.INET,
                     SocketType.STREAM,
                     SocketFlag.none(),
@@ -136,7 +138,7 @@ class ProactorTest {
                     .onSuccess(fd -> {
                         var connectResult = new AtomicReference<Result<FileDescriptor>>();
 
-                        proactor.connect((result, submitter) -> connectResult.set(result),
+                        proactor.connect((result, __) -> connectResult.set(result),
                             fd, address, Option.option(Timeout.timeout(1).seconds()));
 
                         waitForResult(connectResult);
@@ -146,7 +148,7 @@ class ProactorTest {
                             .onSuccess(r1 -> System.out.println("Socket connected: " + r1));
 
                         var writeResult = new AtomicReference<Result<SizeT>>();
-                        proactor.write(((result, submitter) -> writeResult.set(result)),
+                        proactor.write(((result, __) -> writeResult.set(result)),
                             fd, preparedText, OffsetT.ZERO, option(Timeout.timeout(1).seconds()));
 
                         waitForResult(writeResult);
@@ -157,13 +159,13 @@ class ProactorTest {
 
                         var readResult = new AtomicReference<Result<SizeT>>();
 
-                        proactor.read(((result, submitter) -> readResult.set(result)),
+                        proactor.read(((result, __) -> readResult.set(result)),
                             fd, buffer, OffsetT.ZERO, option(Timeout.timeout(1).seconds()));
 
                         waitForResult(readResult);
 
                         var closeResult = new AtomicReference<Result<Unit>>();
-                        proactor.closeFileDescriptor(((result, submitter) -> closeResult.set(result)), fd, empty());
+                        proactor.closeFileDescriptor(((result, __) -> closeResult.set(result)), fd, empty());
 
                         waitForResult(closeResult);
 

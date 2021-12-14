@@ -16,8 +16,8 @@
 
 package org.pfj.io.async.util;
 
-import org.pfj.io.raw.RawMemory;
-import org.pfj.io.uring.struct.offheap.AbstractOffHeapStructure;
+import org.pfj.io.async.util.raw.RawMemory;
+import org.pfj.io.async.uring.struct.offheap.AbstractOffHeapStructure;
 
 public class OffHeapBuffer extends AbstractOffHeapStructure<OffHeapBuffer> {
     private int used;
