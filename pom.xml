@@ -10,6 +10,7 @@
     <modules>
         <module>core</module>
         <module>proactor</module>
+        <module>async-io</module>
     </modules>
 
     <packaging>pom</packaging>
@@ -51,6 +52,12 @@
             <dependency>
                 <groupId>org.pragmatica</groupId>
                 <artifactId>core</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.pragmatica</groupId>
+                <artifactId>proactor</artifactId>
                 <version>${project.version}</version>
             </dependency>
         </dependencies>
