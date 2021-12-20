@@ -1,5 +1,6 @@
 package org.pfj.lang;
 
+import org.pfj.io.async.Timeout;
 import org.pfj.lang.Functions.FN1;
 
 import java.util.function.Consumer;
@@ -9,14 +10,22 @@ public interface Promise<T> {
 
     <U> Promise<U> flatMap(FN1<Promise<U>, ? super T> mapper);
 
-    Promise<T> thenDo(Consumer<Result<T>> action);
+    Promise<T> then(Consumer<Result<T>> action);
 
     default Promise<T> onSuccess(Consumer<T> action) {
-        return thenDo(v -> v.onSuccess(action));
+        return then(v -> v.onSuccess(action));
+    }
+
+    default Promise<T> onSuccessDo(Runnable action) {
+        return then(v -> v.onSuccessDo(action));
     }
 
     default Promise<T> onFailure(Consumer<? super Cause> action) {
-        return thenDo(v -> v.onFailure(action));
+        return then(v -> v.onFailure(action));
+    }
+
+    default Promise<T> onFailureDo(Runnable action) {
+        return then(v -> v.onFailureDo(action));
     }
 
     Promise<T> resolve(Result<T> value);
@@ -30,6 +39,8 @@ public interface Promise<T> {
     }
 
     Promise<T> async(Consumer<Promise<T>> action);
+    Result<T> join();
+    Result<T> join(Timeout timeout);
 
     static <R> Promise<R> promise() {
         return new PromiseImpl<>(null);
