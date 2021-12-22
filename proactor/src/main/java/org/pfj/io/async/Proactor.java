@@ -41,7 +41,6 @@ import java.util.function.BiConsumer;
  * The API designed as a <a href="https://en.wikipedia.org/wiki/Proactor_pattern">Proactor</a> pattern.
  */
 public interface Proactor {
-    //int DEFAULT_QUEUE_SIZE = 8192;
     int DEFAULT_QUEUE_SIZE = 128;
 
     /**

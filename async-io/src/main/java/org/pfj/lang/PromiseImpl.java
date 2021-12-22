@@ -1,31 +1,42 @@
+/*
+ *  Copyright (c) 2021 Sergiy Yevtushenko.
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ */
+
 package org.pfj.lang;
 
 import org.pfj.io.async.SystemError;
 import org.pfj.io.async.Timeout;
-import org.pfj.io.async.util.DaemonThreadFactory;
 import org.pfj.lang.Functions.FN1;
+import org.pfj.lang.io.scheduler.TaskExecutor;
 
 import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodHandles.Lookup;
 import java.lang.invoke.VarHandle;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.locks.LockSupport;
 import java.util.function.Consumer;
 
-public class PromiseImpl<T> implements Promise<T> {
+final class PromiseImpl<T> implements Promise<T> {
     @SuppressWarnings("rawtypes")
-    private static final CompletionAction NOP = new CompletionAction<>(__ -> {
-    }, null);
+    private static final CompletionAction NOP = new CompletionAction<>(__ -> {}, null);
 
     @SuppressWarnings("unchecked")
-    private volatile CompletionAction<T> head = (CompletionAction<T>) NOP;
+    private volatile CompletionAction<T> head = NOP;
     private volatile CompletionAction<T> processed;
     private volatile Result<T> value;
 
     private static final VarHandle HEAD;
     private static final VarHandle VALUE;
-    private static final ExecutorService executor = Executors.newFixedThreadPool(2, DaemonThreadFactory.threadFactory("Promise Pool {}"));
 
     private static class CompletionAction<T> {
         private volatile CompletionAction<T> next;
@@ -80,16 +91,15 @@ public class PromiseImpl<T> implements Promise<T> {
 
         var result = new PromiseImpl<U>(null);
 
-        push(new CompletionAction<T>(value -> value.fold(
-            f -> new PromiseImpl<>((Result<U>) value),
-            mapper
-        ).then(result::resolve), result));
+        push(new CompletionAction<T>(value -> value.fold(f -> new PromiseImpl<>((Result<U>) value), mapper)
+                                                   .onResult(result::resolve),
+                                     result));
 
         return result;
     }
 
     @Override
-    public Promise<T> then(Consumer<Result<T>> action) {
+    public Promise<T> onResult(Consumer<Result<T>> action) {
         if (value != null) {
             action.accept(value);
         } else {
@@ -102,7 +112,7 @@ public class PromiseImpl<T> implements Promise<T> {
     @Override
     public Promise<T> resolve(Result<T> value) {
         if (VALUE.compareAndSet(this, null, value)) {
-            executor.submit(() -> runActions(value));
+            ExecutorHolder.executor().submit(() -> runActions(value));
         }
 
         return this;
@@ -127,6 +137,43 @@ public class PromiseImpl<T> implements Promise<T> {
     @Override
     public Result<T> join(Timeout timeout) {
         return join(timeout.asNanos());
+    }
+
+    @Override
+    public Promise<T> async(Consumer<Promise<T>> action) {
+        ExecutorHolder.executor().submit(() -> action.accept(this));
+
+        return this;
+    }
+
+    @Override
+    public Promise<T> async(Timeout timeout, Consumer<Promise<T>> action) {
+        return async(timeout.asNanos(), System.nanoTime(), action);
+    }
+
+    @Override
+    public String toString() {
+        return "Promise(" + (value == null ? "<>" : value.toString()) + ')';
+    }
+
+    private void runActions(Result<T> value) {
+        CompletionAction<T> processed = NOP;
+        CompletionAction<T> head;
+
+        while ((head = swapHead()) != null) {
+            while (head != null) {
+                head.action.accept(value);
+                var current = head;
+                head = head.next;
+
+                if (current.dependency != null) {
+                    current.next = processed;
+                    processed = current;
+                }
+            }
+        }
+
+        this.processed = processed;
     }
 
     private Result<T> join(long delayNanos) {
@@ -156,33 +203,15 @@ public class PromiseImpl<T> implements Promise<T> {
         return value;
     }
 
-    @Override
-    public Promise<T> async(Consumer<Promise<T>> action) {
-        executor.submit(() -> {
+    private Promise<T> async(long delayNanos, long start, Consumer<Promise<T>> action) {
+        ExecutorHolder.executor().submit(() -> {
+            if (System.nanoTime() - start < delayNanos) {
+                async(delayNanos, start, action);
+            }
             action.accept(this);
         });
 
         return this;
-    }
-
-    private void runActions(Result<T> value) {
-        CompletionAction<T> processed = NOP;
-        CompletionAction<T> head;
-
-        while((head = swapHead()) != null) {
-            while (head != null) {
-                head.action.accept(value);
-                var current = head;
-                head = head.next;
-
-                if (current.dependency != null) {
-                    current.next = processed;
-                    processed = current;
-                }
-            }
-        }
-
-        this.processed = processed;
     }
 
     private PromiseImpl<T> push(CompletionAction<T> newHead) {
@@ -218,8 +247,11 @@ public class PromiseImpl<T> implements Promise<T> {
         return prev;
     }
 
-    @Override
-    public String toString() {
-        return "Promise(" + (value == null ? "<>" : value.toString()) + ')';
+    private static final class ExecutorHolder {
+        private static final TaskExecutor EXECUTOR = TaskExecutor.taskExecutor();
+
+        static TaskExecutor executor() {
+            return EXECUTOR;
+        }
     }
 }

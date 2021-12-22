@@ -33,7 +33,7 @@ public class UringNativeTest {
 
         final long completionBase = RawMemory.allocate(16 * 1024); // 1024 * 2 (CQ size is twice of SQ size) * 8 (bytes per ptr)
 
-        final int rc = UringNative.init(1024, ringBase, 0);
+        final int rc = UringNative.init(128, ringBase, 0);
 
         try {
             assertEquals(0, rc);
@@ -75,7 +75,7 @@ public class UringNativeTest {
 
         assertNotEquals(0, ringBase);
 
-        final int rc = UringNative.init(1024, ringBase, 0);
+        final int rc = UringNative.init(128, ringBase, 0);
 
         try {
             assertEquals(0, rc);
