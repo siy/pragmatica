@@ -17,6 +17,7 @@
 
 package org.pfj.lang;
 
+import org.pfj.io.async.Proactor;
 import org.pfj.io.async.SystemError;
 import org.pfj.io.async.Timeout;
 import org.pfj.lang.Functions.FN1;
@@ -24,6 +25,8 @@ import org.pfj.lang.io.scheduler.TaskExecutor;
 
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 
 final class PromiseImpl<T> implements Promise<T> {
@@ -250,8 +253,28 @@ final class PromiseImpl<T> implements Promise<T> {
     private static final class ExecutorHolder {
         private static final TaskExecutor EXECUTOR = TaskExecutor.taskExecutor();
 
-        static TaskExecutor executor() {
-            return EXECUTOR;
-        }
+        //private static final ExecutorService EXECUTOR = Executors.newFixedThreadPool(2);
+
+        static TaskExecutor executor() { return EXECUTOR; }
+//        static TaskExecutor executor() {
+//            return new TaskExecutor() {
+//                @Override
+//                public TaskExecutor submit(Consumer<Proactor> task) {
+//                    EXECUTOR.submit(() -> task.accept(null));
+//
+//                    return this;
+//                }
+//
+//                @Override
+//                public Promise<Unit> shutdown() {
+//                    return Promise.resolved(Unit.unitResult());
+//                }
+//
+//                @Override
+//                public int parallelism() {
+//                    return 2;
+//                }
+//            };
+//        }
     }
 }

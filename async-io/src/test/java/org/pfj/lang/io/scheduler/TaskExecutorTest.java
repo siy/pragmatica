@@ -1,0 +1,29 @@
+package org.pfj.lang.io.scheduler;
+
+import org.junit.jupiter.api.Test;
+
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+class TaskExecutorTest {
+    @Test
+    void taskCanBeExecuted() throws InterruptedException {
+        TaskExecutor executor = TaskExecutor.taskExecutor(2);
+
+        var counter = new AtomicInteger(0);
+        var latch = new CountDownLatch(1);
+
+        executor.submit(() -> {
+            counter.incrementAndGet();
+            latch.countDown();
+        });
+
+        latch.await();
+
+        assertEquals(1, counter.get());
+
+        executor.shutdown();
+    }
+}

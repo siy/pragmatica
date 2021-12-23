@@ -22,6 +22,7 @@ import org.pfj.io.async.util.ActionableThreshold;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.naming.OperationNotSupportedException;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
 import java.util.concurrent.ExecutorService;
@@ -74,7 +75,7 @@ final class TaskRunner {
     }
 
     private void run() {
-        var proactor = Proactor.proactor();
+        var proactor = createProactor();
         int idleRunCount = 0;
 
         while (!executor.isShutdown()) {
@@ -112,6 +113,17 @@ final class TaskRunner {
         proactor.close();
 
         threshold.registerEvent();
+    }
+
+    private Proactor createProactor() {
+        try {
+            return Proactor.proactor();
+        } catch (Throwable e) {
+            LOG.error("Unable to init Proactor", e);
+
+            System.exit(-1);
+            throw new RuntimeException("Unreachable statement");
+        }
     }
 
     private static class Task {

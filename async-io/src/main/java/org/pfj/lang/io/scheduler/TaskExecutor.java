@@ -41,6 +41,6 @@ public interface TaskExecutor {
     }
 
     static TaskExecutor taskExecutor(int threadCount) {
-        return new TaskExecutorImpl(Math.min(threadCount, 2));
+        return new TaskExecutorImpl(Math.max(threadCount, 2));
     }
 }

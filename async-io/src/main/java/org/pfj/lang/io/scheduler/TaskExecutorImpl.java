@@ -39,19 +39,25 @@ final class TaskExecutorImpl implements TaskExecutor {
     private final List<TaskRunner> runners = new ArrayList<>();
     private final Promise<Unit> shutdownPromise = Promise.promise();
 
+    private int next;
+
     TaskExecutorImpl(int numThreads) {
         this.numThreads = numThreads;
         this.executor = Executors.newFixedThreadPool(numThreads, DaemonThreadFactory.threadFactory("TaskExecutor #%d"));
         this.threshold = ActionableThreshold.threshold(numThreads, () -> shutdownPromise.resolve(unitResult()));
 
-        IntStream.range(0, numThreads).forEach(n -> {
-            runners.add(new TaskRunner(executor, threshold));
-        });
+        IntStream
+            .range(0, numThreads)
+            .forEach(n -> runners.add(new TaskRunner(executor, threshold)));
+
+        runners.forEach(TaskRunner::start);
     }
 
     @Override
     public TaskExecutor submit(Consumer<Proactor> task) {
-        return null;
+        runners.get(next++ % numThreads).push(task);
+
+        return this;
     }
 
     @Override
