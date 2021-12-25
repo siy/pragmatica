@@ -27,6 +27,7 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 final class PromiseImpl<T> implements Promise<T> {
@@ -115,10 +116,15 @@ final class PromiseImpl<T> implements Promise<T> {
     @Override
     public Promise<T> resolve(Result<T> value) {
         if (VALUE.compareAndSet(this, null, value)) {
-            ExecutorHolder.executor().submit(() -> runActions(value));
+            ExecutorHolder.executor().submit(__ -> runActions(value));
         }
 
         return this;
+    }
+
+    @Override
+    public boolean isResolved() {
+        return value != null;
     }
 
     @Override
@@ -143,14 +149,14 @@ final class PromiseImpl<T> implements Promise<T> {
     }
 
     @Override
-    public Promise<T> async(Consumer<Promise<T>> action) {
-        ExecutorHolder.executor().submit(() -> action.accept(this));
+    public Promise<T> async(BiConsumer<Promise<T>, Proactor> action) {
+        ExecutorHolder.executor().submit(proactor -> action.accept(this, proactor));
 
         return this;
     }
 
     @Override
-    public Promise<T> async(Timeout timeout, Consumer<Promise<T>> action) {
+    public Promise<T> async(Timeout timeout, BiConsumer<Promise<T>, Proactor> action) {
         return async(timeout.asNanos(), System.nanoTime(), action);
     }
 
@@ -206,12 +212,13 @@ final class PromiseImpl<T> implements Promise<T> {
         return value;
     }
 
-    private Promise<T> async(long delayNanos, long start, Consumer<Promise<T>> action) {
-        ExecutorHolder.executor().submit(() -> {
+    private Promise<T> async(long delayNanos, long start, BiConsumer<Promise<T>, Proactor> action) {
+        ExecutorHolder.executor().submit(proactor -> {
             if (System.nanoTime() - start < delayNanos) {
                 async(delayNanos, start, action);
+            } else {
+                action.accept(this, proactor);
             }
-            action.accept(this);
         });
 
         return this;
@@ -253,28 +260,6 @@ final class PromiseImpl<T> implements Promise<T> {
     private static final class ExecutorHolder {
         private static final TaskExecutor EXECUTOR = TaskExecutor.taskExecutor();
 
-        //private static final ExecutorService EXECUTOR = Executors.newFixedThreadPool(2);
-
         static TaskExecutor executor() { return EXECUTOR; }
-//        static TaskExecutor executor() {
-//            return new TaskExecutor() {
-//                @Override
-//                public TaskExecutor submit(Consumer<Proactor> task) {
-//                    EXECUTOR.submit(() -> task.accept(null));
-//
-//                    return this;
-//                }
-//
-//                @Override
-//                public Promise<Unit> shutdown() {
-//                    return Promise.resolved(Unit.unitResult());
-//                }
-//
-//                @Override
-//                public int parallelism() {
-//                    return 2;
-//                }
-//            };
-//        }
     }
 }

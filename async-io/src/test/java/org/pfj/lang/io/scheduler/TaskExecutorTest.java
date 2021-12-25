@@ -15,7 +15,7 @@ class TaskExecutorTest {
         var counter = new AtomicInteger(0);
         var latch = new CountDownLatch(1);
 
-        executor.submit(() -> {
+        executor.submit(__ -> {
             counter.incrementAndGet();
             latch.countDown();
         });

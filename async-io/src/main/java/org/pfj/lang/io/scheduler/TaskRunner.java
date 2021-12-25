@@ -22,7 +22,6 @@ import org.pfj.io.async.util.ActionableThreshold;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.naming.OperationNotSupportedException;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
 import java.util.concurrent.ExecutorService;

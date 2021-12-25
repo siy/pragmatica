@@ -32,10 +32,6 @@ public interface TaskExecutor {
 
     int parallelism();
 
-    default TaskExecutor submit(Runnable task) {
-        return submit(__ -> task.run());
-    }
-
     static TaskExecutor taskExecutor() {
         return taskExecutor(DEFAULT_THREAD_COUNT);
     }

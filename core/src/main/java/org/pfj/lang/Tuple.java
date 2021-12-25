@@ -118,261 +118,108 @@ public interface Tuple {
     }
 
     static <T1> Tuple1<T1> tuple(T1 param1) {
-        return new Tuple1<>() {
+        record tuple1<T1>(T1 param1) implements Tuple1<T1> {
             @Override
             public <T> T map(FN1<T, T1> mapper) {
-                return mapper.apply(param1);
+                return mapper.apply(param1());
             }
+        }
 
-            @Override
-            public boolean equals(Object obj) {
-                if (this == obj) {
-                    return true;
-                }
-
-                return (obj instanceof Tuple1<?> tuple1)
-                    && tuple1.map(v1 -> Objects.equals(v1, param1));
-            }
-
-            @Override
-            public int hashCode() {
-                return hash(param1);
-            }
-
-            @Override
-            public String toString() {
-                return "Tuple("
-                    + param1.toString()
-                    + ")";
-            }
-        };
+        return new tuple1<>(param1);
     }
 
     static <T1, T2> Tuple2<T1, T2> tuple(T1 param1, T2 param2) {
-        return new Tuple2<>() {
+        record tuple2<T1, T2>(T1 param1, T2 param2) implements Tuple2<T1, T2> {
             @Override
             public <T> T map(FN2<T, T1, T2> mapper) {
-                return mapper.apply(param1, param2);
-            }
-
-            @Override
-            public boolean equals(Object obj) {
-                if (this == obj) {
-                    return true;
-                }
-
-                return (obj instanceof Tuple2<?, ?> tuple2)
-                    && tuple2.map((v1, v2) -> Objects.equals(v1, param1) && Objects.equals(v2, param2));
-            }
-
-            @Override
-            public int hashCode() {
-                return hash(param1, param2);
-            }
-
-            @Override
-            public String toString() {
-                return "Tuple(" + param1.toString() + ", " + param2.toString() + ")";
+                return mapper.apply(param1(), param2());
             }
 
             @Override
             public T1 first() {
-                return param1;
+                return param1();
             }
 
             @Override
             public T2 last() {
-                return param2;
+                return param2();
             }
-        };
+        }
+
+        return new tuple2<>(param1, param2);
     }
 
     static <T1, T2, T3> Tuple3<T1, T2, T3> tuple(T1 param1, T2 param2, T3 param3) {
-        return new Tuple3<>() {
+        record tuple3<T1, T2, T3>(T1 param1, T2 param2, T3 param3) implements Tuple3<T1, T2, T3> {
             @Override
             public <T> T map(FN3<T, T1, T2, T3> mapper) {
-                return mapper.apply(param1, param2, param3);
+                return mapper.apply(param1(), param2(), param3());
             }
+        }
 
-            @Override
-            public boolean equals(Object obj) {
-                if (this == obj) {
-                    return true;
-                }
-
-                return (obj instanceof Tuple3<?, ?, ?> tuple3)
-                    && tuple3.map((v1, v2, v3) ->
-                    Objects.equals(v1, param1)
-                        && Objects.equals(v2, param2)
-                        && Objects.equals(v3, param3));
-            }
-
-            @Override
-            public int hashCode() {
-                return hash(param1, param2, param3);
-            }
-
-            @Override
-            public String toString() {
-                return "Tuple(" + param1.toString() + ", " + param2.toString() + ", " + param3.toString() + ")";
-            }
-        };
+        return new tuple3<>(param1, param2, param3);
     }
 
     static <T1, T2, T3, T4> Tuple4<T1, T2, T3, T4> tuple(T1 param1, T2 param2, T3 param3, T4 param4) {
-        return new Tuple4<>() {
+        record tuple4<T1, T2, T3, T4>(T1 param1, T2 param2, T3 param3, T4 param4) implements Tuple4<T1, T2, T3, T4> {
+
             @Override
             public <T> T map(FN4<T, T1, T2, T3, T4> mapper) {
-                return mapper.apply(param1, param2, param3, param4);
+                return mapper.apply(param1(), param2(), param3(), param4());
             }
+        }
 
-            @Override
-            public boolean equals(Object obj) {
-                if (this == obj) {
-                    return true;
-                }
-
-                return (obj instanceof Tuple4<?, ?, ?, ?> tuple4)
-                    && tuple4.map((v1, v2, v3, v4) ->
-                    Objects.equals(v1, param1)
-                        && Objects.equals(v2, param2)
-                        && Objects.equals(v3, param3)
-                        && Objects.equals(v4, param4));
-            }
-
-            @Override
-            public int hashCode() {
-                return hash(param1, param2, param3, param4);
-            }
-
-            @Override
-            public String toString() {
-                return "Tuple("
-                    + param1.toString() + ", " + param2.toString() + ", " + param3.toString() + ", "
-                    + param4.toString() + ")";
-            }
-        };
+        return new tuple4<>(param1, param2, param3, param4);
     }
 
     static <T1, T2, T3, T4, T5> Tuple5<T1, T2, T3, T4, T5> tuple(
         T1 param1, T2 param2, T3 param3, T4 param4, T5 param5
     ) {
-        return new Tuple5<>() {
+        record tuple5<T1, T2, T3, T4, T5>(T1 param1, T2 param2, T3 param3,
+                                          T4 param4, T5 param5)
+            implements Tuple5<T1, T2, T3, T4, T5> {
+
             @Override
             public <T> T map(FN5<T, T1, T2, T3, T4, T5> mapper) {
-                return mapper.apply(param1, param2, param3, param4, param5);
+                return mapper.apply(param1(), param2(), param3(), param4(), param5());
             }
+        }
 
-            @Override
-            public boolean equals(Object obj) {
-                if (this == obj) {
-                    return true;
-                }
-
-                return (obj instanceof Tuple5<?, ?, ?, ?, ?> tuple5)
-                    && tuple5.map((v1, v2, v3, v4, v5) ->
-                    Objects.equals(v1, param1)
-                        && Objects.equals(v2, param2)
-                        && Objects.equals(v3, param3)
-                        && Objects.equals(v4, param4)
-                        && Objects.equals(v5, param5));
-            }
-
-            @Override
-            public int hashCode() {
-                return hash(param1, param2, param3, param4, param5);
-            }
-
-            @Override
-            public String toString() {
-                return "Tuple("
-                    + param1.toString() + ", " + param2.toString() + ", " + param3.toString() + ", "
-                    + param4.toString() + ", " + param5.toString() + ")";
-            }
-        };
+        return new tuple5<>(param1, param2, param3, param4, param5);
     }
 
     static <T1, T2, T3, T4, T5, T6> Tuple6<T1, T2, T3, T4, T5, T6> tuple(
         T1 param1, T2 param2, T3 param3,
         T4 param4, T5 param5, T6 param6
     ) {
-        return new Tuple6<>() {
+        record tuple6<T1, T2, T3, T4, T5, T6>(T1 param1, T2 param2, T3 param3,
+                                              T4 param4, T5 param5, T6 param6)
+            implements Tuple6<T1, T2, T3, T4, T5, T6> {
+
             @Override
             public <T> T map(FN6<T, T1, T2, T3, T4, T5, T6> mapper) {
-                return mapper.apply(param1, param2, param3, param4, param5, param6);
+                return mapper.apply(param1(), param2(), param3(), param4(), param5(), param6());
             }
+        }
 
-            @Override
-            public boolean equals(Object obj) {
-                if (this == obj) {
-                    return true;
-                }
-
-                return (obj instanceof Tuple6<?, ?, ?, ?, ?, ?> tuple6)
-                    && tuple6.map((v1, v2, v3, v4, v5, v6) ->
-                    Objects.equals(v1, param1)
-                        && Objects.equals(v2, param2)
-                        && Objects.equals(v3, param3)
-                        && Objects.equals(v4, param4)
-                        && Objects.equals(v5, param5)
-                        && Objects.equals(v6, param6));
-            }
-
-            @Override
-            public int hashCode() {
-                return hash(param1, param2, param3, param4, param5, param6);
-            }
-
-            @Override
-            public String toString() {
-                return "Tuple("
-                    + param1.toString() + ", " + param2.toString() + ", " + param3.toString() + ", "
-                    + param4.toString() + ", " + param5.toString() + ", " + param6.toString() + ")";
-            }
-        };
+        return new tuple6<>(param1, param2, param3, param4, param5, param6);
     }
 
     static <T1, T2, T3, T4, T5, T6, T7> Tuple7<T1, T2, T3, T4, T5, T6, T7> tuple(
         T1 param1, T2 param2, T3 param3,
-        T4 param4, T5 param5, T6 param6,
-        T7 param7
+        T4 param4, T5 param5, T6 param6, T7 param7
     ) {
-        return new Tuple7<>() {
+        record tuple7<T1, T2, T3, T4, T5, T6, T7>(T1 param1, T2 param2, T3 param3,
+                                                  T4 param4, T5 param5, T6 param6, T7 param7)
+            implements Tuple7<T1, T2, T3, T4, T5, T6, T7> {
+
             @Override
             public <T> T map(FN7<T, T1, T2, T3, T4, T5, T6, T7> mapper) {
-                return mapper.apply(param1, param2, param3, param4, param5, param6, param7);
+                return mapper.apply(param1(), param2(), param3(), param4(), param5(), param6(), param7());
             }
+        }
 
-            @Override
-            public boolean equals(Object obj) {
-                if (this == obj) {
-                    return true;
-                }
-
-                return (obj instanceof Tuple7<?, ?, ?, ?, ?, ?, ?> tuple7)
-                    && tuple7.map((v1, v2, v3, v4, v5, v6, v7) ->
-                    Objects.equals(v1, param1)
-                        && Objects.equals(v2, param2)
-                        && Objects.equals(v3, param3)
-                        && Objects.equals(v4, param4)
-                        && Objects.equals(v5, param5)
-                        && Objects.equals(v6, param6)
-                        && Objects.equals(v7, param7));
-            }
-
-            @Override
-            public int hashCode() {
-                return hash(param1, param2, param3, param4, param5, param6, param7);
-            }
-
-            @Override
-            public String toString() {
-                return "Tuple("
-                    + param1.toString() + ", " + param2.toString() + ", " + param3.toString() + ", "
-                    + param4.toString() + ", " + param5.toString() + ", " + param6.toString() + ", "
-                    + param7.toString() + ")";
-            }
-        };
+        return new tuple7<>(param1, param2, param3, param4, param5, param6, param7);
     }
 
     static <T1, T2, T3, T4, T5, T6, T7, T8> Tuple8<T1, T2, T3, T4, T5, T6, T7, T8> tuple(
@@ -380,43 +227,18 @@ public interface Tuple {
         T4 param4, T5 param5, T6 param6,
         T7 param7, T8 param8
     ) {
-        return new Tuple8<>() {
+        record tuple8<T1, T2, T3, T4, T5, T6, T7, T8>(T1 param1, T2 param2, T3 param3,
+                                                      T4 param4, T5 param5, T6 param6,
+                                                      T7 param7, T8 param8)
+            implements Tuple8<T1, T2, T3, T4, T5, T6, T7, T8> {
+
             @Override
             public <T> T map(FN8<T, T1, T2, T3, T4, T5, T6, T7, T8> mapper) {
-                return mapper.apply(param1, param2, param3, param4, param5, param6, param7, param8);
+                return mapper.apply(param1(), param2(), param3(), param4(), param5(), param6(), param7(), param8());
             }
+        }
 
-            @Override
-            public boolean equals(Object obj) {
-                if (this == obj) {
-                    return true;
-                }
-
-                return (obj instanceof Tuple8<?, ?, ?, ?, ?, ?, ?, ?> tuple8)
-                    && tuple8.map((v1, v2, v3, v4, v5, v6, v7, v8) ->
-                    Objects.equals(v1, param1)
-                        && Objects.equals(v2, param2)
-                        && Objects.equals(v3, param3)
-                        && Objects.equals(v4, param4)
-                        && Objects.equals(v5, param5)
-                        && Objects.equals(v6, param6)
-                        && Objects.equals(v7, param7)
-                        && Objects.equals(v8, param8));
-            }
-
-            @Override
-            public int hashCode() {
-                return hash(param1, param2, param3, param4, param5, param6, param7, param8);
-            }
-
-            @Override
-            public String toString() {
-                return "Tuple("
-                    + param1.toString() + ", " + param2.toString() + ", " + param3.toString() + ", "
-                    + param4.toString() + ", " + param5.toString() + ", " + param6.toString() + ", "
-                    + param7.toString() + ", " + param8.toString() + ")";
-            }
-        };
+        return new tuple8<>(param1, param2, param3, param4, param5, param6, param7, param8);
     }
 
     static <T1, T2, T3, T4, T5, T6, T7, T8, T9> Tuple9<T1, T2, T3, T4, T5, T6, T7, T8, T9> tuple(
@@ -424,43 +246,16 @@ public interface Tuple {
         T4 param4, T5 param5, T6 param6,
         T7 param7, T8 param8, T9 param9
     ) {
-        return new Tuple9<>() {
+        record tuple9<T1, T2, T3, T4, T5, T6, T7, T8, T9>(T1 param1, T2 param2, T3 param3,
+                                                          T4 param4, T5 param5, T6 param6,
+                                                          T7 param7, T8 param8, T9 param9)
+            implements Tuple9<T1, T2, T3, T4, T5, T6, T7, T8, T9> {
             @Override
             public <T> T map(FN9<T, T1, T2, T3, T4, T5, T6, T7, T8, T9> mapper) {
-                return mapper.apply(param1, param2, param3, param4, param5, param6, param7, param8, param9);
+                return mapper.apply(param1(), param2(), param3(), param4(), param5(), param6(), param7(), param8(), param9());
             }
+        }
 
-            @Override
-            public boolean equals(Object obj) {
-                if (this == obj) {
-                    return true;
-                }
-
-                return (obj instanceof Tuple9<?, ?, ?, ?, ?, ?, ?, ?, ?> tuple9)
-                    && tuple9.map((v1, v2, v3, v4, v5, v6, v7, v8, v9) ->
-                    Objects.equals(v1, param1)
-                        && Objects.equals(v2, param2)
-                        && Objects.equals(v3, param3)
-                        && Objects.equals(v4, param4)
-                        && Objects.equals(v5, param5)
-                        && Objects.equals(v6, param6)
-                        && Objects.equals(v7, param7)
-                        && Objects.equals(v8, param8)
-                        && Objects.equals(v9, param9));
-            }
-
-            @Override
-            public int hashCode() {
-                return hash(param1, param2, param3, param4, param5, param6, param7, param8, param9);
-            }
-
-            @Override
-            public String toString() {
-                return "Tuple("
-                    + param1.toString() + ", " + param2.toString() + ", " + param3.toString() + ", "
-                    + param4.toString() + ", " + param5.toString() + ", " + param6.toString() + ", "
-                    + param7.toString() + ", " + param8.toString() + ", " + param9.toString() + ")";
-            }
-        };
+        return new tuple9<>(param1, param2, param3, param4, param5, param6, param7, param8, param9);
     }
 }

@@ -223,6 +223,12 @@ public sealed interface Result<T> permits Success, Failure {
      */
     <R> R fold(FN1<? extends R, ? super Cause> failureMapper, FN1<? extends R, ? super T> successMapper);
 
+    default Result<T> accept(Consumer<Cause> failureConsumer, Consumer<T> successConsumer) {
+        return fold(
+            failure -> {failureConsumer.accept(failure); return this;},
+            success -> {successConsumer.accept(success); return this;});
+    }
+
     /**
      * Create an instance of successful operation result.
      *

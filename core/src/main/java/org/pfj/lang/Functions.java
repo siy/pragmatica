@@ -46,6 +46,11 @@ public interface Functions {
     }
 
     @FunctionalInterface
+    interface FNx<R> {
+        R apply(Object... values);
+    }
+
+    @FunctionalInterface
     interface FN0<R> {
         R apply();
     }
