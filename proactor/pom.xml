@@ -76,6 +76,7 @@
     <build>
         <plugins>
             <plugin>
+                <!-- Necessary only to generate liburing/src/include/liburing/compat.h -->
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
                 <version>1.6.0</version>
@@ -93,6 +94,16 @@
                 </configuration>
             </plugin>
             <plugin>
+                <!--
+                Compile and link all sources (including those from liburing) by ourselves.
+
+                Alternatives:
+                - linking against static library (liburing.a) does not produce valid .so
+                because object files for static lib compiled without -fPIC flag
+                - linking against shared library (liburing.so.x.x) requires its inclusion into .jar (I prefer
+                 to avoid this).
+                -->
+
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>native-maven-plugin</artifactId>
                 <version>1.0-alpha-11</version>
@@ -108,14 +119,27 @@
                         <source>
                             <directory>src/main/native/include</directory>
                         </source>
+                        <source>
+                            <directory>../liburing/src</directory>
+                            <fileNames>
+                                <fileName>setup.c</fileName>
+                                <fileName>queue.c</fileName>
+                                <fileName>register.c</fileName>
+                                <fileName>syscall.c</fileName>
+                            </fileNames>
+                        </source>
                     </sources>
                     <compilerProvider>generic-classic</compilerProvider>
                     <compilerExecutable>gcc</compilerExecutable>
 
                     <compilerStartOptions>
+                        <compilerStartOption>-g</compilerStartOption>
+                        <compilerStartOption>-fomit-frame-pointer</compilerStartOption>
+                        <compilerStartOption>-D_GNU_SOURCE</compilerStartOption>
                         <compilerStartOption>-fPIC</compilerStartOption>
                         <compilerStartOption>-Wall</compilerStartOption>
                         <compilerStartOption>-O2</compilerStartOption>
+                        <compilerStartOption>-I ${project.basedir}/../liburing/src</compilerStartOption>
                         <compilerStartOption>-I ${project.basedir}/../liburing/src/include</compilerStartOption>
                         <compilerStartOption>-I ${java.home}/include</compilerStartOption>
                         <compilerStartOption>-I ${java.home}/include/linux</compilerStartOption>
@@ -132,7 +156,6 @@
                     <linkerFinalName>dummy</linkerFinalName>
 
                     <linkerEndOptions>
-                        <linkerEndOption>${project.basedir}/../liburing/src/liburing.a</linkerEndOption>
                         <linkerEndOption>-o ${project.build.directory}/classes/${lib_name}</linkerEndOption>
                     </linkerEndOptions>
                 </configuration>
