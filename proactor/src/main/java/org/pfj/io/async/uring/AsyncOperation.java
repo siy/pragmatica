@@ -19,8 +19,7 @@ package org.pfj.io.async.uring;
 /**
  * WARNING: Always keep in sync with io_uring.h
  * <p>
- * Ordinals (by the means of .ordinal() call) of constants below must match
- * actual Linux API codes (as defined in io_uring.h).
+ * Ordinals (by the means of .ordinal() call) of constants below must match actual Linux API codes (as defined in io_uring.h).
  */
 public enum AsyncOperation {
     IORING_OP_NOP,

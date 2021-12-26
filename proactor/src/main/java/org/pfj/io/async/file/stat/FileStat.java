@@ -45,24 +45,24 @@ public class FileStat {
     private final DeviceId rDevice;
     private final DeviceId fsDevice;
 
-    private FileStat(final EnumSet<StatMask> mask,
-                     final int blockSize,
-                     final EnumSet<StatAttribute> attributes,
-                     final int numLinks,
-                     final int ownerUID,
-                     final int ownerGID,
-                     final FileType fileType,
-                     final EnumSet<FilePermission> permissions,
-                     final long inode,
-                     final long size,
-                     final long blocks,
-                     final EnumSet<StatAttribute> attributeMask,
-                     final StatTimestamp accessTime,
-                     final StatTimestamp creationTime,
-                     final StatTimestamp attributeChangeTime,
-                     final StatTimestamp modificationTime,
-                     final DeviceId rDevice,
-                     final DeviceId fsDevice) {
+    private FileStat(EnumSet<StatMask> mask,
+                     int blockSize,
+                     EnumSet<StatAttribute> attributes,
+                     int numLinks,
+                     int ownerUID,
+                     int ownerGID,
+                     FileType fileType,
+                     EnumSet<FilePermission> permissions,
+                     long inode,
+                     long size,
+                     long blocks,
+                     EnumSet<StatAttribute> attributeMask,
+                     StatTimestamp accessTime,
+                     StatTimestamp creationTime,
+                     StatTimestamp attributeChangeTime,
+                     StatTimestamp modificationTime,
+                     DeviceId rDevice,
+                     DeviceId fsDevice) {
         this.mask = mask;
         this.blockSize = blockSize;
         this.attributes = attributes;
@@ -83,24 +83,24 @@ public class FileStat {
         this.fsDevice = fsDevice;
     }
 
-    public static FileStat fileStat(final EnumSet<StatMask> mask,
-                                    final int blockSize,
-                                    final EnumSet<StatAttribute> attributes,
-                                    final int numLinks,
-                                    final int ownerUID,
-                                    final int ownerGID,
-                                    final FileType fileType,
-                                    final EnumSet<FilePermission> permissions,
-                                    final long inode,
-                                    final long size,
-                                    final long blocks,
-                                    final EnumSet<StatAttribute> attributeMask,
-                                    final StatTimestamp accessTime,
-                                    final StatTimestamp creationTime,
-                                    final StatTimestamp attributeChangeTime,
-                                    final StatTimestamp modificationTime,
-                                    final DeviceId rDevice,
-                                    final DeviceId fsDevice) {
+    public static FileStat fileStat(EnumSet<StatMask> mask,
+                                    int blockSize,
+                                    EnumSet<StatAttribute> attributes,
+                                    int numLinks,
+                                    int ownerUID,
+                                    int ownerGID,
+                                    FileType fileType,
+                                    EnumSet<FilePermission> permissions,
+                                    long inode,
+                                    long size,
+                                    long blocks,
+                                    EnumSet<StatAttribute> attributeMask,
+                                    StatTimestamp accessTime,
+                                    StatTimestamp creationTime,
+                                    StatTimestamp attributeChangeTime,
+                                    StatTimestamp modificationTime,
+                                    DeviceId rDevice,
+                                    DeviceId fsDevice) {
         return new FileStat(mask,
                             blockSize,
                             attributes,
@@ -196,24 +196,24 @@ public class FileStat {
     @Override
     public String toString() {
         return new StringJoiner(", ", "FileStat(", ")")
-                .add("mask:" + mask)
-                .add("blockSize:" + blockSize)
-                .add("attributes:" + attributes)
-                .add("numLinks:" + numLinks)
-                .add("ownerUID:" + ownerUID)
-                .add("ownerGID:" + ownerGID)
-                .add("fileType:" + fileType)
-                .add("permissions:" + permissions)
-                .add("inode:" + inode)
-                .add("size:" + size)
-                .add("blocks:" + blocks)
-                .add("attributeMask:" + attributeMask)
-                .add("accessTime:" + accessTime)
-                .add("creationTime: " + creationTime.localDateTime())
-                .add("attributeChangeTime: " + attributeChangeTime.localDateTime())
-                .add("modificationTime: " + modificationTime.localDateTime())
-                .add("rDevice: " + rDevice)
-                .add("fsDevice: " + fsDevice)
-                .toString();
+            .add("mask:" + mask)
+            .add("blockSize:" + blockSize)
+            .add("attributes:" + attributes)
+            .add("numLinks:" + numLinks)
+            .add("ownerUID:" + ownerUID)
+            .add("ownerGID:" + ownerGID)
+            .add("fileType:" + fileType)
+            .add("permissions:" + permissions)
+            .add("inode:" + inode)
+            .add("size:" + size)
+            .add("blocks:" + blocks)
+            .add("attributeMask:" + attributeMask)
+            .add("accessTime:" + accessTime)
+            .add("creationTime: " + creationTime.localDateTime())
+            .add("attributeChangeTime: " + attributeChangeTime.localDateTime())
+            .add("modificationTime: " + modificationTime.localDateTime())
+            .add("rDevice: " + rDevice)
+            .add("fsDevice: " + fsDevice)
+            .toString();
     }
 }

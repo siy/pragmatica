@@ -19,11 +19,9 @@ package org.pfj.io.async.uring.utils;
 import java.util.Arrays;
 
 /**
- * Temporary storage for objects.
- * Main use case - storing object corresponding to in-flight requests
- * and obtaining integer index which can be passed instead of the whole object
- * to external entity. Upon request completion object then is released from the
- * heap by using corresponding integer index.
+ * Temporary storage for objects. Main use case - storing object corresponding to in-flight requests and obtaining integer index which can be passed
+ * instead of the whole object to external entity. Upon request completion object then is released from the heap by using corresponding integer
+ * index.
  *
  * @param <T>
  */
@@ -36,7 +34,7 @@ public class ObjectHeap<T> {
     private int nextFree = 0;
     private int count = 0;
 
-    private ObjectHeap(final int initialCapacity) {
+    private ObjectHeap(int initialCapacity) {
         elements = new Object[initialCapacity];
         indexes = new int[initialCapacity];
     }
@@ -45,24 +43,24 @@ public class ObjectHeap<T> {
         return objectHeap(INITIAL_SIZE);
     }
 
-    public static <T> ObjectHeap<T> objectHeap(final int initialCapacity) {
+    public static <T> ObjectHeap<T> objectHeap(int initialCapacity) {
         return new ObjectHeap<>(initialCapacity);
     }
 
-    public T releaseUnsafe(final int key) {
+    public T releaseUnsafe(int key) {
         if (key < 0 || key >= nextFree || elements[key] == null || key == firstFree) {
             return null;
         }
 
         indexes[key] = firstFree;
         firstFree = key;
-        final T result = (T) elements[key];
+        T result = (T) elements[key];
         elements[key] = null;
         count--;
         return result;
     }
 
-    public int allocKey(final T value) {
+    public int allocKey(T value) {
         // There are some free elements
         if (firstFree >= 0) {
             return allocInFreeChain(value);
@@ -80,15 +78,15 @@ public class ObjectHeap<T> {
         return allocNew(value);
     }
 
-    private int allocNew(final T value) {
-        final int index = nextFree++;
+    private int allocNew(T value) {
+        int index = nextFree++;
         indexes[index] = firstFree;
         firstFree = index;
         return allocInFreeChain(value);
     }
 
-    private int allocInFreeChain(final T value) {
-        final int result = firstFree;
+    private int allocInFreeChain(T value) {
+        int result = firstFree;
         elements[result] = value;
         firstFree = indexes[result];
         count++;

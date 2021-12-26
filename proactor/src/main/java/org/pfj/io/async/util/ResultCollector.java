@@ -20,21 +20,24 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
 /**
- * Helper class used to track number of events along with results and trigger action once threshold is reached.
- * The action is triggered only once, when number of events exactly matches configured threshold.
+ * Helper class used to track number of events along with results and trigger action once threshold is reached. The action is triggered only once,
+ * when number of events exactly matches configured threshold. All collected results are passed to action.
+ * <p>
+ * Note that this is fairly low level class and for performance reasons it omits some checks. In particular, it's the caller responsibility that each
+ * expected event assign its own result (i.e. uses correct index value).
  */
 public class ResultCollector {
     private final Object[] results;
     private final AtomicInteger counter;
     private final Consumer<Object[]> action;
 
-    private ResultCollector(final int count, final Consumer<Object[]> action) {
+    private ResultCollector(int count, Consumer<Object[]> action) {
         this.counter = new AtomicInteger(count);
         this.action = action;
         this.results = new Object[count];
     }
 
-    public ResultCollector apply(final Consumer<ResultCollector> setup) {
+    public ResultCollector apply(Consumer<ResultCollector> setup) {
         setup.accept(this);
         return this;
     }
@@ -42,38 +45,18 @@ public class ResultCollector {
     /**
      * Create an instance configured for threshold and action.
      *
-     * @param count
-     *        Number of events to register
-     * @param action
-     *        Action to perform
+     * @param count  Number of events to register
+     * @param action Action to perform
      *
      * @return Created instance
      */
-    public static ResultCollector resultCollector(final int count, final Consumer<Object[]> action) {
+    public static ResultCollector resultCollector(int count, Consumer<Object[]> action) {
         assert count >= 0;
         return new ResultCollector(count, action);
     }
 
     /**
-     * Create an instance configured for threshold and action.
-     *
-     * @param count
-     *        Number of events to register
-     * @param setup
-     *        Consumer to invoke once instance of {@link ResultCollector} is created
-     * @param action
-     *        Action to perform
-     *
-     * @return Created instance
-     */
-    public static ResultCollector resultCollector(final int count, final Consumer<ResultCollector> setup, final Consumer<Object[]> action) {
-        assert count >= 0;
-        return resultCollector(count, action).apply(setup);
-    }
-
-    /**
-     * Register event and perform action if threshold is reached. Once threshold is reached
-     * no further events will trigger action execution.
+     * Register event and perform action if threshold is reached. Once threshold is reached no further events will trigger action execution.
      */
     public void registerEvent(int index, Object value) {
         if (counter.get() <= 0) {

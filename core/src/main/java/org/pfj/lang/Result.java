@@ -32,18 +32,15 @@ import static org.pfj.lang.Tuple.*;
 
 
 /**
- * Representation of the operation result. The result can be either success or failure.
- * In case of success it holds value returned by the operation. In case of failure it
- * holds a failure description.
+ * Representation of the operation result. The result can be either success or failure. In case of success it holds value returned by the operation.
+ * In case of failure it holds a failure description.
  *
  * @param <T> Type of value in case of success.
  */
 public sealed interface Result<T> permits Success, Failure {
     /**
-     * Transform operation result value into value of other type and wrap new
-     * value into {@link Result}. Transformation takes place if current instance
-     * (this) contains successful result, otherwise current instance remains
-     * unchanged and transformation function is not invoked.
+     * Transform operation result value into value of other type and wrap new value into {@link Result}. Transformation takes place if current
+     * instance (this) contains successful result, otherwise current instance remains unchanged and transformation function is not invoked.
      *
      * @param mapper Function to transform successful value
      *
@@ -55,9 +52,8 @@ public sealed interface Result<T> permits Success, Failure {
     }
 
     /**
-     * Transform operation result into another operation result. In case if current
-     * instance (this) is an error, transformation function is not invoked
-     * and value remains the same.
+     * Transform operation result into another operation result. In case if current instance (this) is an error, transformation function is not
+     * invoked and value remains the same.
      *
      * @param mapper Function to apply to result
      *
@@ -69,8 +65,7 @@ public sealed interface Result<T> permits Success, Failure {
     }
 
     /**
-     * Apply consumers to result value. Note that depending on the result (success or failure) only one consumer will be
-     * applied at a time.
+     * Apply consumers to result value. Note that depending on the result (success or failure) only one consumer will be applied at a time.
      *
      * @param failureConsumer Consumer for failure result
      * @param successConsumer Consumer for success result
@@ -144,24 +139,20 @@ public sealed interface Result<T> permits Success, Failure {
     }
 
     /**
-     * Convert instance into {@link Option} of the same value type. Successful instance
-     * is converted into present {@link Option} and failure - into empty {@link Option}.
-     * Note that during such a conversion error information is get lost.
+     * Convert instance into {@link Option} of the same value type. Successful instance is converted into present {@link Option} and failure - into
+     * empty {@link Option}. Note that during such a conversion error information is get lost.
      *
-     * @return {@link Option} instance which is present in case of success and missing
-     * in case of failure.
+     * @return {@link Option} instance which is present in case of success and missing in case of failure.
      */
     default Option<T> toOption() {
         return fold(t1 -> Option.empty(), Option::option);
     }
 
     /**
-     * Convert instance into {@link Optional} of the same value type. Successful instance
-     * is converted into present {@link Optional} and failure - into empty {@link Optional}.
-     * Note that during such a conversion error information is get lost.
+     * Convert instance into {@link Optional} of the same value type. Successful instance is converted into present {@link Optional} and failure -
+     * into empty {@link Optional}. Note that during such a conversion error information is get lost.
      *
-     * @return {@link Optional} instance which is present in case of success and missing
-     * in case of failure.
+     * @return {@link Optional} instance which is present in case of success and missing in case of failure.
      */
     default Optional<T> toOptional() {
         return fold(t1 -> Optional.empty(), Optional::of);
@@ -186,9 +177,8 @@ public sealed interface Result<T> permits Success, Failure {
     }
 
     /**
-     * Filter instance against provided predicate. If predicate returns {@code true} then
-     * instance remains unchanged. If predicate returns {@code false}, then failure instance in created
-     * using given {@link Cause}.
+     * Filter instance against provided predicate. If predicate returns {@code true} then instance remains unchanged. If predicate returns {@code
+     * false}, then failure instance in created using given {@link Cause}.
      *
      * @param cause     failure to use in case if predicate returns {@code false}
      * @param predicate predicate to invoke
@@ -200,9 +190,8 @@ public sealed interface Result<T> permits Success, Failure {
     }
 
     /**
-     * Filter instance against provided predicate. If predicate returns {@code true} then
-     * instance remains unchanged. If predicate returns {@code false}, then failure instance in created
-     * using {@link Cause} created by provided function.
+     * Filter instance against provided predicate. If predicate returns {@code true} then instance remains unchanged. If predicate returns {@code
+     * false}, then failure instance in created using {@link Cause} created by provided function.
      *
      * @param causeMapper function which transforms the tested value into instance of {@link Cause} if predicate returns {@code false}
      * @param predicate   predicate to invoke
@@ -225,8 +214,14 @@ public sealed interface Result<T> permits Success, Failure {
 
     default Result<T> accept(Consumer<Cause> failureConsumer, Consumer<T> successConsumer) {
         return fold(
-            failure -> {failureConsumer.accept(failure); return this;},
-            success -> {successConsumer.accept(success); return this;});
+            failure -> {
+                failureConsumer.accept(failure);
+                return this;
+            },
+            success -> {
+                successConsumer.accept(success);
+                return this;
+            });
     }
 
     /**
@@ -316,8 +311,7 @@ public sealed interface Result<T> permits Success, Failure {
     }
 
     /**
-     * Wrap value returned by provided lambda into success {@link Result} if call succeeds
-     * or into failure {@link Result} if call throws exception.
+     * Wrap value returned by provided lambda into success {@link Result} if call succeeds or into failure {@link Result} if call throws exception.
      *
      * @param exceptionMapper the function which will transform exception into instance of {@link Cause}
      * @param supplier        the call to wrap
@@ -337,8 +331,7 @@ public sealed interface Result<T> permits Success, Failure {
      *
      * @param resultList input list
      *
-     * @return success instance if all {@link Result} instances in list are successes or
-     * failure instance with any instances in list is a failure
+     * @return success instance if all {@link Result} instances in list are successes or failure instance with any instances in list is a failure
      */
     static <T> Result<List<T>> flatten(List<Result<T>> resultList) {
         var failure = new Cause[1];
@@ -398,8 +391,8 @@ public sealed interface Result<T> permits Success, Failure {
     }
 
     /**
-     * Transform provided results into single result containing tuple of values. The result is failure
-     * if any input result is failure. Otherwise returned instance contains tuple with values from input results.
+     * Transform provided results into single result containing tuple of values. The result is failure if any input result is failure. Otherwise
+     * returned instance contains tuple with values from input results.
      *
      * @return {@link Mapper1} prepared for further transformation.
      */
@@ -408,8 +401,8 @@ public sealed interface Result<T> permits Success, Failure {
     }
 
     /**
-     * Transform provided results into single result containing tuple of values. The result is failure
-     * if any input result is failure. Otherwise returned instance contains tuple with values from input results.
+     * Transform provided results into single result containing tuple of values. The result is failure if any input result is failure. Otherwise
+     * returned instance contains tuple with values from input results.
      *
      * @return {@link Mapper2} prepared for further transformation.
      */
@@ -418,8 +411,8 @@ public sealed interface Result<T> permits Success, Failure {
     }
 
     /**
-     * Transform provided results into single result containing tuple of values. The result is failure
-     * if any input result is failure. Otherwise returned instance contains tuple with values from input results.
+     * Transform provided results into single result containing tuple of values. The result is failure if any input result is failure. Otherwise
+     * returned instance contains tuple with values from input results.
      *
      * @return {@link Mapper3} prepared for further transformation.
      */
@@ -428,8 +421,8 @@ public sealed interface Result<T> permits Success, Failure {
     }
 
     /**
-     * Transform provided results into single result containing tuple of values. The result is failure
-     * if any input result is failure. Otherwise returned instance contains tuple with values from input results.
+     * Transform provided results into single result containing tuple of values. The result is failure if any input result is failure. Otherwise
+     * returned instance contains tuple with values from input results.
      *
      * @return {@link Mapper4} prepared for further transformation.
      */
@@ -444,8 +437,8 @@ public sealed interface Result<T> permits Success, Failure {
     }
 
     /**
-     * Transform provided results into single result containing tuple of values. The result is failure
-     * if any input result is failure. Otherwise returned instance contains tuple with values from input results.
+     * Transform provided results into single result containing tuple of values. The result is failure if any input result is failure. Otherwise
+     * returned instance contains tuple with values from input results.
      *
      * @return {@link Mapper5} prepared for further transformation.
      */
@@ -461,8 +454,8 @@ public sealed interface Result<T> permits Success, Failure {
     }
 
     /**
-     * Transform provided results into single result containing tuple of values. The result is failure
-     * if any input result is failure. Otherwise returned instance contains tuple with values from input results.
+     * Transform provided results into single result containing tuple of values. The result is failure if any input result is failure. Otherwise
+     * returned instance contains tuple with values from input results.
      *
      * @return {@link Mapper6} prepared for further transformation.
      */
@@ -480,8 +473,8 @@ public sealed interface Result<T> permits Success, Failure {
     }
 
     /**
-     * Transform provided results into single result containing tuple of values. The result is failure
-     * if any input result is failure. Otherwise returned instance contains tuple with values from input results.
+     * Transform provided results into single result containing tuple of values. The result is failure if any input result is failure. Otherwise
+     * returned instance contains tuple with values from input results.
      *
      * @return {@link Mapper7} prepared for further transformation.
      */
@@ -501,8 +494,8 @@ public sealed interface Result<T> permits Success, Failure {
     }
 
     /**
-     * Transform provided results into single result containing tuple of values. The result is failure
-     * if any input result is failure. Otherwise returned instance contains tuple with values from input results.
+     * Transform provided results into single result containing tuple of values. The result is failure if any input result is failure. Otherwise
+     * returned instance contains tuple with values from input results.
      *
      * @return {@link Mapper8} prepared for further transformation.
      */
@@ -523,8 +516,8 @@ public sealed interface Result<T> permits Success, Failure {
     }
 
     /**
-     * Transform provided results into single result containing tuple of values. The result is failure
-     * if any input result is failure. Otherwise returned instance contains tuple with values from input results.
+     * Transform provided results into single result containing tuple of values. The result is failure if any input result is failure. Otherwise
+     * returned instance contains tuple with values from input results.
      *
      * @return {@link Mapper9} prepared for further transformation.
      */
@@ -546,9 +539,8 @@ public sealed interface Result<T> permits Success, Failure {
     }
 
     /**
-     * Helper interface for convenient {@link Tuple1} transformation.
-     * In case if you need to return a tuple, it might be more convenient to return this interface instead.
-     * For example, instead of this:
+     * Helper interface for convenient {@link Tuple1} transformation. In case if you need to return a tuple, it might be more convenient to return
+     * this interface instead. For example, instead of this:
      * <blockquote><pre>
      *     return tuple(value, ...);
      * </pre></blockquote>
@@ -570,9 +562,8 @@ public sealed interface Result<T> permits Success, Failure {
     }
 
     /**
-     * Helper interface for convenient {@link Tuple2} transformation.
-     * In case if you need to return a tuple, it might be more convenient to return this interface instead.
-     * For example, instead of this:
+     * Helper interface for convenient {@link Tuple2} transformation. In case if you need to return a tuple, it might be more convenient to return
+     * this interface instead. For example, instead of this:
      * <blockquote><pre>
      *     return tuple(value, ...);
      * </pre></blockquote>
@@ -594,9 +585,8 @@ public sealed interface Result<T> permits Success, Failure {
     }
 
     /**
-     * Helper interface for convenient {@link Tuple3} transformation.
-     * In case if you need to return a tuple, it might be more convenient to return this interface instead.
-     * For example, instead of this:
+     * Helper interface for convenient {@link Tuple3} transformation. In case if you need to return a tuple, it might be more convenient to return
+     * this interface instead. For example, instead of this:
      * <blockquote><pre>
      *     return tuple(value, ...);
      * </pre></blockquote>
@@ -618,9 +608,8 @@ public sealed interface Result<T> permits Success, Failure {
     }
 
     /**
-     * Helper interface for convenient {@link Tuple4} transformation.
-     * In case if you need to return a tuple, it might be more convenient to return this interface instead.
-     * For example, instead of this:
+     * Helper interface for convenient {@link Tuple4} transformation. In case if you need to return a tuple, it might be more convenient to return
+     * this interface instead. For example, instead of this:
      * <blockquote><pre>
      *     return tuple(value, ...);
      * </pre></blockquote>
@@ -642,9 +631,8 @@ public sealed interface Result<T> permits Success, Failure {
     }
 
     /**
-     * Helper interface for convenient {@link Tuple5} transformation.
-     * In case if you need to return a tuple, it might be more convenient to return this interface instead.
-     * For example, instead of this:
+     * Helper interface for convenient {@link Tuple5} transformation. In case if you need to return a tuple, it might be more convenient to return
+     * this interface instead. For example, instead of this:
      * <blockquote><pre>
      *     return tuple(value, ...);
      * </pre></blockquote>
@@ -666,9 +654,8 @@ public sealed interface Result<T> permits Success, Failure {
     }
 
     /**
-     * Helper interface for convenient {@link Tuple6} transformation.
-     * In case if you need to return a tuple, it might be more convenient to return this interface instead.
-     * For example, instead of this:
+     * Helper interface for convenient {@link Tuple6} transformation. In case if you need to return a tuple, it might be more convenient to return
+     * this interface instead. For example, instead of this:
      * <blockquote><pre>
      *     return tuple(value, ...);
      * </pre></blockquote>
@@ -690,9 +677,8 @@ public sealed interface Result<T> permits Success, Failure {
     }
 
     /**
-     * Helper interface for convenient {@link Tuple7} transformation.
-     * In case if you need to return a tuple, it might be more convenient to return this interface instead.
-     * For example, instead of this:
+     * Helper interface for convenient {@link Tuple7} transformation. In case if you need to return a tuple, it might be more convenient to return
+     * this interface instead. For example, instead of this:
      * <blockquote><pre>
      *     return tuple(value, ...);
      * </pre></blockquote>
@@ -714,9 +700,8 @@ public sealed interface Result<T> permits Success, Failure {
     }
 
     /**
-     * Helper interface for convenient {@link Tuple8} transformation.
-     * In case if you need to return a tuple, it might be more convenient to return this interface instead.
-     * For example, instead of this:
+     * Helper interface for convenient {@link Tuple8} transformation. In case if you need to return a tuple, it might be more convenient to return
+     * this interface instead. For example, instead of this:
      * <blockquote><pre>
      *     return tuple(value, ...);
      * </pre></blockquote>
@@ -738,9 +723,8 @@ public sealed interface Result<T> permits Success, Failure {
     }
 
     /**
-     * Helper interface for convenient {@link Tuple9} transformation.
-     * In case if you need to return a tuple, it might be more convenient to return this interface instead.
-     * For example, instead of this:
+     * Helper interface for convenient {@link Tuple9} transformation. In case if you need to return a tuple, it might be more convenient to return
+     * this interface instead. For example, instead of this:
      * <blockquote><pre>
      *     return tuple(value, ...);
      * </pre></blockquote>

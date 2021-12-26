@@ -18,10 +18,7 @@ package org.pfj.lang;
 
 import org.pfj.lang.Functions.*;
 
-import java.util.Objects;
 import java.util.function.Supplier;
-
-import static java.util.Objects.hash;
 
 /**
  * Tuples of various size (0-9).

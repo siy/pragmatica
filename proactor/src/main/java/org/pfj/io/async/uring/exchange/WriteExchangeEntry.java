@@ -16,12 +16,12 @@
 
 package org.pfj.io.async.uring.exchange;
 
-import org.pfj.io.async.uring.struct.raw.SubmitQueueEntry;
-import org.pfj.io.async.SystemError;
 import org.pfj.io.async.Proactor;
+import org.pfj.io.async.SystemError;
 import org.pfj.io.async.common.SizeT;
-import org.pfj.io.async.util.OffHeapBuffer;
+import org.pfj.io.async.uring.struct.raw.SubmitQueueEntry;
 import org.pfj.io.async.uring.utils.PlainObjectPool;
+import org.pfj.io.async.util.OffHeapBuffer;
 import org.pfj.lang.Result;
 
 import java.util.function.BiConsumer;
@@ -34,17 +34,17 @@ public class WriteExchangeEntry extends AbstractExchangeEntry<WriteExchangeEntry
     private OffHeapBuffer buffer;
     private long offset;
 
-    protected WriteExchangeEntry(final PlainObjectPool<WriteExchangeEntry> pool) {
+    protected WriteExchangeEntry(PlainObjectPool<WriteExchangeEntry> pool) {
         super(IORING_OP_WRITE, pool);
     }
 
     @Override
-    protected void doAccept(final int res, final int flags, final Proactor proactor) {
+    protected void doAccept(int res, int flags, Proactor proactor) {
         completion.accept(byteCountToResult(res), proactor);
     }
 
     @Override
-    public SubmitQueueEntry apply(final SubmitQueueEntry entry) {
+    public SubmitQueueEntry apply(SubmitQueueEntry entry) {
         return super.apply(entry)
                     .fd(descriptor)
                     .flags(flags)
@@ -53,11 +53,11 @@ public class WriteExchangeEntry extends AbstractExchangeEntry<WriteExchangeEntry
                     .off(offset);
     }
 
-    public WriteExchangeEntry prepare(final BiConsumer<Result<SizeT>, Proactor> completion,
-                                      final int descriptor,
-                                      final OffHeapBuffer buffer,
-                                      final long offset,
-                                      final byte flags) {
+    public WriteExchangeEntry prepare(BiConsumer<Result<SizeT>, Proactor> completion,
+                                      int descriptor,
+                                      OffHeapBuffer buffer,
+                                      long offset,
+                                      byte flags) {
         this.descriptor = descriptor;
         this.flags = flags;
         this.buffer = buffer;
@@ -65,7 +65,7 @@ public class WriteExchangeEntry extends AbstractExchangeEntry<WriteExchangeEntry
         return super.prepare(completion);
     }
 
-    private Result<SizeT> byteCountToResult(final int res) {
+    private Result<SizeT> byteCountToResult(int res) {
         return res > 0
                ? sizeResult(res)
                : SystemError.result(res);

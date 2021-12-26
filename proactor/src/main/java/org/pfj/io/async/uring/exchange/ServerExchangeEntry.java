@@ -35,26 +35,26 @@ public class ServerExchangeEntry extends AbstractExchangeEntry<ServerExchangeEnt
     private SizeT queueDepth;
     private Set<SocketOption> options;
 
-    protected ServerExchangeEntry(final PlainObjectPool<ServerExchangeEntry> pool) {
+    protected ServerExchangeEntry(PlainObjectPool<ServerExchangeEntry> pool) {
         super(IORING_OP_NOP, pool);
     }
 
     @Override
-    protected void doAccept(final int result, final int flags, final Proactor proactor) {
+    protected void doAccept(int result, int flags, Proactor proactor) {
         completion.accept(UringApi.server(socketAddress,
-                                             socketType,
-                                             openFlags,
-                                             options,
-                                             queueDepth),
-            proactor);
+                                          socketType,
+                                          openFlags,
+                                          options,
+                                          queueDepth),
+                          proactor);
     }
 
-    public ServerExchangeEntry prepare(final BiConsumer<Result<ServerContext<?>>, Proactor> completion,
-                                       final SocketAddress<?> socketAddress,
-                                       final SocketType socketType,
-                                       final Set<SocketFlag> openFlags,
-                                       final SizeT queueDepth,
-                                       final Set<SocketOption> options) {
+    public ServerExchangeEntry prepare(BiConsumer<Result<ServerContext<?>>, Proactor> completion,
+                                       SocketAddress<?> socketAddress,
+                                       SocketType socketType,
+                                       Set<SocketFlag> openFlags,
+                                       SizeT queueDepth,
+                                       Set<SocketOption> options) {
         this.socketAddress = socketAddress;
         this.socketType = socketType;
         this.openFlags = openFlags;

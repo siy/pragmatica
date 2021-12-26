@@ -35,14 +35,14 @@ public enum StatAttribute {
         return mask;
     }
 
-    StatAttribute(final long mask) {
+    StatAttribute(long mask) {
         this.mask = mask;
     }
 
-    public static EnumSet<StatAttribute> fromLong(final long attributes) {
-        final EnumSet<StatAttribute> result = EnumSet.noneOf(StatAttribute.class);
+    public static EnumSet<StatAttribute> fromLong(long attributes) {
+        var result = EnumSet.noneOf(StatAttribute.class);
 
-        for(var attribute : values()) {
+        for (var attribute : values()) {
             if ((attributes & attribute.mask) != 0) {
                 result.add(attribute);
             }
@@ -50,7 +50,7 @@ public enum StatAttribute {
         return result;
     }
 
-    public static long toBytes(final EnumSet<StatAttribute> attributes) {
+    public static long toBytes(EnumSet<StatAttribute> attributes) {
         return attributes.stream()
                          .mapToLong(StatAttribute::mask)
                          .sum();

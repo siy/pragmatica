@@ -16,28 +16,28 @@
 
 package org.pfj.io.async.util;
 
-import org.pfj.io.async.util.raw.RawMemory;
 import org.pfj.io.async.uring.struct.offheap.AbstractOffHeapStructure;
+import org.pfj.io.async.util.raw.RawMemory;
 
 public class OffHeapBuffer extends AbstractOffHeapStructure<OffHeapBuffer> {
     private int used;
 
-    private OffHeapBuffer(final byte[] input) {
+    private OffHeapBuffer(byte[] input) {
         super(input.length);
         RawMemory.putByteArray(address(), input);
         used = input.length;
     }
 
-    private OffHeapBuffer(final int size) {
+    private OffHeapBuffer(int size) {
         super(size);
         used = 0;
     }
 
-    public static OffHeapBuffer fromBytes(final byte[] input) {
+    public static OffHeapBuffer fromBytes(byte[] input) {
         return new OffHeapBuffer(input);
     }
 
-    public static OffHeapBuffer fixedSize(final int size) {
+    public static OffHeapBuffer fixedSize(int size) {
         return new OffHeapBuffer(size);
     }
 
@@ -45,7 +45,7 @@ public class OffHeapBuffer extends AbstractOffHeapStructure<OffHeapBuffer> {
         return used;
     }
 
-    public OffHeapBuffer used(final int used) {
+    public OffHeapBuffer used(int used) {
         this.used = Math.min(size(), used);
         return this;
     }

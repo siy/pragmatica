@@ -31,11 +31,11 @@ public final class Timeout {
     private static final long NANOS_IN_SECOND = 1_000_000_000L;
     private final long timeout;
 
-    private Timeout(final long timeout) {
+    private Timeout(long timeout) {
         this.timeout = timeout;
     }
 
-    public static TimeoutBuilder timeout(final long value) {
+    public static TimeoutBuilder timeout(long value) {
         return new TimeoutBuilder(value);
     }
 
@@ -52,7 +52,7 @@ public final class Timeout {
     }
 
     public Tuple2<Long, Integer> asSecondsAndNanos() {
-        return tuple(timeout/NANOS_IN_SECOND, (int) (timeout % NANOS_IN_SECOND));
+        return tuple(timeout / NANOS_IN_SECOND, (int) (timeout % NANOS_IN_SECOND));
     }
 
     public Duration asDuration() {
@@ -60,7 +60,7 @@ public final class Timeout {
     }
 
     @Override
-    public boolean equals(final Object o) {
+    public boolean equals(Object o) {
         if (this == o) {
             return true;
         }
@@ -88,7 +88,7 @@ public final class Timeout {
     public static final class TimeoutBuilder {
         private final long value;
 
-        private TimeoutBuilder(final long value) {
+        private TimeoutBuilder(long value) {
             this.value = value;
         }
 
@@ -145,6 +145,7 @@ public final class Timeout {
         public Timeout hours() {
             return new Timeout(TimeUnit.HOURS.toNanos(value));
         }
+
         /**
          * Create {@link Timeout} instance by interpreting value as days.
          *

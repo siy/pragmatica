@@ -26,21 +26,17 @@ import static org.pfj.io.async.net.Inet6Address.inet6Address;
 import static org.pfj.io.async.net.Inet6FlowInfo.inet6FlowInfo;
 import static org.pfj.io.async.net.Inet6ScopeId.inet6ScopeId;
 import static org.pfj.io.async.net.InetPort.inetPort;
-import static org.pfj.io.async.uring.struct.shape.SocketAddressIn6Offsets.sin6_addr;
-import static org.pfj.io.async.uring.struct.shape.SocketAddressIn6Offsets.sin6_family;
-import static org.pfj.io.async.uring.struct.shape.SocketAddressIn6Offsets.sin6_flowinfo;
-import static org.pfj.io.async.uring.struct.shape.SocketAddressIn6Offsets.sin6_port;
-import static org.pfj.io.async.uring.struct.shape.SocketAddressIn6Offsets.sin6_scope_id;
+import static org.pfj.io.async.uring.struct.shape.SocketAddressIn6Offsets.*;
 import static org.pfj.lang.Result.success;
 
 public class RawSocketAddressIn6 extends AbstractExternalRawStructure<RawSocketAddressIn6>
     implements RawSocketAddress<SocketAddressIn6, RawSocketAddressIn6> {
 
-    protected RawSocketAddressIn6(final long address) {
+    protected RawSocketAddressIn6(long address) {
         super(address, SocketAddressIn6Offsets.SIZE);
     }
 
-    public static RawSocketAddressIn6 at(final int address) {
+    public static RawSocketAddressIn6 at(int address) {
         return new RawSocketAddressIn6(address);
     }
 
@@ -64,33 +60,33 @@ public class RawSocketAddressIn6 extends AbstractExternalRawStructure<RawSocketA
         return getBytes(sin6_addr);
     }
 
-    public RawSocketAddressIn6 family(final short family) {
+    public RawSocketAddressIn6 family(short family) {
         putShort(sin6_family, family);
         return this;
     }
 
-    public RawSocketAddressIn6 port(final short port) {
+    public RawSocketAddressIn6 port(short port) {
         putShortInNetOrder(sin6_port, port);
         return this;
     }
 
-    public RawSocketAddressIn6 flowinfo(final int flowinfo) {
+    public RawSocketAddressIn6 flowinfo(int flowinfo) {
         putInt(sin6_flowinfo, flowinfo);
         return this;
     }
 
-    public RawSocketAddressIn6 scopeId(final int scopeId) {
+    public RawSocketAddressIn6 scopeId(int scopeId) {
         putInt(sin6_scope_id, scopeId);
         return this;
     }
 
-    public RawSocketAddressIn6 addr(final byte[] addr) {
+    public RawSocketAddressIn6 addr(byte[] addr) {
         putBytes(sin6_addr, addr);
         return this;
     }
 
     @Override
-    public void assign(final SocketAddressIn6 input) {
+    public void assign(SocketAddressIn6 input) {
         family(input.family().familyId());
         port(input.port().port());
         addr(input.address().asBytes());
@@ -101,11 +97,11 @@ public class RawSocketAddressIn6 extends AbstractExternalRawStructure<RawSocketA
     @Override
     public Result<SocketAddressIn6> extract() {
         return Result.all(addressFamily(family()),
-                success(inetPort(port())),
-                inet6Address(addr()),
-                success(inet6FlowInfo(flowinfo())),
-                success(inet6ScopeId(scopeId())))
-            .map(SocketAddressIn6::create);
+                          success(inetPort(port())),
+                          inet6Address(addr()),
+                          success(inet6FlowInfo(flowinfo())),
+                          success(inet6ScopeId(scopeId())))
+                     .map(SocketAddressIn6::create);
     }
 
     @Override

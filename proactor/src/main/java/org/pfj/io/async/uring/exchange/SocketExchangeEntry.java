@@ -37,24 +37,21 @@ public class SocketExchangeEntry extends AbstractExchangeEntry<SocketExchangeEnt
     private Set<SocketFlag> openFlags;
     private Set<SocketOption> options;
 
-    protected SocketExchangeEntry(final PlainObjectPool<SocketExchangeEntry> pool) {
+    protected SocketExchangeEntry(PlainObjectPool<SocketExchangeEntry> pool) {
         super(IORING_OP_NOP, pool);
     }
 
     @Override
-    protected void doAccept(final int result, final int flags, final Proactor proactor) {
-        completion.accept(UringApi.socket(addressFamily,
-                                             socketType,
-                                             openFlags,
-                                             options),
-            proactor);
+    protected void doAccept(int result, int flags, Proactor proactor) {
+        completion.accept(UringApi.socket(addressFamily, socketType, openFlags, options),
+                          proactor);
     }
 
-    public SocketExchangeEntry prepare(final BiConsumer<Result<FileDescriptor>, Proactor> completion,
-                                       final AddressFamily addressFamily,
-                                       final SocketType socketType,
-                                       final Set<SocketFlag> openFlags,
-                                       final Set<SocketOption> options) {
+    public SocketExchangeEntry prepare(BiConsumer<Result<FileDescriptor>, Proactor> completion,
+                                       AddressFamily addressFamily,
+                                       SocketType socketType,
+                                       Set<SocketFlag> openFlags,
+                                       Set<SocketOption> options) {
         this.addressFamily = addressFamily;
         this.socketType = socketType;
         this.openFlags = openFlags;

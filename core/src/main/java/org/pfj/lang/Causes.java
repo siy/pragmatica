@@ -47,8 +47,8 @@ public final class Causes {
     }
 
     /**
-     * Create a mapper which will map a value into a formatted message.
-     * Main use case for this function - creation of mappers for {@link Result#filter(FN1, Predicate)}:
+     * Create a mapper which will map a value into a formatted message. Main use case for this function - creation of mappers for {@link
+     * Result#filter(FN1, Predicate)}:
      * <blockquote><pre>
      * filter(Causes.with1("Value {0} is below threshold"), value -> value > 321)
      * </pre></blockquote>

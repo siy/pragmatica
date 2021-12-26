@@ -16,15 +16,15 @@
 
 package org.pfj.io.async.uring.struct.raw;
 
-import org.pfj.io.async.uring.struct.shape.IoVectorOffsets;
 import org.pfj.io.async.uring.struct.AbstractExternalRawStructure;
+import org.pfj.io.async.uring.struct.shape.IoVectorOffsets;
 
 public class IoVector extends AbstractExternalRawStructure<IoVector> {
-    private IoVector(final long address) {
+    private IoVector(long address) {
         super(address, IoVectorOffsets.SIZE);
     }
 
-    public static IoVector at(final long address) {
+    public static IoVector at(long address) {
         return new IoVector(address);
     }
 
@@ -32,7 +32,7 @@ public class IoVector extends AbstractExternalRawStructure<IoVector> {
         return getLong(IoVectorOffsets.iov_base);
     }
 
-    public IoVector base(final long data) {
+    public IoVector base(long data) {
         return putLong(IoVectorOffsets.iov_base, data);
     }
 
@@ -40,7 +40,7 @@ public class IoVector extends AbstractExternalRawStructure<IoVector> {
         return getLong(IoVectorOffsets.iov_len);
     }
 
-    public IoVector len(final long data) {
+    public IoVector len(long data) {
         return putLong(IoVectorOffsets.iov_len, data);
     }
 }

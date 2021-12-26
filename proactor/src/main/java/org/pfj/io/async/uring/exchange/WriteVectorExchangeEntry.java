@@ -16,11 +16,11 @@
 
 package org.pfj.io.async.uring.exchange;
 
-import org.pfj.io.async.uring.struct.raw.SubmitQueueEntry;
-import org.pfj.io.async.SystemError;
 import org.pfj.io.async.Proactor;
+import org.pfj.io.async.SystemError;
 import org.pfj.io.async.common.SizeT;
 import org.pfj.io.async.uring.struct.offheap.OffHeapIoVector;
+import org.pfj.io.async.uring.struct.raw.SubmitQueueEntry;
 import org.pfj.io.async.uring.utils.PlainObjectPool;
 import org.pfj.lang.Result;
 
@@ -36,19 +36,19 @@ public class WriteVectorExchangeEntry extends AbstractExchangeEntry<WriteVectorE
     private int descriptor;
     private long offset;
 
-    protected WriteVectorExchangeEntry(final PlainObjectPool<WriteVectorExchangeEntry> pool) {
+    protected WriteVectorExchangeEntry(PlainObjectPool<WriteVectorExchangeEntry> pool) {
         super(IORING_OP_WRITEV, pool);
     }
 
     @Override
-    protected void doAccept(final int res, final int flags, final Proactor proactor) {
+    protected void doAccept(int res, int flags, Proactor proactor) {
         completion.accept(byteCountToResult(res), proactor);
         ioVector.dispose();
         ioVector = null;
     }
 
     @Override
-    public SubmitQueueEntry apply(final SubmitQueueEntry entry) {
+    public SubmitQueueEntry apply(SubmitQueueEntry entry) {
         return super.apply(entry)
                     .flags(flags)
                     .fd(descriptor)
@@ -57,11 +57,11 @@ public class WriteVectorExchangeEntry extends AbstractExchangeEntry<WriteVectorE
                     .off(offset);
     }
 
-    public WriteVectorExchangeEntry prepare(final BiConsumer<Result<SizeT>, Proactor> completion,
-                                            final int descriptor,
-                                            final long offset,
-                                            final byte flags,
-                                            final OffHeapIoVector ioVector) {
+    public WriteVectorExchangeEntry prepare(BiConsumer<Result<SizeT>, Proactor> completion,
+                                            int descriptor,
+                                            long offset,
+                                            byte flags,
+                                            OffHeapIoVector ioVector) {
         this.descriptor = descriptor;
         this.offset = offset;
         this.flags = flags;
@@ -69,7 +69,7 @@ public class WriteVectorExchangeEntry extends AbstractExchangeEntry<WriteVectorE
         return super.prepare(completion);
     }
 
-    private Result<SizeT> byteCountToResult(final int res) {
+    private Result<SizeT> byteCountToResult(int res) {
         return res > 0
                ? sizeResult(res)
                : SystemError.result(res);

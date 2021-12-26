@@ -11,37 +11,40 @@
 ![GitHub top language](https://img.shields.io/github/languages/top/siy/pragmatica?style=plastic)
 ![GitHub last commit](https://img.shields.io/github/last-commit/siy/pragmatica?color=red&style=plastic)
 
-<a href="https://sergiy-yevtushenko.medium.com/"><img src="https://img.shields.io/badge/medium-%2312100E.svg?&style=for-the-badge&logo=medium&logoColor=white" height=25></a> 
+<a href="https://sergiy-yevtushenko.medium.com/"><img src="https://img.shields.io/badge/medium-%2312100E.svg?&style=for-the-badge&logo=medium&logoColor=white" height=25></a>
 <a href="https://dev.to/siy"><img src="https://img.shields.io/badge/DEV.TO-%230A0A0A.svg?&style=for-the-badge&logo=dev-dot-to&logoColor=white" height=25></a>
 
 # Pragmatic Functional Java Essentials
-Minimal set of Java classes necessary to apply [Pragmatic Functional Java](https://github.com/siy/pragmatica/wiki) approaches in practice.
+
+Minimal set of Java classes necessary to apply [Pragmatic Functional Java](https://github.com/siy/pragmatica/wiki)
+approaches in practice.
 
 Current version requires _Java 17_ to build and run.
 
-Instead of using this library as a dependency, it is highly suggested to just copy classes into your own codebase
-and adapt it to your needs.
+Instead of using this library as a dependency, it is highly suggested to just copy classes into your own codebase and
+adapt it to your needs.
 
 ## Performance Implications
 
-In order to avoid performance penalty caused by using Pragmatic Functional Java approaches, all classes were designed 
-with performance in mind. In particular, despite inherently conditional behavior (empty vs nothing Option, success vs failure Result), 
-implementation does not use branching operator (`if` or `?` ). Java compiler and JIT do the rest - resulting performance 
-virtually identical to traditional Java code with explicit `null` checks and exceptions. 
+In order to avoid performance penalty caused by using Pragmatic Functional Java approaches, all classes were designed
+with performance in mind. In particular, despite inherently conditional behavior (empty vs nothing Option, success vs
+failure Result), implementation does not use branching operator (`if` or `?` ). Java compiler and JIT do the rest -
+resulting performance virtually identical to traditional Java code with explicit `null` checks and exceptions.
 
-It should be noted, that `Result` benchmark puts exception handling cases into rather convenient conditions, with very 
-short call stack and only one type of exception is generated. Exception stack trace is not accessed either. All these 
-conditions enabling much better optimization and don't trigger some resource-intensive processing (like printing stack 
+It should be noted, that `Result` benchmark puts exception handling cases into rather convenient conditions, with very
+short call stack and only one type of exception is generated. Exception stack trace is not accessed either. All these
+conditions enabling much better optimization and don't trigger some resource-intensive processing (like printing stack
 trace) which usually happens (for example, for logging) in real applications.
 
-Benchmarks measure execution of same code under different rate of missing (error) cases. Rate set to 0% is equal to 
-`happy day scenraio` when there is no empty values (or errors/exceptions). With 100% rate all cases are empty/null 
+Benchmarks measure execution of same code under different rate of missing (error) cases. Rate set to 0% is equal to
+`happy day scenraio` when there is no empty values (or errors/exceptions). With 100% rate all cases are empty/null
 (error/exception) and usually show plain overhead caused by used handling method.
 
-Test results were obtained on MacBook Pro M1. Results are reorganized
-to simplify direct comparison of different implementations for same use case.
+Test results were obtained on MacBook Pro M1. Results are reorganized to simplify direct comparison of different
+implementations for same use case.
 
 Test results for `Option`:
+
 ```
 Benchmark                           Mode  Cnt   Score    Error  Units
 

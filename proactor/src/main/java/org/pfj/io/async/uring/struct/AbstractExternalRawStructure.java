@@ -16,14 +16,16 @@
 
 package org.pfj.io.async.uring.struct;
 
-public abstract class AbstractExternalRawStructure<T extends ExternalRawStructure<T>> extends AbstractRawStructure<T> implements ExternalRawStructure<T> {
-    protected AbstractExternalRawStructure(final long address, final int size) {
+public abstract class AbstractExternalRawStructure<T extends ExternalRawStructure<T>>
+    extends AbstractRawStructure<T> implements ExternalRawStructure<T> {
+
+    protected AbstractExternalRawStructure(long address, int size) {
         super(address, size);
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    public T reposition(final long address) {
+    public T reposition(long address) {
         address(address);
         return (T) this;
     }

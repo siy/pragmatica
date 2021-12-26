@@ -16,11 +16,11 @@
 
 package org.pfj.io.async.uring.exchange;
 
-import org.pfj.io.async.uring.struct.raw.SubmitQueueEntry;
-import org.pfj.io.async.SystemError;
 import org.pfj.io.async.Proactor;
+import org.pfj.io.async.SystemError;
 import org.pfj.io.async.Timeout;
 import org.pfj.io.async.uring.struct.offheap.OffHeapTimeSpec;
+import org.pfj.io.async.uring.struct.raw.SubmitQueueEntry;
 import org.pfj.io.async.uring.utils.PlainObjectPool;
 import org.pfj.lang.Result;
 
@@ -35,7 +35,7 @@ public class DelayExchangeEntry extends AbstractExchangeEntry<DelayExchangeEntry
     private final OffHeapTimeSpec timeSpec = OffHeapTimeSpec.uninitialized();
     private long startNanos;
 
-    protected DelayExchangeEntry(final PlainObjectPool<DelayExchangeEntry> pool) {
+    protected DelayExchangeEntry(PlainObjectPool<DelayExchangeEntry> pool) {
         super(IORING_OP_TIMEOUT, pool);
     }
 
@@ -45,17 +45,17 @@ public class DelayExchangeEntry extends AbstractExchangeEntry<DelayExchangeEntry
     }
 
     @Override
-    protected void doAccept(final int res, final int flags, final Proactor proactor) {
-        final var totalNanos = System.nanoTime() - startNanos;
+    protected void doAccept(int res, int flags, Proactor proactor) {
+        var totalNanos = System.nanoTime() - startNanos;
 
-        final var result = Math.abs(res) != SystemError.ETIME.code()
-                           ? SystemError.<Duration>result(res)
-                           : success(timeout(totalNanos).nanos().asDuration());
+        var result = Math.abs(res) != SystemError.ETIME.code()
+                     ? SystemError.<Duration>result(res)
+                     : success(timeout(totalNanos).nanos().asDuration());
 
         completion.accept(result, proactor);
     }
 
-    public DelayExchangeEntry prepare(final BiConsumer<Result<Duration>, Proactor> completion, final Timeout timeout) {
+    public DelayExchangeEntry prepare(BiConsumer<Result<Duration>, Proactor> completion, Timeout timeout) {
         startNanos = System.nanoTime();
 
         timeout.asSecondsAndNanos()
@@ -65,7 +65,7 @@ public class DelayExchangeEntry extends AbstractExchangeEntry<DelayExchangeEntry
     }
 
     @Override
-    public SubmitQueueEntry apply(final SubmitQueueEntry entry) {
+    public SubmitQueueEntry apply(SubmitQueueEntry entry) {
         return super.apply(entry)
                     .addr(timeSpec.address())
                     .fd(-1)

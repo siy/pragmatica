@@ -25,25 +25,7 @@ import org.pfj.io.async.uring.struct.AbstractExternalRawStructure;
 import org.pfj.io.async.uring.struct.shape.StatxOffsets;
 
 import static org.pfj.io.async.file.stat.DeviceId.deviceId;
-import static org.pfj.io.async.uring.struct.shape.StatxOffsets.stx_atime;
-import static org.pfj.io.async.uring.struct.shape.StatxOffsets.stx_attributes;
-import static org.pfj.io.async.uring.struct.shape.StatxOffsets.stx_attributes_mask;
-import static org.pfj.io.async.uring.struct.shape.StatxOffsets.stx_blksize;
-import static org.pfj.io.async.uring.struct.shape.StatxOffsets.stx_blocks;
-import static org.pfj.io.async.uring.struct.shape.StatxOffsets.stx_btime;
-import static org.pfj.io.async.uring.struct.shape.StatxOffsets.stx_ctime;
-import static org.pfj.io.async.uring.struct.shape.StatxOffsets.stx_dev_major;
-import static org.pfj.io.async.uring.struct.shape.StatxOffsets.stx_dev_minor;
-import static org.pfj.io.async.uring.struct.shape.StatxOffsets.stx_gid;
-import static org.pfj.io.async.uring.struct.shape.StatxOffsets.stx_ino;
-import static org.pfj.io.async.uring.struct.shape.StatxOffsets.stx_mask;
-import static org.pfj.io.async.uring.struct.shape.StatxOffsets.stx_mode;
-import static org.pfj.io.async.uring.struct.shape.StatxOffsets.stx_mtime;
-import static org.pfj.io.async.uring.struct.shape.StatxOffsets.stx_nlink;
-import static org.pfj.io.async.uring.struct.shape.StatxOffsets.stx_rdev_major;
-import static org.pfj.io.async.uring.struct.shape.StatxOffsets.stx_rdev_minor;
-import static org.pfj.io.async.uring.struct.shape.StatxOffsets.stx_size;
-import static org.pfj.io.async.uring.struct.shape.StatxOffsets.stx_uid;
+import static org.pfj.io.async.uring.struct.shape.StatxOffsets.*;
 
 public class RawStatx extends AbstractExternalRawStructure<RawStatx> {
     private final RawStatxTimestamp atime = RawStatxTimestamp.at(0);
@@ -51,17 +33,17 @@ public class RawStatx extends AbstractExternalRawStructure<RawStatx> {
     private final RawStatxTimestamp ctime = RawStatxTimestamp.at(0);
     private final RawStatxTimestamp mtime = RawStatxTimestamp.at(0);
 
-    private RawStatx(final long address) {
+    private RawStatx(long address) {
         super(address, StatxOffsets.SIZE);
 
         repositionInner(address);
     }
 
-    public static RawStatx at(final long address) {
+    public static RawStatx at(long address) {
         return new RawStatx(address);
     }
 
-    private void repositionInner(final long address) {
+    private void repositionInner(long address) {
         atime.reposition(address + stx_atime.offset());
         btime.reposition(address + stx_btime.offset());
         ctime.reposition(address + stx_ctime.offset());
@@ -69,7 +51,7 @@ public class RawStatx extends AbstractExternalRawStructure<RawStatx> {
     }
 
     @Override
-    public RawStatx reposition(final long address) {
+    public RawStatx reposition(long address) {
         repositionInner(address);
         return super.reposition(address);
     }
@@ -171,23 +153,23 @@ public class RawStatx extends AbstractExternalRawStructure<RawStatx> {
 
     public FileStat detach() {
         return FileStat.fileStat(
-                StatMask.fromInt(mask()),
-                blockSize(),
-                StatAttribute.fromLong(attributes()),
-                numLinks(),
-                ownerUID(),
-                ownerGID(),
-                FileType.unsafeFromShort(mode()),
-                FilePermission.fromShort(mode()),
-                inode(),
-                fileSize(),
-                blocks(),
-                StatAttribute.fromLong(attributesMask()),
-                lastAccessTime().detach(),
-                creationTime().detach(),
-                changeTime().detach(),
-                modificationTime().detach(),
-                deviceId(rdevMajor(), rdevMinor()),
-                deviceId(devMajor(), devMinor()));
+            StatMask.fromInt(mask()),
+            blockSize(),
+            StatAttribute.fromLong(attributes()),
+            numLinks(),
+            ownerUID(),
+            ownerGID(),
+            FileType.unsafeFromShort(mode()),
+            FilePermission.fromShort(mode()),
+            inode(),
+            fileSize(),
+            blocks(),
+            StatAttribute.fromLong(attributesMask()),
+            lastAccessTime().detach(),
+            creationTime().detach(),
+            changeTime().detach(),
+            modificationTime().detach(),
+            deviceId(rdevMajor(), rdevMinor()),
+            deviceId(devMajor(), devMinor()));
     }
 }

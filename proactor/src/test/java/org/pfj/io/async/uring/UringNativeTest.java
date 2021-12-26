@@ -25,43 +25,25 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 public class UringNativeTest {
-    @Test
-    void nopCanBeSubmittedAndConfirmed() {
-        final long ringBase = RawMemory.allocate(256);
+    private static final int QUEUE_SIZE = 128;
 
+    interface LongBiConsumer {
+        void accept(long ringBase, long completionBase);
+    }
+
+    private static void runWithUring(LongBiConsumer action) {
+        var ringBase = RawMemory.allocate(UringNative.SIZE);
+        var completionBase = RawMemory.allocate(QUEUE_SIZE * 2 * 8); // queue size * 2 (CQ size == 2 x SQ size) * 8 (bytes per ptr)
         assertNotEquals(0, ringBase);
+        assertNotEquals(0, completionBase);
 
-        final long completionBase = RawMemory.allocate(16 * 1024); // 1024 * 2 (CQ size is twice of SQ size) * 8 (bytes per ptr)
-
-        final int rc = UringNative.init(128, ringBase, 0);
+        var rc = UringNative.init(QUEUE_SIZE, ringBase, 0);
 
         try {
             assertEquals(0, rc);
 
-            final long sq = UringNative.nextSQEntry(ringBase);
+            action.accept(ringBase, completionBase);
 
-            assertNotEquals(0, sq);
-
-            final SubmitQueueEntry entry = SubmitQueueEntry.at(sq);
-
-            entry.clear()
-                 .opcode(AsyncOperation.IORING_OP_NOP.opcode())
-                 .userData(0x0CAFEBABEL)
-                 .fd(-1);
-
-            final long completionCount = UringNative.submitAndWait(ringBase, 1);
-
-            assertEquals(1, completionCount);
-
-            final int readyCompletions = UringNative.peekCQ(ringBase, completionBase, 1024);
-
-            assertEquals(1, readyCompletions);
-
-            final CompletionQueueEntry cq = CompletionQueueEntry.at(RawMemory.getLong(completionBase));
-
-            assertEquals(0x0CAFEBABEL, cq.userData());
-
-            UringNative.advanceCQ(ringBase, 1);
         } finally {
             UringNative.close(ringBase);
             RawMemory.dispose(ringBase);
@@ -70,36 +52,50 @@ public class UringNativeTest {
     }
 
     @Test
-    void nopCanBeSubmittedAndConfirmedWithCompletionProcessor() {
-        final long ringBase = RawMemory.allocate(256);
-
-        assertNotEquals(0, ringBase);
-
-        final int rc = UringNative.init(128, ringBase, 0);
-
-        try {
-            assertEquals(0, rc);
-
-            final long sq = UringNative.nextSQEntry(ringBase);
-
+    void nopCanBeSubmittedAndConfirmed() {
+        runWithUring((ringBase, completionBase) -> {
+            var sq = UringNative.nextSQEntry(ringBase);
             assertNotEquals(0, sq);
 
-            final SubmitQueueEntry entry = SubmitQueueEntry.at(sq);
+            var entry = SubmitQueueEntry.at(sq);
 
             entry.clear()
                  .opcode(AsyncOperation.IORING_OP_NOP.opcode())
                  .userData(0x0CAFEBABEL)
                  .fd(-1);
 
-            final long completionCount = UringNative.submitAndWait(ringBase, 1);
+            var completionCount = UringNative.submitAndWait(ringBase, 1);
             assertEquals(1, completionCount);
 
-            try (final CompletionProcessor processor = CompletionProcessor.create(1024)) {
+            var readyCompletions = UringNative.peekCQ(ringBase, completionBase, QUEUE_SIZE);
+            assertEquals(1, readyCompletions);
+
+            var cq = CompletionQueueEntry.at(RawMemory.getLong(completionBase));
+            assertEquals(0x0CAFEBABEL, cq.userData());
+
+            UringNative.advanceCQ(ringBase, 1);
+        });
+    }
+
+    @Test
+    void nopCanBeSubmittedAndConfirmedWithCompletionProcessor() {
+        runWithUring((ringBase, completionBase) -> {
+            var sq = UringNative.nextSQEntry(ringBase);
+            assertNotEquals(0, sq);
+
+            var entry = SubmitQueueEntry.at(sq);
+
+            entry.clear()
+                 .opcode(AsyncOperation.IORING_OP_NOP.opcode())
+                 .userData(0x0CAFEBABEL)
+                 .fd(-1);
+
+            var completionCount = UringNative.submitAndWait(ringBase, 1);
+            assertEquals(1, completionCount);
+
+            try (var processor = CompletionProcessor.create(QUEUE_SIZE)) {
                 processor.process(ringBase, (cq) -> assertEquals(0x0CAFEBABEL, cq.userData()));
             }
-        } finally {
-            UringNative.close(ringBase);
-            RawMemory.dispose(ringBase);
-        }
+        });
     }
 }

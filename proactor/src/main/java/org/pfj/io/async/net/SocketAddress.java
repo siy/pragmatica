@@ -18,6 +18,8 @@ package org.pfj.io.async.net;
 
 public interface SocketAddress<T extends InetAddress> {
     AddressFamily family();
+
     InetPort port();
+
     T address();
 }

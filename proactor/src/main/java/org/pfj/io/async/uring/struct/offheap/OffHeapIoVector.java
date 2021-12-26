@@ -24,14 +24,14 @@ public class OffHeapIoVector extends AbstractOffHeapStructure<OffHeapIoVector> {
     private final IoVector shape;
     private final int count;
 
-    private OffHeapIoVector(final int count) {
+    private OffHeapIoVector(int count) {
         super(count * IoVectorOffsets.SIZE);
         this.count = count;
         clear();
         shape = IoVector.at(address());
     }
 
-    private void addBuffer(final OffHeapBuffer buffer) {
+    private void addBuffer(OffHeapBuffer buffer) {
         shape.base(buffer.address())
              .len(buffer.used())
              .reposition(shape.address() + IoVectorOffsets.SIZE);
@@ -41,9 +41,9 @@ public class OffHeapIoVector extends AbstractOffHeapStructure<OffHeapIoVector> {
         shape.reposition(address());
     }
 
-    public static OffHeapIoVector withBuffers(final OffHeapBuffer ... buffers) {
-        final var vector = new OffHeapIoVector(buffers.length);
-        for(final var buffer : buffers) {
+    public static OffHeapIoVector withBuffers(OffHeapBuffer... buffers) {
+        var vector = new OffHeapIoVector(buffers.length);
+        for (var buffer : buffers) {
             vector.addBuffer(buffer);
         }
         vector.resetShape();

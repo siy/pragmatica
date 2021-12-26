@@ -26,8 +26,7 @@ public enum FileType {
     BLOCK(0060000),     /* Block device.  */
     FIFO(0010000),      /* FIFO.  */
     LINK(0120000),      /* Symbolic link.  */
-    SOCKET(0140000),	/* Socket.  */
-    ;
+    SOCKET(0140000),    /* Socket.  */;
 
     private final short mask;
 
@@ -40,7 +39,7 @@ public enum FileType {
     }
 
     public static FileType unsafeFromShort(final short value) {
-        for(var type : values()) {
+        for (var type : values()) {
             if ((value & type.mask) == type.mask) {
                 return type;
             }

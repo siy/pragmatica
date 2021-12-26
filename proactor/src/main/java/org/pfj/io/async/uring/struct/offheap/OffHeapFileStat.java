@@ -20,7 +20,7 @@ import org.pfj.io.async.file.stat.FileStat;
 import org.pfj.io.async.uring.struct.raw.RawStatx;
 import org.pfj.io.async.uring.struct.shape.StatxOffsets;
 
-public class OffHeapFileStat extends AbstractOffHeapStructure<OffHeapFileStat>{
+public class OffHeapFileStat extends AbstractOffHeapStructure<OffHeapFileStat> {
     private final RawStatx shape;
 
     private OffHeapFileStat() {

@@ -19,32 +19,7 @@ package org.pfj.io.async.uring.struct.raw;
 import org.pfj.io.async.uring.struct.AbstractExternalRawStructure;
 import org.pfj.io.async.uring.struct.shape.SubmitQueueEntryOffsets;
 
-import static org.pfj.io.async.uring.struct.shape.SubmitQueueEntryOffsets.accept_flags;
-import static org.pfj.io.async.uring.struct.shape.SubmitQueueEntryOffsets.addr;
-import static org.pfj.io.async.uring.struct.shape.SubmitQueueEntryOffsets.addr2;
-import static org.pfj.io.async.uring.struct.shape.SubmitQueueEntryOffsets.buf_group;
-import static org.pfj.io.async.uring.struct.shape.SubmitQueueEntryOffsets.buf_index;
-import static org.pfj.io.async.uring.struct.shape.SubmitQueueEntryOffsets.cancel_flags;
-import static org.pfj.io.async.uring.struct.shape.SubmitQueueEntryOffsets.fadvise_advice;
-import static org.pfj.io.async.uring.struct.shape.SubmitQueueEntryOffsets.fd;
-import static org.pfj.io.async.uring.struct.shape.SubmitQueueEntryOffsets.flags;
-import static org.pfj.io.async.uring.struct.shape.SubmitQueueEntryOffsets.fsync_flags;
-import static org.pfj.io.async.uring.struct.shape.SubmitQueueEntryOffsets.ioprio;
-import static org.pfj.io.async.uring.struct.shape.SubmitQueueEntryOffsets.len;
-import static org.pfj.io.async.uring.struct.shape.SubmitQueueEntryOffsets.msg_flags;
-import static org.pfj.io.async.uring.struct.shape.SubmitQueueEntryOffsets.off;
-import static org.pfj.io.async.uring.struct.shape.SubmitQueueEntryOffsets.opcode;
-import static org.pfj.io.async.uring.struct.shape.SubmitQueueEntryOffsets.open_flags;
-import static org.pfj.io.async.uring.struct.shape.SubmitQueueEntryOffsets.personality;
-import static org.pfj.io.async.uring.struct.shape.SubmitQueueEntryOffsets.poll_events;
-import static org.pfj.io.async.uring.struct.shape.SubmitQueueEntryOffsets.rw_flags;
-import static org.pfj.io.async.uring.struct.shape.SubmitQueueEntryOffsets.splice_fd_in;
-import static org.pfj.io.async.uring.struct.shape.SubmitQueueEntryOffsets.splice_flags;
-import static org.pfj.io.async.uring.struct.shape.SubmitQueueEntryOffsets.splice_off_in;
-import static org.pfj.io.async.uring.struct.shape.SubmitQueueEntryOffsets.statx_flags;
-import static org.pfj.io.async.uring.struct.shape.SubmitQueueEntryOffsets.sync_range_flags;
-import static org.pfj.io.async.uring.struct.shape.SubmitQueueEntryOffsets.timeout_flags;
-import static org.pfj.io.async.uring.struct.shape.SubmitQueueEntryOffsets.user_data;
+import static org.pfj.io.async.uring.struct.shape.SubmitQueueEntryOffsets.*;
 
 public class SubmitQueueEntry extends AbstractExternalRawStructure<SubmitQueueEntry> {
     public static final int IORING_FSYNC_DATASYNC = 1;      /* sqe->fsync_flags */

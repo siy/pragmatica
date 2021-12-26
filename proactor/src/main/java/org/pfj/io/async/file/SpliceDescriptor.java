@@ -107,11 +107,11 @@ public class SpliceDescriptor {
      */
     public static SpliceDescriptorBuilder builder() {
         return fromDescriptor ->
-                toDescriptor ->
-                 fromOffset ->
-                  toOffset ->
-                   bytesToCopy ->
-                     flags -> new SpliceDescriptor(fromDescriptor, toDescriptor, fromOffset, toOffset, bytesToCopy, flags);
+            toDescriptor ->
+                fromOffset ->
+                    toOffset ->
+                        bytesToCopy ->
+                            flags -> new SpliceDescriptor(fromDescriptor, toDescriptor, fromOffset, toOffset, bytesToCopy, flags);
     }
 
     public interface SpliceDescriptorBuilder {

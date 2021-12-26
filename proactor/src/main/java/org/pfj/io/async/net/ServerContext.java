@@ -18,8 +18,6 @@ package org.pfj.io.async.net;
 
 import org.pfj.io.async.file.FileDescriptor;
 
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 
@@ -33,13 +31,13 @@ public class ServerContext<T extends SocketAddress<?>> {
     //private final ConcurrentMap<ULID, IncomingConnectionContext> connections = new ConcurrentHashMap<>();
     private final AtomicBoolean shutdown = new AtomicBoolean(false);
 
-    private ServerContext(final FileDescriptor socket, final T address, final int queueDepth) {
+    private ServerContext(FileDescriptor socket, T address, int queueDepth) {
         this.socket = socket;
         this.address = address;
         this.queueDepth = queueDepth;
     }
 
-    public static <T extends SocketAddress<?>> ServerContext<T> connector(final FileDescriptor socket, final SocketAddress<?> address, final int queueDepth) {
+    public static <T extends SocketAddress<?>> ServerContext<T> connector(FileDescriptor socket, SocketAddress<?> address, int queueDepth) {
         return new ServerContext<>(socket, (T) address, queueDepth);
     }
 
@@ -55,12 +53,12 @@ public class ServerContext<T extends SocketAddress<?>> {
         return queueDepth;
     }
 
-//    public ServerContext<T> addConnection(final IncomingConnectionContext incomingConnectionContext) {
+//    public ServerContext<T> addConnection( IncomingConnectionContext incomingConnectionContext) {
 //        connections.putIfAbsent(incomingConnectionContext.id(), incomingConnectionContext);
 //        return this;
 //    }
 //
-//    public ServerContext<T> removeConnection(final IncomingConnectionContext incomingConnectionContext) {
+//    public ServerContext<T> removeConnection( IncomingConnectionContext incomingConnectionContext) {
 //        connections.remove(incomingConnectionContext.id());
 //        return this;
 //    }
@@ -75,7 +73,7 @@ public class ServerContext<T extends SocketAddress<?>> {
     }
 
     //TODO: does not look convenient nor good enough, how to rework it?
-//    public void shutdown(final Promise<Unit> shutdownPromise) {
+//    public void shutdown( Promise<Unit> shutdownPromise) {
 //        if (shutdown.compareAndSet(false, true)) {
 //            //wait for all connections to be closed???
 //            shutdownPromise.ok(unit());

@@ -16,10 +16,10 @@
 
 package org.pfj.io.async.uring.exchange;
 
-import org.pfj.io.async.uring.struct.raw.SubmitQueueEntry;
 import org.pfj.io.async.Proactor;
 import org.pfj.io.async.Timeout;
 import org.pfj.io.async.uring.struct.offheap.OffHeapTimeSpec;
+import org.pfj.io.async.uring.struct.raw.SubmitQueueEntry;
 import org.pfj.io.async.uring.utils.PlainObjectPool;
 import org.pfj.lang.Unit;
 
@@ -28,7 +28,7 @@ import static org.pfj.io.async.uring.AsyncOperation.IORING_OP_LINK_TIMEOUT;
 public class TimeoutExchangeEntry extends AbstractExchangeEntry<TimeoutExchangeEntry, Unit> {
     private final OffHeapTimeSpec timeSpec = OffHeapTimeSpec.uninitialized();
 
-    protected TimeoutExchangeEntry(final PlainObjectPool<TimeoutExchangeEntry> pool) {
+    protected TimeoutExchangeEntry(PlainObjectPool<TimeoutExchangeEntry> pool) {
         super(IORING_OP_LINK_TIMEOUT, pool);
     }
 
@@ -38,10 +38,10 @@ public class TimeoutExchangeEntry extends AbstractExchangeEntry<TimeoutExchangeE
     }
 
     @Override
-    protected void doAccept(final int res, final int flags, final Proactor proactor) {
+    protected void doAccept(int res, int flags, Proactor proactor) {
     }
 
-    public TimeoutExchangeEntry prepare(final Timeout timeout) {
+    public TimeoutExchangeEntry prepare(Timeout timeout) {
         timeout.asSecondsAndNanos()
                .map(timeSpec::setSecondsNanos);
 
@@ -49,7 +49,7 @@ public class TimeoutExchangeEntry extends AbstractExchangeEntry<TimeoutExchangeE
     }
 
     @Override
-    public SubmitQueueEntry apply(final SubmitQueueEntry entry) {
+    public SubmitQueueEntry apply(SubmitQueueEntry entry) {
         return super.apply(entry)
                     .addr(timeSpec.address())
                     .fd(-1)

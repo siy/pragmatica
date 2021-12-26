@@ -21,16 +21,14 @@ import org.pfj.io.async.uring.struct.shape.CompletionQueueEntryOffsets;
 
 import java.util.StringJoiner;
 
-import static org.pfj.io.async.uring.struct.shape.CompletionQueueEntryOffsets.flags;
-import static org.pfj.io.async.uring.struct.shape.CompletionQueueEntryOffsets.res;
-import static org.pfj.io.async.uring.struct.shape.CompletionQueueEntryOffsets.user_data;
+import static org.pfj.io.async.uring.struct.shape.CompletionQueueEntryOffsets.*;
 
 public class CompletionQueueEntry extends AbstractExternalRawStructure<CompletionQueueEntry> {
-    private CompletionQueueEntry(final long address) {
+    private CompletionQueueEntry(long address) {
         super(address, CompletionQueueEntryOffsets.SIZE);
     }
 
-    public static CompletionQueueEntry at(final long address) {
+    public static CompletionQueueEntry at(long address) {
         return new CompletionQueueEntry(address);
     }
 
@@ -49,9 +47,9 @@ public class CompletionQueueEntry extends AbstractExternalRawStructure<Completio
     @Override
     public String toString() {
         return new StringJoiner(", ", "CompletionQueueEntry(", ")")
-                .add("res: " + res())
-                .add("flags: " + flags())
-                .add("data: " + userData())
-                .toString();
+            .add("res: " + res())
+            .add("flags: " + flags())
+            .add("data: " + userData())
+            .toString();
     }
 }

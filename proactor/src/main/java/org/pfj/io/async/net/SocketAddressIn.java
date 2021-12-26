@@ -23,7 +23,7 @@ public class SocketAddressIn implements SocketAddress<Inet4Address> {
     private final InetPort port;
     private final Inet4Address address;
 
-    private SocketAddressIn(final AddressFamily family, final InetPort port, final Inet4Address address) {
+    private SocketAddressIn(AddressFamily family, InetPort port, Inet4Address address) {
         this.family = family;
         this.port = port;
         this.address = address;
@@ -44,20 +44,20 @@ public class SocketAddressIn implements SocketAddress<Inet4Address> {
         return address;
     }
 
-    public static SocketAddressIn create(final InetPort port, final Inet4Address address) {
+    public static SocketAddressIn create(InetPort port, Inet4Address address) {
         return new SocketAddressIn(AddressFamily.INET, port, address);
     }
 
-    public static SocketAddressIn create(final AddressFamily addressFamily, final InetPort port, final Inet4Address address) {
+    public static SocketAddressIn create(AddressFamily addressFamily, InetPort port, Inet4Address address) {
         return new SocketAddressIn(addressFamily, port, address);
     }
 
     @Override
     public String toString() {
         return new StringJoiner(", ", "SocketAddressIn(", ")")
-                .add(family.toString())
-                .add(port.toString())
-                .add(address.toString())
-                .toString();
+            .add(family.toString())
+            .add(port.toString())
+            .add(address.toString())
+            .toString();
     }
 }

@@ -16,13 +16,13 @@
 
 package org.pfj.io.async.uring.exchange;
 
-import org.pfj.io.async.uring.struct.raw.SubmitQueueEntry;
-import org.pfj.io.async.SystemError;
 import org.pfj.io.async.Proactor;
+import org.pfj.io.async.SystemError;
 import org.pfj.io.async.file.FileDescriptor;
 import org.pfj.io.async.net.SocketAddress;
 import org.pfj.io.async.uring.struct.ExternalRawStructure;
 import org.pfj.io.async.uring.struct.offheap.OffHeapSocketAddress;
+import org.pfj.io.async.uring.struct.raw.SubmitQueueEntry;
 import org.pfj.io.async.uring.utils.PlainObjectPool;
 import org.pfj.lang.Result;
 
@@ -36,33 +36,30 @@ public class ConnectExchangeEntry extends AbstractExchangeEntry<ConnectExchangeE
     private byte flags;
     private FileDescriptor descriptor;
 
-    protected ConnectExchangeEntry(final PlainObjectPool<ConnectExchangeEntry> pool) {
+    protected ConnectExchangeEntry(PlainObjectPool<ConnectExchangeEntry> pool) {
         super(IORING_OP_CONNECT, pool);
     }
 
     @Override
-    protected void doAccept(final int res, final int flags, final Proactor proactor) {
+    protected void doAccept(int res,  int flags,  Proactor proactor) {
         completion.accept(res < 0
-                ? SystemError.result(res)
-                : success(descriptor),
-            proactor);
+                          ? SystemError.result(res)
+                          : success(descriptor),
+                          proactor);
 
         clientAddress.dispose();
         clientAddress = null;
     }
 
     @Override
-    public SubmitQueueEntry apply(final SubmitQueueEntry entry) {
+    public SubmitQueueEntry apply( SubmitQueueEntry entry) {
         return super.apply(entry)
-            .fd(descriptor.descriptor())
-            .addr(clientAddress.sockAddrPtr())
-            .off(clientAddress.sockAddrSize());
+                    .fd(descriptor.descriptor())
+                    .addr(clientAddress.sockAddrPtr())
+                    .off(clientAddress.sockAddrSize());
     }
 
-    public ConnectExchangeEntry prepare(final BiConsumer<Result<FileDescriptor>, Proactor> completion,
-                                        final FileDescriptor descriptor,
-                                        final OffHeapSocketAddress<SocketAddress<?>, ExternalRawStructure<?>> clientAddress,
-                                        final byte flags) {
+    public ConnectExchangeEntry prepare( BiConsumer<Result<FileDescriptor>, Proactor> completion, FileDescriptor descriptor, OffHeapSocketAddress<SocketAddress<?>, ExternalRawStructure<?>> clientAddress, byte flags) {
         this.clientAddress = clientAddress;
         this.descriptor = descriptor;
         this.flags = flags;

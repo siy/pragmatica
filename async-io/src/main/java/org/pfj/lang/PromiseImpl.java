@@ -25,8 +25,6 @@ import org.pfj.lang.io.scheduler.TaskExecutor;
 
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
@@ -260,6 +258,8 @@ final class PromiseImpl<T> implements Promise<T> {
     private static final class ExecutorHolder {
         private static final TaskExecutor EXECUTOR = TaskExecutor.taskExecutor();
 
-        static TaskExecutor executor() { return EXECUTOR; }
+        static TaskExecutor executor() {
+            return EXECUTOR;
+        }
     }
 }

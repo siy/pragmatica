@@ -21,15 +21,10 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 /**
- * Resizable pool of mutable objects.
- * Low level utility class for creating pools of reusable (and therefore mutable) objects.
- * Note that this implementation goals were:
- * 1) minimize memory allocation
- * 2) minimal possible overhead
- * As a consequence API is not null-safe, not completely bulletproof and
- * not thread safe. In particular, check for double releases is minimal and
- * does not protect from all possible mistakes.
- * Use with care.
+ * Resizable pool of mutable objects. Low level utility class for creating pools of reusable (and therefore mutable) objects. Note that this
+ * implementation goals were: 1) minimize memory allocation 2) minimal possible overhead As a consequence API is not null-safe, not completely
+ * bulletproof and not thread safe. In particular, check for double releases is minimal and does not protect from all possible mistakes. Use with
+ * care.
  *
  * @param <T>
  */
@@ -42,19 +37,19 @@ public class ObjectPool<T> {
     private int nextFree = 0;
     private int count = 0;
 
-    private ObjectPool(final int initialCapacity, final Supplier<T> supplier, final Consumer<T> janitor) {
+    private ObjectPool(int initialCapacity, Supplier<T> supplier, Consumer<T> janitor) {
         elements = new Object[initialCapacity];
         indexes = new int[initialCapacity];
         this.supplier = supplier;
         this.janitor = janitor;
     }
 
-    public static <T> ObjectPool<T> objectPool(final int initialCapacity, final Supplier<T> newElement, final Consumer<T> janitor) {
+    public static <T> ObjectPool<T> objectPool(int initialCapacity, Supplier<T> newElement, Consumer<T> janitor) {
         return new ObjectPool<>(initialCapacity, newElement, janitor);
     }
 
     @SuppressWarnings("unchecked")
-    public void release(final int key) {
+    public void release(int key) {
         if (key < 0 || key >= nextFree || key == firstFree) {
             return;
         }
@@ -66,7 +61,7 @@ public class ObjectPool<T> {
     }
 
     @SuppressWarnings("unchecked")
-    public T get(final int key) {
+    public T get(int key) {
         if (key < 0 || key >= nextFree || key == firstFree) {
             return null;
         }
@@ -92,7 +87,7 @@ public class ObjectPool<T> {
     }
 
     private int allocNew() {
-        final int index = nextFree++;
+        int index = nextFree++;
         elements[index] = supplier.get();
         indexes[index] = firstFree;
         firstFree = index;
@@ -100,7 +95,7 @@ public class ObjectPool<T> {
     }
 
     private int allocInFreeChain() {
-        final int result = firstFree;
+        int result = firstFree;
         firstFree = indexes[result];
         count++;
         return result;

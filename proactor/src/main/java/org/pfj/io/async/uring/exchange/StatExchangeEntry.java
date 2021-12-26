@@ -16,12 +16,12 @@
 
 package org.pfj.io.async.uring.exchange;
 
-import org.pfj.io.async.file.stat.FileStat;
-import org.pfj.io.async.uring.struct.raw.SubmitQueueEntry;
-import org.pfj.io.async.SystemError;
 import org.pfj.io.async.Proactor;
+import org.pfj.io.async.SystemError;
+import org.pfj.io.async.file.stat.FileStat;
 import org.pfj.io.async.uring.struct.offheap.OffHeapCString;
 import org.pfj.io.async.uring.struct.offheap.OffHeapFileStat;
+import org.pfj.io.async.uring.struct.raw.SubmitQueueEntry;
 import org.pfj.io.async.uring.utils.PlainObjectPool;
 import org.pfj.lang.Result;
 
@@ -37,16 +37,16 @@ public class StatExchangeEntry extends AbstractExchangeEntry<StatExchangeEntry, 
     private int statFlags;
     private int statMask;
 
-    protected StatExchangeEntry(final PlainObjectPool<StatExchangeEntry> pool) {
+    protected StatExchangeEntry(PlainObjectPool<StatExchangeEntry> pool) {
         super(IORING_OP_STATX, pool);
     }
 
     @Override
-    protected void doAccept(final int res, final int flags, final Proactor proactor) {
+    protected void doAccept(int res, int flags, Proactor proactor) {
         completion.accept(res < 0
-                ? SystemError.result(res)
-                : success(fileStat.extract()),
-            proactor);
+                          ? SystemError.result(res)
+                          : success(fileStat.extract()),
+                          proactor);
         fileStat.dispose();
         rawPath.dispose();
         rawPath = null;
@@ -62,20 +62,20 @@ public class StatExchangeEntry extends AbstractExchangeEntry<StatExchangeEntry, 
     }
 
     @Override
-    public SubmitQueueEntry apply(final SubmitQueueEntry entry) {
+    public SubmitQueueEntry apply(SubmitQueueEntry entry) {
         return super.apply(entry)
-            .fd(descriptor)
-            .addr(rawPath.address())
-            .len(statMask)
-            .off(fileStat.address())
-            .statxFlags(statFlags);
+                    .fd(descriptor)
+                    .addr(rawPath.address())
+                    .len(statMask)
+                    .off(fileStat.address())
+                    .statxFlags(statFlags);
     }
 
-    public StatExchangeEntry prepare(final BiConsumer<Result<FileStat>, Proactor> completion,
-                                     final int descriptor,
-                                     final int statFlags,
-                                     final int statMask,
-                                     final OffHeapCString rawPath) {
+    public StatExchangeEntry prepare(BiConsumer<Result<FileStat>, Proactor> completion,
+                                     int descriptor,
+                                     int statFlags,
+                                     int statMask,
+                                     OffHeapCString rawPath) {
         this.descriptor = descriptor;
         this.statFlags = statFlags;
         this.statMask = statMask;

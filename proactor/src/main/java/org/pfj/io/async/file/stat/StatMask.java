@@ -49,14 +49,14 @@ public enum StatMask implements Bitmask {
         return ALL;
     }
 
-    StatMask(final int mask) {
+    StatMask(int mask) {
         this.mask = mask;
     }
 
-    public static EnumSet<StatMask> fromInt(final int value) {
+    public static EnumSet<StatMask> fromInt(int value) {
         final var result = EnumSet.noneOf(StatMask.class);
 
-        for(final var statMask : values()) {
+        for (var statMask : values()) {
             if ((value & statMask.mask) != 0) {
                 result.add(statMask);
             }

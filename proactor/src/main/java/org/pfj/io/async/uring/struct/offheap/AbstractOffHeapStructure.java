@@ -20,11 +20,11 @@ import org.pfj.io.async.uring.struct.AbstractRawStructure;
 import org.pfj.io.async.uring.struct.OffHeapStructure;
 import org.pfj.io.async.util.raw.RawMemory;
 
-public abstract class AbstractOffHeapStructure<T extends AbstractOffHeapStructure<?>> extends AbstractRawStructure<T>
-        implements OffHeapStructure<T>, AutoCloseable {
+public abstract class AbstractOffHeapStructure<T extends AbstractOffHeapStructure<?>>
+    extends AbstractRawStructure<T> implements OffHeapStructure<T>, AutoCloseable {
     private boolean released = false;
 
-    protected AbstractOffHeapStructure(final int size) {
+    protected AbstractOffHeapStructure(int size) {
         super(RawMemory.allocate(size), size);
     }
 

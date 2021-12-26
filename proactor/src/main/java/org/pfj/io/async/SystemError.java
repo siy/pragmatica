@@ -17,7 +17,6 @@
 package org.pfj.io.async;
 
 import org.pfj.lang.Cause;
-import org.pfj.lang.Causes;
 import org.pfj.lang.Functions.FN1;
 import org.pfj.lang.Result;
 
@@ -170,17 +169,17 @@ public enum SystemError implements Cause {
 
 
     static {
-        for(final var err : values()) {
+        for (var err : values()) {
             if (err.code < index.length) {
                 index[err.code] = err;
             }
         }
     }
 
-    SystemError(final int code, final String description) {
+    SystemError(int code, String description) {
         this.code = code;
         this.message = description;
-        result = Causes.cause(description).result();
+        this.result = Result.failure(this);
     }
 
     @Override
@@ -197,18 +196,18 @@ public enum SystemError implements Cause {
         return message;
     }
 
-    public static <T> Result<T> result(final int code, final FN1<T, Integer> constructor) {
+    public static <T> Result<T> result(int code, FN1<T, Integer> constructor) {
         return code >= 0
                ? Result.success(constructor.apply(code))
                : fromCode(code).result();
     }
 
-    public static <T> Result<T> result(final int code) {
+    public static <T> Result<T> result(int code) {
         return fromCode(code).result();
     }
 
-    public static SystemError fromCode(final int code) {
-        final int key = Math.abs(code);
+    public static SystemError fromCode(int code) {
+        int key = Math.abs(code);
 
         if (code >= index.length) {
             return EUNKNOWN;

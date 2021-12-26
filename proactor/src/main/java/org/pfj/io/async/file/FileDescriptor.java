@@ -25,7 +25,7 @@ public class FileDescriptor {
     private final int fd;
     private final DescriptorType type;
 
-    private FileDescriptor(final int fd, final DescriptorType type) {
+    private FileDescriptor(int fd, DescriptorType type) {
         this.fd = fd;
         this.type = type;
     }
@@ -42,22 +42,22 @@ public class FileDescriptor {
         return fd;
     }
 
-    public static FileDescriptor file(final int fd) {
+    public static FileDescriptor file(int fd) {
         return new FileDescriptor(fd, DescriptorType.FILE);
     }
 
-    public static FileDescriptor socket(final int fd) {
+    public static FileDescriptor socket(int fd) {
         return new FileDescriptor(fd, DescriptorType.SOCKET);
     }
 
-    public static FileDescriptor socket6(final int fd) {
+    public static FileDescriptor socket6(int fd) {
         return new FileDescriptor(fd, DescriptorType.SOCKET6);
     }
 
     @Override
-    public boolean equals(final Object o) {
-        return this == o || o instanceof FileDescriptor other
-            && fd == other.fd && type == other.type;
+    public boolean equals(Object o) {
+        return this == o
+               || o instanceof FileDescriptor other && fd == other.fd && type == other.type;
     }
 
     @Override

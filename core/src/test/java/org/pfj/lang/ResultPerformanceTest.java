@@ -66,8 +66,8 @@ public class ResultPerformanceTest {
 
     public Result<String> testWithResultRate(int rate) {
         return testWithResult(RANDOM.nextInt(1000) < rate
-            ? Result.failure(TEST_CAUSE)
-            : Result.success(generateRandomString()));
+                              ? Result.failure(TEST_CAUSE)
+                              : Result.success(generateRandomString()));
     }
 
     @Benchmark

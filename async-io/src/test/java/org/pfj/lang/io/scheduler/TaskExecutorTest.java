@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class TaskExecutorTest {
     @Test

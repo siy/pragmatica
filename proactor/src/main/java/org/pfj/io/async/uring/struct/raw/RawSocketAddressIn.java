@@ -24,18 +24,18 @@ import org.pfj.lang.Result;
 import static org.pfj.io.async.net.AddressFamily.addressFamily;
 import static org.pfj.io.async.net.Inet4Address.inet4Address;
 import static org.pfj.io.async.net.InetPort.inetPort;
-import static org.pfj.io.async.uring.struct.shape.SocketAddressInOffsets.sin_addr;
-import static org.pfj.io.async.uring.struct.shape.SocketAddressInOffsets.sin_family;
-import static org.pfj.io.async.uring.struct.shape.SocketAddressInOffsets.sin_port;
+import static org.pfj.io.async.uring.struct.shape.SocketAddressInOffsets.*;
 import static org.pfj.lang.Result.success;
 
-public class RawSocketAddressIn extends AbstractExternalRawStructure<RawSocketAddressIn>
+public class RawSocketAddressIn
+    extends AbstractExternalRawStructure<RawSocketAddressIn>
     implements RawSocketAddress<SocketAddressIn, RawSocketAddressIn> {
-    private RawSocketAddressIn(final long address) {
+
+    private RawSocketAddressIn(long address) {
         super(address, SocketAddressInOffsets.SIZE);
     }
 
-    public static RawSocketAddressIn at(final long address) {
+    public static RawSocketAddressIn at(long address) {
         return new RawSocketAddressIn(address);
     }
 
@@ -43,7 +43,7 @@ public class RawSocketAddressIn extends AbstractExternalRawStructure<RawSocketAd
         return getIntInNetOrder(sin_addr);
     }
 
-    public RawSocketAddressIn inetAddress(final int address) {
+    public RawSocketAddressIn inetAddress(int address) {
         return putIntInNetOrder(sin_addr, address);
     }
 
@@ -51,7 +51,7 @@ public class RawSocketAddressIn extends AbstractExternalRawStructure<RawSocketAd
         return getShortInNetOrder(sin_port);
     }
 
-    public RawSocketAddressIn port(final short port) {
+    public RawSocketAddressIn port(short port) {
         return putShortInNetOrder(sin_port, port);
     }
 
@@ -59,12 +59,12 @@ public class RawSocketAddressIn extends AbstractExternalRawStructure<RawSocketAd
         return getShort(sin_family);
     }
 
-    public RawSocketAddressIn family(final short family) {
+    public RawSocketAddressIn family(short family) {
         return putShort(sin_family, family);
     }
 
     @Override
-    public void assign(final SocketAddressIn addressIn) {
+    public void assign(SocketAddressIn addressIn) {
         family(addressIn.family().familyId());
         port(addressIn.port().port());
         putBytes(sin_addr, addressIn.address().asBytes());
@@ -73,9 +73,9 @@ public class RawSocketAddressIn extends AbstractExternalRawStructure<RawSocketAd
     @Override
     public Result<SocketAddressIn> extract() {
         return Result.all(addressFamily(family()),
-                success(inetPort(port())),
-                inet4Address(getBytes(sin_addr)))
-            .map(SocketAddressIn::create);
+                          success(inetPort(port())),
+                          inet4Address(getBytes(sin_addr)))
+                     .map(SocketAddressIn::create);
     }
 
     @Override

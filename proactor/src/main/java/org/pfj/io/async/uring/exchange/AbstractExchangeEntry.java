@@ -16,11 +16,11 @@
 
 package org.pfj.io.async.uring.exchange;
 
-import org.pfj.io.async.uring.struct.raw.SubmitQueueEntry;
-import org.pfj.io.async.uring.CompletionHandler;
 import org.pfj.io.async.Proactor;
 import org.pfj.io.async.common.SizeT;
 import org.pfj.io.async.uring.AsyncOperation;
+import org.pfj.io.async.uring.CompletionHandler;
+import org.pfj.io.async.uring.struct.raw.SubmitQueueEntry;
 import org.pfj.io.async.uring.utils.ObjectHeap;
 import org.pfj.io.async.uring.utils.PlainObjectPool;
 import org.pfj.lang.Result;
@@ -54,7 +54,7 @@ public abstract class AbstractExchangeEntry<T extends AbstractExchangeEntry<T, R
     private int key;
     protected BiConsumer<Result<R>, Proactor> completion;
 
-    protected AbstractExchangeEntry(final AsyncOperation operation, final PlainObjectPool pool) {
+    protected AbstractExchangeEntry(AsyncOperation operation, PlainObjectPool pool) {
         this.operation = operation;
         this.pool = pool;
     }
@@ -70,12 +70,12 @@ public abstract class AbstractExchangeEntry<T extends AbstractExchangeEntry<T, R
     }
 
     @Override
-    public final void accept(final int result, final int flags, final Proactor proactor) {
+    public final void accept(int result, int flags, Proactor proactor) {
         doAccept(result, flags, proactor);
         release();
     }
 
-    protected abstract void doAccept(final int result, final int flags, final Proactor proactor);
+    protected abstract void doAccept(int result, int flags, Proactor proactor);
 
     @Override
     public void close() {
@@ -88,32 +88,32 @@ public abstract class AbstractExchangeEntry<T extends AbstractExchangeEntry<T, R
 
     @Override
     @SuppressWarnings("unchecked")
-    public T next(final T next) {
+    public T next(T next) {
         this.next = next;
         return (T) this;
     }
 
     @Override
     @SuppressWarnings("unchecked")
-    public T register(final ObjectHeap<CompletionHandler> heap) {
+    public T register(ObjectHeap<CompletionHandler> heap) {
         key = heap.allocKey(this);
         return (T) this;
     }
 
     @Override
-    public SubmitQueueEntry apply(final SubmitQueueEntry entry) {
+    public SubmitQueueEntry apply(SubmitQueueEntry entry) {
         return entry.userData(key)
                     .opcode(operation.opcode());
     }
 
     @SuppressWarnings("unchecked")
-    public T prepare(final BiConsumer<Result<R>, Proactor> completion) {
+    public T prepare(BiConsumer<Result<R>, Proactor> completion) {
         this.completion = completion;
         return (T) this;
     }
 
     @SuppressWarnings("unchecked")
-    protected static Result<SizeT> sizeResult(final int res) {
+    protected static Result<SizeT> sizeResult(int res) {
         return res < RESULT_SIZET_POOL.length
                ? RESULT_SIZET_POOL[res]
                : success(sizeT(res));

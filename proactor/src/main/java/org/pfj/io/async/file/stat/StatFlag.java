@@ -16,24 +16,23 @@
 
 package org.pfj.io.async.file.stat;
 
-import org.pfj.io.async.uring.Bitmask;
 import org.pfj.io.async.Proactor;
 import org.pfj.io.async.file.FileDescriptor;
+import org.pfj.io.async.uring.Bitmask;
 
 import java.nio.file.Path;
 import java.util.EnumSet;
 
 /**
- * Flags which control behavior of {@link Proactor#stat(Path, EnumSet, EnumSet)} and {@link Proactor#stat(FileDescriptor, EnumSet, EnumSet)}
- * methods.
+ * Flags which control behavior of {@link Proactor#stat(Path, EnumSet, EnumSet)} and {@link Proactor#stat(FileDescriptor, EnumSet, EnumSet)} methods.
  * <p>
- * Note that {@link #EMPTY_PATH} is used internally. This flag controls what is used to point to file - path or file descriptor.
- * While this is not an error to pass this flag to methods above, it is ignored.
+ * Note that {@link #EMPTY_PATH} is used internally. This flag controls what is used to point to file - path or file descriptor. While this is not an
+ * error to pass this flag to methods above, it is ignored.
  * <p>
- * Flags {@link #STATX_DONT_SYNC} and {@link #STATX_FORCE_SYNC} have mutually exclusive meaning so if they both are passed, result is undefined
- * and may depend on Linux kernel version. If none of these flags passed then default behavior is used. The default behavior depends
- * on file system where file resides. So, if consistent behavior is necessary then one of these flags should be provided. If underlying file
- * system is remote, using {@link #STATX_FORCE_SYNC} might trigger additional synchronization with relevant network communication.
+ * Flags {@link #STATX_DONT_SYNC} and {@link #STATX_FORCE_SYNC} have mutually exclusive meaning so if they both are passed, result is undefined and
+ * may depend on Linux kernel version. If none of these flags passed then default behavior is used. The default behavior depends on file system where
+ * file resides. So, if consistent behavior is necessary then one of these flags should be provided. If underlying file system is remote, using {@link
+ * #STATX_FORCE_SYNC} might trigger additional synchronization with relevant network communication.
  */
 public enum StatFlag implements Bitmask {
     EMPTY_PATH(0x00001000),         /* Operate on FD rather than path (if path is empty) */
@@ -44,7 +43,7 @@ public enum StatFlag implements Bitmask {
 
     private final int mask;
 
-    StatFlag(final int mask) {
+    StatFlag(int mask) {
         this.mask = mask;
     }
 

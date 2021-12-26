@@ -16,6 +16,8 @@
 
 package org.pfj.io.async.uring;
 
+import org.pfj.io.async.Proactor;
+import org.pfj.io.async.SystemError;
 import org.pfj.io.async.common.SizeT;
 import org.pfj.io.async.file.FileDescriptor;
 import org.pfj.io.async.net.*;
@@ -23,22 +25,18 @@ import org.pfj.io.async.uring.exchange.ExchangeEntry;
 import org.pfj.io.async.uring.struct.raw.CompletionQueueEntry;
 import org.pfj.io.async.uring.struct.raw.SubmitQueueEntry;
 import org.pfj.io.async.uring.utils.ObjectHeap;
+import org.pfj.io.async.util.raw.RawMemory;
 import org.pfj.lang.Result;
 import org.pfj.lang.Tuple.Tuple3;
-import org.pfj.io.async.SystemError;
-import org.pfj.io.async.Proactor;
-import org.pfj.io.async.util.raw.RawMemory;
 
 import java.util.Deque;
 import java.util.Set;
 
-import static org.pfj.lang.Result.success;
-import static org.pfj.lang.Tuple.tuple;
-import static org.pfj.io.async.SystemError.ENOTSOCK;
-import static org.pfj.io.async.SystemError.EPFNOSUPPORT;
-import static org.pfj.io.async.SystemError.result;
+import static org.pfj.io.async.SystemError.*;
 import static org.pfj.io.async.uring.struct.offheap.OffHeapSocketAddress.addressIn;
 import static org.pfj.io.async.uring.struct.offheap.OffHeapSocketAddress.addressIn6;
+import static org.pfj.lang.Result.success;
+import static org.pfj.lang.Tuple.tuple;
 
 /**
  * Low-level IO URING API
@@ -59,7 +57,7 @@ public class UringApi implements AutoCloseable {
 
     private boolean closed = false;
 
-    private UringApi(final int numEntries, final long ringBase) {
+    private UringApi(int numEntries, long ringBase) {
         submissionEntries = numEntries;
         completionEntries = numEntries * 2;
         this.ringBase = ringBase;
@@ -82,8 +80,8 @@ public class UringApi implements AutoCloseable {
         closed = true;
     }
 
-    public void processCompletions(final ObjectHeap<CompletionHandler> pendingCompletions, final Proactor proactor) {
-        final long ready = UringNative.peekCQ(ringBase, completionBuffer, completionEntries);
+    public void processCompletions(ObjectHeap<CompletionHandler> pendingCompletions, Proactor proactor) {
+        long ready = UringNative.peekCQ(ringBase, completionBuffer, completionEntries);
 
         for (long i = 0, address = completionBuffer; i < ready; i++, address += ENTRY_SIZE) {
             cqEntry.reposition(RawMemory.getLong(address));
@@ -97,8 +95,8 @@ public class UringApi implements AutoCloseable {
         }
     }
 
-    public void processSubmissions(final Deque<ExchangeEntry<?>> queue) {
-        final int available = UringNative.peekSQEntries(ringBase,
+    public void processSubmissions(Deque<ExchangeEntry<?>> queue) {
+        int available = UringNative.peekSQEntries(ringBase,
                                                   submissionBuffer,
                                                   Math.min(queue.size(), submissionEntries));
 
@@ -110,10 +108,10 @@ public class UringApi implements AutoCloseable {
         UringNative.submitAndWait(ringBase, 0);
     }
 
-    public static Result<UringApi> uringApi(final int requestedEntries, final Set<UringSetupFlags> openFlags) {
-        final long ringBase = RawMemory.allocate(UringNative.SIZE);
-        final int numEntries = calculateNumEntries(requestedEntries);
-        final int rc = UringNative.init(numEntries, ringBase, Bitmask.combine(openFlags));
+    public static Result<UringApi> uringApi(int requestedEntries, Set<UringSetupFlags> openFlags) {
+        long ringBase = RawMemory.allocate(UringNative.SIZE);
+        int numEntries = calculateNumEntries(requestedEntries);
+        int rc = UringNative.init(numEntries, ringBase, Bitmask.combine(openFlags));
 
         if (rc != 0) {
             RawMemory.dispose(ringBase);
@@ -123,7 +121,7 @@ public class UringApi implements AutoCloseable {
         return success(new UringApi(numEntries, ringBase));
     }
 
-    private static int calculateNumEntries(final int size) {
+    private static int calculateNumEntries(int size) {
         if (size <= MIN_QUEUE_SIZE) {
             return MIN_QUEUE_SIZE;
         }
@@ -136,36 +134,36 @@ public class UringApi implements AutoCloseable {
         return submissionEntries;
     }
 
-    public static Result<FileDescriptor> socket(final AddressFamily addressFamily,
-                                                final SocketType socketType,
-                                                final Set<SocketFlag> openFlags,
-                                                final Set<SocketOption> options) {
+    public static Result<FileDescriptor> socket(AddressFamily addressFamily,
+                                                SocketType socketType,
+                                                Set<SocketFlag> openFlags,
+                                                Set<SocketOption> options) {
         return result(UringNative.socket(addressFamily.familyId(),
-                                   socketType.code() | Bitmask.combine(openFlags),
-                                   Bitmask.combine(options)),
+                                         socketType.code() | Bitmask.combine(openFlags),
+                                         Bitmask.combine(options)),
                       (addressFamily == AddressFamily.INET6) ? FileDescriptor::socket6
                                                              : FileDescriptor::socket);
     }
 
-    public static Result<ServerContext<?>> server(final SocketAddress<?> socketAddress,
-                                                  final SocketType socketType,
-                                                  final Set<SocketFlag> openFlags,
-                                                  final Set<SocketOption> options,
-                                                  final SizeT queueDepth) {
+    public static Result<ServerContext<?>> server(SocketAddress<?> socketAddress,
+                                                  SocketType socketType,
+                                                  Set<SocketFlag> openFlags,
+                                                  Set<SocketOption> options,
+                                                  SizeT queueDepth) {
         return socket(socketAddress.family(), socketType, openFlags, options)
-                .flatMap(fileDescriptor -> configureForListen(fileDescriptor, socketAddress, (int) queueDepth.value()))
-                .map(tuple -> tuple.map(ServerContext::connector));
+            .flatMap(fileDescriptor -> configureForListen(fileDescriptor, socketAddress, (int) queueDepth.value()))
+            .map(tuple -> tuple.map(ServerContext::connector));
     }
 
-    private static Result<Tuple3<FileDescriptor, SocketAddress<?>, Integer>> configureForListen(final FileDescriptor fileDescriptor,
-                                                                                                final SocketAddress<?> socketAddress,
-                                                                                                final int queueDepth) {
+    private static Result<Tuple3<FileDescriptor, SocketAddress<?>, Integer>> configureForListen(FileDescriptor fileDescriptor,
+                                                                                                SocketAddress<?> socketAddress,
+                                                                                                int queueDepth) {
 
         if (!fileDescriptor.isSocket()) {
             return ENOTSOCK.result();
         }
 
-        final var rc = switch (socketAddress.family()) {
+        var rc = switch (socketAddress.family()) {
             case INET -> configureForInet(fileDescriptor, socketAddress, queueDepth);
             case INET6 -> configureForInet6(fileDescriptor, socketAddress, queueDepth);
             default -> EPFNOSUPPORT.code();
@@ -174,35 +172,35 @@ public class UringApi implements AutoCloseable {
         return result(rc, __ -> tuple(fileDescriptor, socketAddress, queueDepth));
     }
 
-    private static int configureForInet6(final FileDescriptor fileDescriptor, final SocketAddress<?> socketAddress, final int queueDepth) {
+    private static int configureForInet6(FileDescriptor fileDescriptor, SocketAddress<?> socketAddress, int queueDepth) {
         if (!fileDescriptor.isSocket6() || socketAddress.family() != AddressFamily.INET6) {
             return -EPFNOSUPPORT.code();
         }
 
         if (socketAddress instanceof SocketAddressIn6 socketAddressIn6) {
-            final var addressIn6 = addressIn6(socketAddressIn6);
+            var addressIn6 = addressIn6(socketAddressIn6);
 
             return UringNative.prepareForListen(fileDescriptor.descriptor(),
-                                          addressIn6.sockAddrPtr(),
-                                          addressIn6.sockAddrSize(),
-                                          queueDepth);
+                                                addressIn6.sockAddrPtr(),
+                                                addressIn6.sockAddrSize(),
+                                                queueDepth);
         }
 
         return -EPFNOSUPPORT.code();
     }
 
-    private static int configureForInet(final FileDescriptor fileDescriptor, final SocketAddress<?> socketAddress, final int queueDepth) {
+    private static int configureForInet(FileDescriptor fileDescriptor, SocketAddress<?> socketAddress, int queueDepth) {
         if (fileDescriptor.isSocket6() || socketAddress.family() == AddressFamily.INET6) {
             return -EPFNOSUPPORT.code();
         }
 
         if (socketAddress instanceof SocketAddressIn socketAddressIn) {
-            final var addressIn = addressIn(socketAddressIn);
+            var addressIn = addressIn(socketAddressIn);
 
             return UringNative.prepareForListen(fileDescriptor.descriptor(),
-                                          addressIn.sockAddrPtr(),
-                                          addressIn.sockAddrSize(),
-                                          queueDepth);
+                                                addressIn.sockAddrPtr(),
+                                                addressIn.sockAddrSize(),
+                                                queueDepth);
 
         }
 

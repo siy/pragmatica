@@ -18,5 +18,6 @@ package org.pfj.io.async.uring.utils;
 
 public interface Poolable<T extends Poolable<T>> {
     T next();
-    T next(final T next);
+
+    T next(T next);
 }

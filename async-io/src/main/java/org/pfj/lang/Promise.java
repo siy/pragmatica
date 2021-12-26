@@ -36,6 +36,7 @@ public interface Promise<T> {
      * unchanged.
      *
      * @param value The value to resolve the Promise instance.
+     *
      * @return Current instance
      */
     Promise<T> resolve(Result<T> value);
@@ -55,6 +56,7 @@ public interface Promise<T> {
      * Transform current instance into the instance containing another type using provided transformation function.
      *
      * @param mapper The transformation function
+     *
      * @return Transformed instance
      */
     <U> Promise<U> map(FN1<U, ? super T> mapper);
@@ -63,6 +65,7 @@ public interface Promise<T> {
      * Compose current instance with the function which returns a Promise of another type.
      *
      * @param mapper The function to compose with
+     *
      * @return Composed instance
      */
     <U> Promise<U> flatMap(FN1<Promise<U>, ? super T> mapper);
@@ -71,6 +74,7 @@ public interface Promise<T> {
      * Run asynchronous task. The task will receive current instance of Promise as a parameter.
      *
      * @param action The task to run
+     *
      * @return Current instance
      */
     default Promise<T> async(Consumer<Promise<T>> action) {
@@ -81,6 +85,7 @@ public interface Promise<T> {
      * Run asynchronous task. The task will receive current instance of Promise and an instance of {@link Proactor} as a parameter.
      *
      * @param action The task to run
+     *
      * @return Current instance
      */
     Promise<T> async(BiConsumer<Promise<T>, Proactor> action);
@@ -90,6 +95,7 @@ public interface Promise<T> {
      *
      * @param timeout The timeout before task will be started
      * @param action  The task to run
+     *
      * @return Current instance
      */
     default Promise<T> async(Timeout timeout, Consumer<Promise<T>> action) {
@@ -101,6 +107,7 @@ public interface Promise<T> {
      *
      * @param timeout The timeout before task will be started
      * @param action  The task to run
+     *
      * @return Current instance
      */
     Promise<T> async(Timeout timeout, BiConsumer<Promise<T>, Proactor> action);
@@ -115,8 +122,11 @@ public interface Promise<T> {
     /**
      * Wait for completion of the Promise and all attached actions. The waiting time is limited to specified timeout. If timeout expires before
      * Promise is resolved, then returned result contains {@link org.pfj.io.async.SystemError#ETIME} error.
+     * <p>
+     * Note that if return signals that timeout is expired, this does not change state of the promise.
      *
      * @param timeout How long to wait for promise resolution
+     *
      * @return Value of the Promise or timeout error.
      */
     Result<T> join(Timeout timeout);
@@ -126,6 +136,7 @@ public interface Promise<T> {
      * invocation of this method, then provided action will be executed immediately.
      *
      * @param action the action to execute
+     *
      * @return Current instance
      */
     Promise<T> onResult(Consumer<Result<T>> action);
@@ -136,6 +147,7 @@ public interface Promise<T> {
      * passed to this method does not receive parameter.
      *
      * @param action the action to execute
+     *
      * @return Current instance
      */
     default Promise<T> onResultDo(Runnable action) {
@@ -149,6 +161,7 @@ public interface Promise<T> {
      * immediately.
      *
      * @param action the action to execute
+     *
      * @return Current instance
      */
     default Promise<T> onSuccess(Consumer<T> action) {
@@ -162,6 +175,7 @@ public interface Promise<T> {
      * immediately. Note that unlike {@link Promise#onSuccess(Consumer)}, the action passed to this method does not receive parameter.
      *
      * @param action the action to execute
+     *
      * @return Current instance
      */
     default Promise<T> onSuccessDo(Runnable action) {
@@ -175,6 +189,7 @@ public interface Promise<T> {
      * immediately.
      *
      * @param action the action to execute
+     *
      * @return Current instance
      */
     default Promise<T> onFailure(Consumer<? super Cause> action) {
@@ -188,6 +203,7 @@ public interface Promise<T> {
      * immediately. Note that unlike {@link Promise#onFailure(Consumer)}, the action passed to this method does not receive parameter.
      *
      * @param action the action to execute
+     *
      * @return Current instance
      */
     default Promise<T> onFailureDo(Runnable action) {
@@ -199,6 +215,7 @@ public interface Promise<T> {
      * invocation has no effect.
      *
      * @param value the value to resolve.
+     *
      * @return Current instance
      */
     default Promise<T> success(T value) {
@@ -210,6 +227,7 @@ public interface Promise<T> {
      * invocation has no effect.
      *
      * @param cause the failure cause.
+     *
      * @return Current instance
      */
     default Promise<T> failure(Cause cause) {
@@ -229,6 +247,7 @@ public interface Promise<T> {
      * Create an unresolved instance and run asynchronous action which will receive created instance as a parameter.
      *
      * @param consumer The action to run
+     *
      * @return Created instance
      */
     static <R> Promise<R> promise(Consumer<Promise<R>> consumer) {
@@ -239,6 +258,7 @@ public interface Promise<T> {
      * Create a resolved instance.
      *
      * @param value The value which will be stored in the created instance
+     *
      * @return Created instance
      */
     static <R> Promise<R> resolved(Result<R> value) {
@@ -249,8 +269,8 @@ public interface Promise<T> {
         return () -> Promise.promise(
             promise -> promise1.onResult(
                 result -> result.map(Tuple::tuple)
-                    .onSuccess(promise::success)
-                    .onFailure(promise::failure)));
+                                .onSuccess(promise::success)
+                                .onFailure(promise::failure)));
     }
 
     private static <R> Promise<R> setup(FNx<R> transformer, Promise<?>... promises) {
@@ -275,23 +295,23 @@ public interface Promise<T> {
     static <T1, T2, T3> Mapper3<T1, T2, T3> all(
         Promise<T1> promise1, Promise<T2> promise2, Promise<T3> promise3) {
 
-        return () -> setup(values -> tuple((T1) values[1], (T2) values[2], (T3) values[3]), promise1, promise2, promise3);
+        return () -> setup(values -> tuple((T1) values[0], (T2) values[1], (T3) values[2]), promise1, promise2, promise3);
     }
 
     @SuppressWarnings("unchecked")
     static <T1, T2, T3, T4> Mapper4<T1, T2, T3, T4> all(
         Promise<T1> promise1, Promise<T2> promise2, Promise<T3> promise3, Promise<T4> promise4) {
 
-        return () -> setup(values -> tuple((T1) values[1], (T2) values[2], (T3) values[3], (T4) values[4]),
-            promise1, promise2, promise3, promise4);
+        return () -> setup(values -> tuple((T1) values[0], (T2) values[1], (T3) values[2], (T4) values[3]),
+                           promise1, promise2, promise3, promise4);
     }
 
     @SuppressWarnings("unchecked")
     static <T1, T2, T3, T4, T5> Mapper5<T1, T2, T3, T4, T5> all(
         Promise<T1> promise1, Promise<T2> promise2, Promise<T3> promise3, Promise<T4> promise4, Promise<T5> promise5) {
 
-        return () -> setup(values -> tuple((T1) values[1], (T2) values[2], (T3) values[3], (T4) values[4], (T5) values[5]),
-            promise1, promise2, promise3, promise4, promise5);
+        return () -> setup(values -> tuple((T1) values[0], (T2) values[1], (T3) values[2], (T4) values[3], (T5) values[4]),
+                           promise1, promise2, promise3, promise4, promise5);
     }
 
     @SuppressWarnings("unchecked")
@@ -300,8 +320,8 @@ public interface Promise<T> {
         Promise<T5> promise5, Promise<T6> promise6) {
 
         return () -> setup(values -> tuple(
-                (T1) values[1], (T2) values[2], (T3) values[3], (T4) values[4], (T5) values[5], (T6) values[6]),
-            promise1, promise2, promise3, promise4, promise5, promise6);
+                               (T1) values[0], (T2) values[1], (T3) values[2], (T4) values[3], (T5) values[4], (T6) values[5]),
+                           promise1, promise2, promise3, promise4, promise5, promise6);
     }
 
     @SuppressWarnings("unchecked")
@@ -310,9 +330,9 @@ public interface Promise<T> {
         Promise<T5> promise5, Promise<T6> promise6, Promise<T7> promise7) {
 
         return () -> setup(values -> tuple(
-                (T1) values[1], (T2) values[2], (T3) values[3], (T4) values[4],
-                (T5) values[5], (T6) values[6], (T7) values[7]),
-            promise1, promise2, promise3, promise4, promise5, promise6, promise7);
+                               (T1) values[0], (T2) values[1], (T3) values[2], (T4) values[3],
+                               (T5) values[4], (T6) values[5], (T7) values[6]),
+                           promise1, promise2, promise3, promise4, promise5, promise6, promise7);
     }
 
     @SuppressWarnings("unchecked")
@@ -321,9 +341,9 @@ public interface Promise<T> {
         Promise<T5> promise5, Promise<T6> promise6, Promise<T7> promise7, Promise<T8> promise8) {
 
         return () -> setup(values -> tuple(
-                (T1) values[1], (T2) values[2], (T3) values[3], (T4) values[4],
-                (T5) values[5], (T6) values[6], (T7) values[7], (T8) values[8]),
-            promise1, promise2, promise3, promise4, promise5, promise6, promise7, promise8);
+                               (T1) values[0], (T2) values[1], (T3) values[2], (T4) values[3],
+                               (T5) values[4], (T6) values[5], (T7) values[6], (T8) values[7]),
+                           promise1, promise2, promise3, promise4, promise5, promise6, promise7, promise8);
     }
 
     @SuppressWarnings("unchecked")
@@ -332,9 +352,9 @@ public interface Promise<T> {
         Promise<T6> promise6, Promise<T7> promise7, Promise<T8> promise8, Promise<T9> promise9) {
 
         return () -> setup(values -> tuple(
-            (T1) values[1], (T2) values[2], (T3) values[3], (T4) values[4], (T5) values[5],
-            (T6) values[6], (T7) values[7], (T8) values[8], (T9) values[9]),
-            promise1, promise2, promise3, promise4, promise5, promise6, promise7, promise8, promise9);
+                               (T1) values[0], (T2) values[1], (T3) values[2], (T4) values[3], (T5) values[4],
+                               (T6) values[5], (T7) values[6], (T8) values[7], (T9) values[8]),
+                           promise1, promise2, promise3, promise4, promise5, promise6, promise7, promise8, promise9);
     }
 
     interface Mapper1<T1> {

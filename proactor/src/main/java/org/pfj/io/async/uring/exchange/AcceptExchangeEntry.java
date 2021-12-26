@@ -16,14 +16,14 @@
 
 package org.pfj.io.async.uring.exchange;
 
-import org.pfj.io.async.uring.struct.raw.RawSocketAddressIn;
-import org.pfj.io.async.uring.struct.raw.SubmitQueueEntry;
-import org.pfj.io.async.SystemError;
 import org.pfj.io.async.Proactor;
+import org.pfj.io.async.SystemError;
 import org.pfj.io.async.file.FileDescriptor;
 import org.pfj.io.async.net.ClientConnection;
 import org.pfj.io.async.net.SocketAddressIn;
 import org.pfj.io.async.uring.struct.offheap.OffHeapSocketAddress;
+import org.pfj.io.async.uring.struct.raw.RawSocketAddressIn;
+import org.pfj.io.async.uring.struct.raw.SubmitQueueEntry;
 import org.pfj.io.async.uring.utils.PlainObjectPool;
 import org.pfj.lang.Result;
 
@@ -38,7 +38,7 @@ public class AcceptExchangeEntry extends AbstractExchangeEntry<AcceptExchangeEnt
     private int descriptor;
     private int acceptFlags;
 
-    protected AcceptExchangeEntry(final PlainObjectPool<AcceptExchangeEntry> pool) {
+    protected AcceptExchangeEntry(PlainObjectPool<AcceptExchangeEntry> pool) {
         super(IORING_OP_ACCEPT, pool);
     }
 
@@ -48,19 +48,19 @@ public class AcceptExchangeEntry extends AbstractExchangeEntry<AcceptExchangeEnt
     }
 
     @Override
-    protected void doAccept(final int res, final int flags, final Proactor proactor) {
+    protected void doAccept(int res, int flags, Proactor proactor) {
         if (res <= 0) {
             completion.accept(SystemError.result(res), proactor);
         }
 
         completion.accept(clientAddress.extract()
                                        .map(addr -> connectionIn(FileDescriptor.socket(res), addr)),
-            proactor);
+                          proactor);
 
     }
 
     @Override
-    public SubmitQueueEntry apply(final SubmitQueueEntry entry) {
+    public SubmitQueueEntry apply(SubmitQueueEntry entry) {
         return super.apply(entry)
                     .fd(descriptor)
                     .addr(clientAddress.sockAddrPtr())
@@ -68,9 +68,7 @@ public class AcceptExchangeEntry extends AbstractExchangeEntry<AcceptExchangeEnt
                     .acceptFlags(acceptFlags);
     }
 
-    public AcceptExchangeEntry prepare(final BiConsumer<Result<ClientConnection<?>>, Proactor> completion,
-                                       final int descriptor,
-                                       final int acceptFlags) {
+    public AcceptExchangeEntry prepare(BiConsumer<Result<ClientConnection<?>>, Proactor> completion, int descriptor, int acceptFlags) {
         this.descriptor = descriptor;
         this.acceptFlags = acceptFlags;
         clientAddress.reset();

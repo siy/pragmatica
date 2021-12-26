@@ -30,7 +30,7 @@ public class OffHeapTimeSpec extends AbstractOffHeapStructure<OffHeapTimeSpec> {
         super(TimeSpecOffsets.SIZE);
     }
 
-    public OffHeapTimeSpec setSecondsNanos(final long seconds, final long nanos) {
+    public OffHeapTimeSpec setSecondsNanos(long seconds, long nanos) {
         return putLong(tv_sec, seconds).putLong(tv_nsec, nanos);
     }
 
@@ -38,13 +38,13 @@ public class OffHeapTimeSpec extends AbstractOffHeapStructure<OffHeapTimeSpec> {
         return new OffHeapTimeSpec();
     }
 
-    public static OffHeapTimeSpec forSecondsNanos(final long seconds, final long nanos) {
+    public static OffHeapTimeSpec forSecondsNanos(long seconds, long nanos) {
         return new OffHeapTimeSpec()
-                .putLong(tv_sec, seconds)
-                .putLong(tv_nsec, nanos);
+            .putLong(tv_sec, seconds)
+            .putLong(tv_nsec, nanos);
     }
 
-    public static OffHeapTimeSpec forTimeout(final Timeout timeout) {
+    public static OffHeapTimeSpec forTimeout(Timeout timeout) {
         return timeout.asSecondsAndNanos()
                       .map(OffHeapTimeSpec::forSecondsNanos);
     }

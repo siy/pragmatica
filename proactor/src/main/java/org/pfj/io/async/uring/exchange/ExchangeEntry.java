@@ -16,8 +16,8 @@
 
 package org.pfj.io.async.uring.exchange;
 
-import org.pfj.io.async.uring.struct.raw.SubmitQueueEntry;
 import org.pfj.io.async.uring.CompletionHandler;
+import org.pfj.io.async.uring.struct.raw.SubmitQueueEntry;
 import org.pfj.io.async.uring.utils.ObjectHeap;
 import org.pfj.io.async.uring.utils.Poolable;
 
@@ -27,7 +27,7 @@ public interface ExchangeEntry<T extends ExchangeEntry<T> & Poolable<T>> extends
      */
     void close();
 
-    SubmitQueueEntry apply(final SubmitQueueEntry entry);
+    SubmitQueueEntry apply(SubmitQueueEntry entry);
 
-    T register(final ObjectHeap<CompletionHandler> heap);
+    T register(ObjectHeap<CompletionHandler> heap);
 }

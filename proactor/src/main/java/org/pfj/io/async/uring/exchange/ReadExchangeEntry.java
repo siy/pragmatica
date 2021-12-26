@@ -16,12 +16,12 @@
 
 package org.pfj.io.async.uring.exchange;
 
-import org.pfj.io.async.uring.struct.raw.SubmitQueueEntry;
-import org.pfj.io.async.SystemError;
 import org.pfj.io.async.Proactor;
+import org.pfj.io.async.SystemError;
 import org.pfj.io.async.common.SizeT;
-import org.pfj.io.async.util.OffHeapBuffer;
+import org.pfj.io.async.uring.struct.raw.SubmitQueueEntry;
 import org.pfj.io.async.uring.utils.PlainObjectPool;
+import org.pfj.io.async.util.OffHeapBuffer;
 import org.pfj.lang.Result;
 
 import java.util.function.BiConsumer;
@@ -36,12 +36,12 @@ public class ReadExchangeEntry extends AbstractExchangeEntry<ReadExchangeEntry, 
     private OffHeapBuffer buffer;
     private long offset;
 
-    protected ReadExchangeEntry(final PlainObjectPool<ReadExchangeEntry> pool) {
+    protected ReadExchangeEntry(PlainObjectPool<ReadExchangeEntry> pool) {
         super(IORING_OP_READ, pool);
     }
 
     @Override
-    protected void doAccept(final int res, final int flags, final Proactor proactor) {
+    protected void doAccept(int res, int flags, Proactor proactor) {
         if (res > 0) {
             buffer.used(res);
         }
@@ -49,7 +49,7 @@ public class ReadExchangeEntry extends AbstractExchangeEntry<ReadExchangeEntry, 
     }
 
     @Override
-    public SubmitQueueEntry apply(final SubmitQueueEntry entry) {
+    public SubmitQueueEntry apply(SubmitQueueEntry entry) {
         return super.apply(entry)
                     .fd(descriptor)
                     .flags(flags)
@@ -58,11 +58,7 @@ public class ReadExchangeEntry extends AbstractExchangeEntry<ReadExchangeEntry, 
                     .off(offset);
     }
 
-    public ReadExchangeEntry prepare(final BiConsumer<Result<SizeT>, Proactor> completion,
-                                     final int descriptor,
-                                     final OffHeapBuffer buffer,
-                                     final long offset,
-                                     final byte flags) {
+    public ReadExchangeEntry prepare(BiConsumer<Result<SizeT>, Proactor> completion, int descriptor, OffHeapBuffer buffer, long offset, byte flags) {
         this.descriptor = descriptor;
         this.flags = flags;
         this.buffer = buffer;
@@ -70,7 +66,7 @@ public class ReadExchangeEntry extends AbstractExchangeEntry<ReadExchangeEntry, 
         return super.prepare(completion);
     }
 
-    private Result<SizeT> bytesReadToResult(final int res) {
+    private Result<SizeT> bytesReadToResult(int res) {
         return res == 0 ? EOF_RESULT
                         : res > 0 ? sizeResult(res)
                                   : SystemError.result(res);

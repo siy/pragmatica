@@ -16,11 +16,11 @@
 
 package org.pfj.io.async.uring.exchange;
 
-import org.pfj.io.async.uring.struct.raw.SubmitQueueEntry;
-import org.pfj.io.async.SystemError;
 import org.pfj.io.async.Proactor;
+import org.pfj.io.async.SystemError;
 import org.pfj.io.async.file.FileDescriptor;
 import org.pfj.io.async.uring.struct.offheap.OffHeapCString;
+import org.pfj.io.async.uring.struct.raw.SubmitQueueEntry;
 import org.pfj.io.async.uring.utils.PlainObjectPool;
 import org.pfj.lang.Result;
 
@@ -38,36 +38,32 @@ public class OpenExchangeEntry extends AbstractExchangeEntry<OpenExchangeEntry, 
     private int openFlags;
     private int mode;
 
-    protected OpenExchangeEntry(final PlainObjectPool<OpenExchangeEntry> pool) {
+    protected OpenExchangeEntry(PlainObjectPool<OpenExchangeEntry> pool) {
         super(IORING_OP_OPENAT, pool);
     }
 
     @Override
-    protected void doAccept(final int res, final int flags, final Proactor proactor) {
+    protected void doAccept(int res, int flags, Proactor proactor) {
         rawPath.dispose();
         rawPath = null;
 
-        final var result = res < 0
-            ? SystemError.<FileDescriptor>result(res)
-            : success(FileDescriptor.file(res));
+        var result = res < 0
+                     ? SystemError.<FileDescriptor>result(res)
+                     : success(FileDescriptor.file(res));
         completion.accept(result, proactor);
     }
 
     @Override
-    public SubmitQueueEntry apply(final SubmitQueueEntry entry) {
+    public SubmitQueueEntry apply(SubmitQueueEntry entry) {
         return super.apply(entry)
-            .flags(flags)
-            .fd(AT_FDCWD)
-            .addr(rawPath.address())
-            .len(mode)
-            .openFlags(openFlags);
+                    .flags(flags)
+                    .fd(AT_FDCWD)
+                    .addr(rawPath.address())
+                    .len(mode)
+                    .openFlags(openFlags);
     }
 
-    public OpenExchangeEntry prepare(final BiConsumer<Result<FileDescriptor>, Proactor> completion,
-                                     final Path path,
-                                     final int openFlags,
-                                     final int mode,
-                                     final byte flags) {
+    public OpenExchangeEntry prepare(BiConsumer<Result<FileDescriptor>, Proactor> completion, Path path, int openFlags, int mode, byte flags) {
         rawPath = OffHeapCString.cstring(path.toString());
 
         this.flags = flags;

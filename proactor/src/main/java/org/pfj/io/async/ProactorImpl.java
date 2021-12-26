@@ -26,17 +26,17 @@ import org.pfj.io.async.file.stat.FileStat;
 import org.pfj.io.async.file.stat.StatFlag;
 import org.pfj.io.async.file.stat.StatMask;
 import org.pfj.io.async.net.*;
-import org.pfj.io.async.util.OffHeapBuffer;
 import org.pfj.io.async.uring.Bitmask;
 import org.pfj.io.async.uring.CompletionHandler;
 import org.pfj.io.async.uring.UringApi;
 import org.pfj.io.async.uring.UringSetupFlags;
 import org.pfj.io.async.uring.exchange.ExchangeEntry;
 import org.pfj.io.async.uring.exchange.ExchangeEntryFactory;
-import org.pfj.io.async.uring.utils.ObjectHeap;
 import org.pfj.io.async.uring.struct.offheap.OffHeapCString;
 import org.pfj.io.async.uring.struct.offheap.OffHeapIoVector;
 import org.pfj.io.async.uring.struct.offheap.OffHeapSocketAddress;
+import org.pfj.io.async.uring.utils.ObjectHeap;
+import org.pfj.io.async.util.OffHeapBuffer;
 import org.pfj.lang.*;
 
 import java.nio.file.Path;
@@ -63,16 +63,16 @@ class ProactorImpl implements Proactor {
     private final Deque<ExchangeEntry<?>> queue = new ArrayDeque<>();
     private final ExchangeEntryFactory factory = new ExchangeEntryFactory();
 
-    private ProactorImpl(final UringApi uringApi) {
+    private ProactorImpl(UringApi uringApi) {
         this.uringApi = uringApi;
         pendingCompletions = ObjectHeap.objectHeap(uringApi.numEntries());
     }
 
-    public static ProactorImpl proactor(final int queueSize) {
+    public static ProactorImpl proactor(int queueSize) {
         return proactor(queueSize, UringSetupFlags.defaultFlags());
     }
 
-    static ProactorImpl proactor(final int queueSize, final Set<UringSetupFlags> openFlags) {
+    static ProactorImpl proactor(int queueSize, Set<UringSetupFlags> openFlags) {
         return new ProactorImpl(uringApi(queueSize, openFlags).fold(ProactorImpl::fail, Functions::id));
     }
 
@@ -102,24 +102,21 @@ class ProactorImpl implements Proactor {
     }
 
     @Override
-    public void nop(final BiConsumer<Result<Unit>, Proactor> completion) {
+    public void nop(BiConsumer<Result<Unit>, Proactor> completion) {
 
         queue.add(factory.forNop(completion)
                          .register(pendingCompletions));
     }
 
     @Override
-    public void delay(final BiConsumer<Result<Duration>, Proactor> completion,
-                      final Timeout timeout) {
+    public void delay(BiConsumer<Result<Duration>, Proactor> completion, Timeout timeout) {
 
         queue.add(factory.forDelay(completion, timeout)
                          .register(pendingCompletions));
     }
 
     @Override
-    public void closeFileDescriptor(final BiConsumer<Result<Unit>, Proactor> completion,
-                                    final FileDescriptor fd,
-                                    final Option<Timeout> timeout) {
+    public void closeFileDescriptor(BiConsumer<Result<Unit>, Proactor> completion, FileDescriptor fd, Option<Timeout> timeout) {
 
         queue.add(factory.forClose(completion, fd, timeout)
                          .register(pendingCompletions));
@@ -128,11 +125,11 @@ class ProactorImpl implements Proactor {
     }
 
     @Override
-    public void read(final BiConsumer<Result<SizeT>, Proactor> completion,
-                     final FileDescriptor fd,
-                     final OffHeapBuffer buffer,
-                     final OffsetT offset,
-                     final Option<Timeout> timeout) {
+    public void read(BiConsumer<Result<SizeT>, Proactor> completion,
+                     FileDescriptor fd,
+                     OffHeapBuffer buffer,
+                     OffsetT offset,
+                     Option<Timeout> timeout) {
 
         queue.add(factory.forRead(completion, fd, buffer, offset, timeout)
                          .register(pendingCompletions));
@@ -141,11 +138,11 @@ class ProactorImpl implements Proactor {
     }
 
     @Override
-    public void write(final BiConsumer<Result<SizeT>, Proactor> completion,
-                      final FileDescriptor fd,
-                      final OffHeapBuffer buffer,
-                      final OffsetT offset,
-                      final Option<Timeout> timeout) {
+    public void write(BiConsumer<Result<SizeT>, Proactor> completion,
+                      FileDescriptor fd,
+                      OffHeapBuffer buffer,
+                      OffsetT offset,
+                      Option<Timeout> timeout) {
 
         if (buffer.used() == 0) {
             completion.accept(SystemError.ENODATA.result(), this);
@@ -159,9 +156,7 @@ class ProactorImpl implements Proactor {
     }
 
     @Override
-    public void splice(final BiConsumer<Result<SizeT>, Proactor> completion,
-                       final SpliceDescriptor descriptor,
-                       final Option<Timeout> timeout) {
+    public void splice(BiConsumer<Result<SizeT>, Proactor> completion, SpliceDescriptor descriptor, Option<Timeout> timeout) {
 
         queue.add(factory.forSplice(completion, descriptor, timeout)
                          .register(pendingCompletions));
@@ -170,11 +165,11 @@ class ProactorImpl implements Proactor {
     }
 
     @Override
-    public void open(final BiConsumer<Result<FileDescriptor>, Proactor> completion,
-                     final Path path,
-                     final Set<OpenFlags> flags,
-                     final Set<FilePermission> mode,
-                     final Option<Timeout> timeout) {
+    public void open(BiConsumer<Result<FileDescriptor>, Proactor> completion,
+                     Path path,
+                     Set<OpenFlags> flags,
+                     Set<FilePermission> mode,
+                     Option<Timeout> timeout) {
 
         queue.add(factory.forOpen(completion, path, flags, mode, timeout)
                          .register(pendingCompletions));
@@ -183,42 +178,40 @@ class ProactorImpl implements Proactor {
     }
 
     @Override
-    public void socket(final BiConsumer<Result<FileDescriptor>, Proactor> completion,
-                       final AddressFamily addressFamily,
-                       final SocketType socketType,
-                       final Set<SocketFlag> openFlags,
-                       final Set<SocketOption> options) {
+    public void socket(BiConsumer<Result<FileDescriptor>, Proactor> completion,
+                       AddressFamily addressFamily,
+                       SocketType socketType,
+                       Set<SocketFlag> openFlags,
+                       Set<SocketOption> options) {
         queue.add(factory.forSocket(completion, addressFamily, socketType, openFlags, options)
                          .register(pendingCompletions));
     }
 
     @Override
-    public void server(final BiConsumer<Result<ServerContext<?>>, Proactor> completion,
-                       final SocketAddress<?> socketAddress,
-                       final SocketType socketType,
-                       final Set<SocketFlag> openFlags,
-                       final SizeT queueDepth,
-                       final Set<SocketOption> options) {
+    public void server(BiConsumer<Result<ServerContext<?>>, Proactor> completion,
+                       SocketAddress<?> socketAddress,
+                       SocketType socketType,
+                       Set<SocketFlag> openFlags,
+                       SizeT queueDepth,
+                       Set<SocketOption> options) {
 
         queue.add(factory.forServer(completion, socketAddress, socketType, openFlags, queueDepth, options)
                          .register(pendingCompletions));
     }
 
     @Override
-    public void accept(final BiConsumer<Result<ClientConnection<?>>, Proactor> completion,
-                       final FileDescriptor socket,
-                       final Set<SocketFlag> flags) {
+    public void accept(BiConsumer<Result<ClientConnection<?>>, Proactor> completion, FileDescriptor socket, Set<SocketFlag> flags) {
 
         queue.add(factory.forAccept(completion, socket, flags)
                          .register(pendingCompletions));
     }
 
     @Override
-    public void connect(final BiConsumer<Result<FileDescriptor>, Proactor> completion,
-                        final FileDescriptor socket,
-                        final SocketAddress<?> address,
-                        final Option<Timeout> timeout) {
-        final var clientAddress = OffHeapSocketAddress.unsafeSocketAddress(address);
+    public void connect(BiConsumer<Result<FileDescriptor>, Proactor> completion,
+                        FileDescriptor socket,
+                        SocketAddress<?> address,
+                        Option<Timeout> timeout) {
+        var clientAddress = OffHeapSocketAddress.unsafeSocketAddress(address);
 
         if (clientAddress == null) {
             completion.accept(SystemError.EPFNOSUPPORT.result(), this);
@@ -232,11 +225,8 @@ class ProactorImpl implements Proactor {
     }
 
     @Override
-    public void stat(final BiConsumer<Result<FileStat>, Proactor> completion,
-                     final Path path,
-                     final Set<StatFlag> flags,
-                     final Set<StatMask> mask,
-                     final Option<Timeout> timeout) {
+    public void stat(BiConsumer<Result<FileStat>, Proactor> completion,
+                     Path path, Set<StatFlag> flags, Set<StatMask> mask, Option<Timeout> timeout) {
 
         //Reset EMPTY_PATH and force use the path.
         queue.add(factory.forStat(completion,
@@ -249,11 +239,11 @@ class ProactorImpl implements Proactor {
     }
 
     @Override
-    public void stat(final BiConsumer<Result<FileStat>, Proactor> completion,
-                     final FileDescriptor fd,
-                     final Set<StatFlag> flags,
-                     final Set<StatMask> mask,
-                     final Option<Timeout> timeout) {
+    public void stat(BiConsumer<Result<FileStat>, Proactor> completion,
+                     FileDescriptor fd,
+                     Set<StatFlag> flags,
+                     Set<StatMask> mask,
+                     Option<Timeout> timeout) {
 
         //Set EMPTY_PATH and force use of file descriptor.
         queue.add(factory.forStat(completion,
@@ -266,11 +256,11 @@ class ProactorImpl implements Proactor {
     }
 
     @Override
-    public void readVector(final BiConsumer<Result<SizeT>, Proactor> completion,
-                           final FileDescriptor fileDescriptor,
-                           final OffsetT offset,
-                           final Option<Timeout> timeout,
-                           final OffHeapBuffer... buffers) {
+    public void readVector(BiConsumer<Result<SizeT>, Proactor> completion,
+                           FileDescriptor fileDescriptor,
+                           OffsetT offset,
+                           Option<Timeout> timeout,
+                           OffHeapBuffer... buffers) {
 
         queue.add(factory.forReadVector(completion, fileDescriptor, offset, timeout, OffHeapIoVector.withBuffers(buffers))
                          .register(pendingCompletions));
@@ -279,11 +269,11 @@ class ProactorImpl implements Proactor {
     }
 
     @Override
-    public void writeVector(final BiConsumer<Result<SizeT>, Proactor> completion,
-                            final FileDescriptor fileDescriptor,
-                            final OffsetT offset,
-                            final Option<Timeout> timeout,
-                            final OffHeapBuffer... buffers) {
+    public void writeVector(BiConsumer<Result<SizeT>, Proactor> completion,
+                            FileDescriptor fileDescriptor,
+                            OffsetT offset,
+                            Option<Timeout> timeout,
+                            OffHeapBuffer... buffers) {
 
         queue.add(factory.forWriteVector(completion, fileDescriptor, offset, timeout, OffHeapIoVector.withBuffers(buffers))
                          .register(pendingCompletions));
@@ -291,7 +281,7 @@ class ProactorImpl implements Proactor {
         timeout.whenPresent(this::appendTimeout);
     }
 
-    private void appendTimeout(final Timeout timeout) {
+    private void appendTimeout(Timeout timeout) {
         queue.add(factory.forTimeout(timeout)
                          .register(pendingCompletions));
     }

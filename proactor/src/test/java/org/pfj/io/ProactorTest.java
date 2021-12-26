@@ -19,6 +19,7 @@ package org.pfj.io;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.pfj.io.async.Proactor;
+import org.pfj.io.async.Timeout;
 import org.pfj.io.async.common.OffsetT;
 import org.pfj.io.async.common.SizeT;
 import org.pfj.io.async.file.FileDescriptor;
@@ -26,15 +27,8 @@ import org.pfj.io.async.file.FilePermission;
 import org.pfj.io.async.file.OpenFlags;
 import org.pfj.io.async.net.*;
 import org.pfj.io.async.util.OffHeapBuffer;
-import org.pfj.io.async.Timeout;
 import org.pfj.lang.Option;
 import org.pfj.lang.Result;
-import org.pfj.io.async.net.AddressFamily;
-import org.pfj.io.async.net.InetPort;
-import org.pfj.io.async.net.SocketAddressIn;
-import org.pfj.io.async.net.SocketFlag;
-import org.pfj.io.async.net.SocketOption;
-import org.pfj.io.async.net.SocketType;
 import org.pfj.lang.Unit;
 
 import java.net.UnknownHostException;
@@ -62,9 +56,9 @@ class ProactorTest {
         waitForResult(finalResult);
 
         finalResult.get()
-            .onSuccess(Assertions::assertNotNull)
-            .onSuccess(System.out::println)
-            .onFailure(__ -> fail());
+                   .onSuccess(Assertions::assertNotNull)
+                   .onSuccess(System.out::println)
+                   .onFailure(__ -> fail());
     }
 
     @Test
@@ -75,9 +69,9 @@ class ProactorTest {
         waitForResult(finalResult);
 
         finalResult.get()
-            .onFailure(failure -> fail(failure::message))
-            .onSuccess(duration -> System.out.println("Duration: " + duration.toMillis() + " milliseconds"))
-            .onSuccess(duration -> assertTrue(duration.compareTo(Duration.ofMillis(100)) > 0));
+                   .onFailure(failure -> fail(failure::message))
+                   .onSuccess(duration -> System.out.println("Duration: " + duration.toMillis() + " milliseconds"))
+                   .onSuccess(duration -> assertTrue(duration.compareTo(Duration.ofMillis(100)) > 0));
     }
 
     @Test
@@ -88,36 +82,36 @@ class ProactorTest {
         System.out.println("Trying to open " + fileName);
 
         proactor.open((result, __) -> fileDescriptor.set(result),
-            Path.of(fileName),
-            EnumSet.of(OpenFlags.READ_ONLY),
-            EnumSet.noneOf(FilePermission.class),
-            empty());
+                      Path.of(fileName),
+                      EnumSet.of(OpenFlags.READ_ONLY),
+                      EnumSet.noneOf(FilePermission.class),
+                      empty());
 
         waitForResult(fileDescriptor);
 
         fileDescriptor.get()
-            .onSuccess(fd -> System.out.println("Open successful: " + fd))
-            .onSuccess(fd -> assertTrue(fd.descriptor() > 0))
-            .onFailure(f -> fail(f::message));
+                      .onSuccess(fd -> System.out.println("Open successful: " + fd))
+                      .onSuccess(fd -> assertTrue(fd.descriptor() > 0))
+                      .onFailure(f -> fail(f::message));
 
         final var closeResult = new AtomicReference<Result<Unit>>();
         fileDescriptor.get()
-            .onSuccess(fd -> proactor.closeFileDescriptor(((result, __) -> closeResult.set(result)), fd, empty()));
+                      .onSuccess(fd -> proactor.closeFileDescriptor(((result, __) -> closeResult.set(result)), fd, empty()));
 
         waitForResult(closeResult);
 
         closeResult.get()
-            .onSuccess(unit -> System.out.println("Close successful " + unit))
-            .onFailure(f -> fail(f::message));
+                   .onSuccess(unit -> System.out.println("Close successful " + unit))
+                   .onFailure(f -> fail(f::message));
     }
 
     @Test
     void externalHostCanBeConnectedAndRead() throws UnknownHostException {
         final var addr = java.net.Inet4Address.getByName("www.google.com");
         final var address = Inet4Address.inet4Address(addr.getAddress())
-            .fold(failure -> fail(failure::message),
-                inetAddress -> SocketAddressIn.create(InetPort.inetPort(80),
-                    inetAddress));
+                                        .fold(failure -> fail(failure::message),
+                                              inetAddress -> SocketAddressIn.create(InetPort.inetPort(80),
+                                                                                    inetAddress));
 
         System.out.println("Address: " + address);
 
@@ -127,50 +121,50 @@ class ProactorTest {
 
                 var socketResult = new AtomicReference<Result<FileDescriptor>>();
                 proactor.socket((result, __) -> socketResult.set(result),
-                    AddressFamily.INET,
-                    SocketType.STREAM,
-                    SocketFlag.none(),
-                    SocketOption.reuseAll());
+                                AddressFamily.INET,
+                                SocketType.STREAM,
+                                SocketFlag.none(),
+                                SocketOption.reuseAll());
 
                 waitForResult(socketResult);
                 socketResult.get()
-                    .onFailure(failure -> Assertions.fail(failure::message))
-                    .onSuccess(fd -> {
-                        var connectResult = new AtomicReference<Result<FileDescriptor>>();
+                            .onFailure(failure -> Assertions.fail(failure::message))
+                            .onSuccess(fd -> {
+                                var connectResult = new AtomicReference<Result<FileDescriptor>>();
 
-                        proactor.connect((result, __) -> connectResult.set(result),
-                            fd, address, Option.option(Timeout.timeout(1).seconds()));
+                                proactor.connect((result, __) -> connectResult.set(result),
+                                                 fd, address, Option.option(Timeout.timeout(1).seconds()));
 
-                        waitForResult(connectResult);
+                                waitForResult(connectResult);
 
-                        connectResult.get()
-                            .onFailure(failure -> fail(failure::message))
-                            .onSuccess(r1 -> System.out.println("Socket connected: " + r1));
+                                connectResult.get()
+                                             .onFailure(failure -> fail(failure::message))
+                                             .onSuccess(r1 -> System.out.println("Socket connected: " + r1));
 
-                        var writeResult = new AtomicReference<Result<SizeT>>();
-                        proactor.write(((result, __) -> writeResult.set(result)),
-                            fd, preparedText, OffsetT.ZERO, option(Timeout.timeout(1).seconds()));
+                                var writeResult = new AtomicReference<Result<SizeT>>();
+                                proactor.write(((result, __) -> writeResult.set(result)),
+                                               fd, preparedText, OffsetT.ZERO, option(Timeout.timeout(1).seconds()));
 
-                        waitForResult(writeResult);
+                                waitForResult(writeResult);
 
-                        writeResult.get()
-                            .onFailure(failure -> fail(failure::message))
-                            .onSuccess(sizeT -> System.out.println("Wrote " + sizeT + " bytes"));
+                                writeResult.get()
+                                           .onFailure(failure -> fail(failure::message))
+                                           .onSuccess(sizeT -> System.out.println("Wrote " + sizeT + " bytes"));
 
-                        var readResult = new AtomicReference<Result<SizeT>>();
+                                var readResult = new AtomicReference<Result<SizeT>>();
 
-                        proactor.read(((result, __) -> readResult.set(result)),
-                            fd, buffer, OffsetT.ZERO, option(Timeout.timeout(1).seconds()));
+                                proactor.read(((result, __) -> readResult.set(result)),
+                                              fd, buffer, OffsetT.ZERO, option(Timeout.timeout(1).seconds()));
 
-                        waitForResult(readResult);
+                                waitForResult(readResult);
 
-                        var closeResult = new AtomicReference<Result<Unit>>();
-                        proactor.closeFileDescriptor(((result, __) -> closeResult.set(result)), fd, empty());
+                                var closeResult = new AtomicReference<Result<Unit>>();
+                                proactor.closeFileDescriptor(((result, __) -> closeResult.set(result)), fd, empty());
 
-                        waitForResult(closeResult);
+                                waitForResult(closeResult);
 
-                        System.out.println("Content: [" + new String(buffer.export(), StandardCharsets.UTF_8) + "]");
-                    });
+                                System.out.println("Content: [" + new String(buffer.export(), StandardCharsets.UTF_8) + "]");
+                            });
             }
         }
     }
