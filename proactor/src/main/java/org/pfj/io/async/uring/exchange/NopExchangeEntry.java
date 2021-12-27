@@ -21,6 +21,7 @@ import org.pfj.io.async.uring.utils.PlainObjectPool;
 import org.pfj.lang.Unit;
 
 import static org.pfj.io.async.uring.AsyncOperation.IORING_OP_NOP;
+import static org.pfj.lang.Unit.unitResult;
 
 public class NopExchangeEntry extends AbstractExchangeEntry<NopExchangeEntry, Unit> {
     protected NopExchangeEntry(final PlainObjectPool<NopExchangeEntry> pool) {
@@ -29,6 +30,6 @@ public class NopExchangeEntry extends AbstractExchangeEntry<NopExchangeEntry, Un
 
     @Override
     protected void doAccept(final int result, final int flags, final Proactor proactor) {
-        completion.accept(UNIT_RESULT, proactor);
+        completion.accept(unitResult(), proactor);
     }
 }

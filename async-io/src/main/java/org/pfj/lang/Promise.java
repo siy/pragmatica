@@ -21,9 +21,11 @@ import org.pfj.io.async.SystemError;
 import org.pfj.io.async.Timeout;
 import org.pfj.lang.Functions.*;
 
+import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
+import static org.pfj.io.async.util.ActionableThreshold.threshold;
 import static org.pfj.io.async.util.ResultCollector.resultCollector;
 import static org.pfj.lang.Tuple.*;
 
@@ -255,6 +257,17 @@ public interface Promise<T> {
     }
 
     /**
+     * Create an unresolved instance and run asynchronous action which will receive created instance as a parameter.
+     *
+     * @param consumer The action to run
+     *
+     * @return Created instance
+     */
+    static <R> Promise<R> promise(BiConsumer<Promise<R>, Proactor> consumer) {
+        return Promise.<R>promise().async(consumer);
+    }
+
+    /**
      * Create a resolved instance.
      *
      * @param value The value which will be stored in the created instance
@@ -272,15 +285,42 @@ public interface Promise<T> {
      *
      * @return Created promise.
      */
+    @SafeVarargs
     static <R> Promise<R> any(Promise<R>... promises) {
-        var result = Promise.<R>promise();
+        return Promise.promise(result -> List.of(promises)
+                                             .forEach(promise -> promise.onResult(result::resolve)
+                                                                        .onResultDo(() -> cancelAll(promises))));
+    }
 
-        for (var promise : promises) {
-            promise.onResult(result::resolve)
-                   .onResultDo(() -> cancellAll(promises));
-        }
+    /**
+     * Return promise which will be resolved once any of the promises provided as a parameters will be resolved with success. If none of the promises
+     * will be resolved with success, then created instance will be resolved with provided {@code failureResult}.
+     *
+     * @param failureResult Result in case if no instances were resolved with success
+     * @param promises      Input promises
+     *
+     * @return Created instance
+     */
+    @SafeVarargs
+    static <T> Promise<T> anySuccess(Result<T> failureResult, Promise<T>... promises) {
+        return Promise.promise(anySuccess -> threshold(promises.length, () -> anySuccess.resolve(failureResult))
+            .apply(at -> List.of(promises)
+                             .forEach(promise -> promise.onResult(result -> result.onSuccess(anySuccess::success)
+                                                                                  .onSuccessDo(() -> cancelAll(promises)))
+                                                        .onResultDo(at::registerEvent))));
+    }
 
-        return result;
+    /**
+     * Return promise which will be resolved once any of the promises provided as a parameters will be resolved with success. If none of the promises
+     * will be resolved with success, then created instance will be resolved with {@link SystemError#ECANCELED}.
+     *
+     * @param promises Input promises
+     *
+     * @return Created instance
+     */
+    @SafeVarargs
+    static <T> Promise<T> anySuccess(Promise<T>... promises) {
+        return anySuccess(Result.failure(SystemError.ECANCELED), promises);
     }
 
     /**
@@ -288,16 +328,23 @@ public interface Promise<T> {
      *
      * @param promises Input promises.
      */
-    static void cancellAll(Promise<?>... promises) {
-        for (var promise : promises) {
-            promise.cancel();
-        }
+    static void cancelAll(Promise<?>... promises) {
+        cancelAll(List.of(promises));
+    }
+
+    /**
+     * Cancel all provided promises.
+     *
+     * @param promises Input promises.
+     */
+    static void cancelAll(List<Promise<?>> promises) {
+        promises.forEach(Promise::cancel);
     }
 
     /**
      * Return a promise which will be resolved when all promises passed as a parameter will be resolved. If any of the provided promises will be
      * resolved with error, then resulting promise will be also resolved with error.
-     *
+     * <p>
      * The function for single input promise is provided for completeness.
      *
      * @param promise1 Input promise

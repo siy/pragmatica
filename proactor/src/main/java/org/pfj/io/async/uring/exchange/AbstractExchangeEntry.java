@@ -24,18 +24,14 @@ import org.pfj.io.async.uring.struct.raw.SubmitQueueEntry;
 import org.pfj.io.async.uring.utils.ObjectHeap;
 import org.pfj.io.async.uring.utils.PlainObjectPool;
 import org.pfj.lang.Result;
-import org.pfj.lang.Unit;
 
 import java.util.function.BiConsumer;
 
 import static org.pfj.io.async.common.SizeT.sizeT;
 import static org.pfj.lang.Result.success;
-import static org.pfj.lang.Unit.unit;
 
 @SuppressWarnings("rawtypes")
 public abstract class AbstractExchangeEntry<T extends AbstractExchangeEntry<T, R>, R> implements ExchangeEntry<T> {
-    public static final Result<Unit> UNIT_RESULT = success(unit());
-
     private static final int RESULT_SIZET_POOL_SIZE = 65536;
     @SuppressWarnings("rawtypes")
     private static final Result[] RESULT_SIZET_POOL;

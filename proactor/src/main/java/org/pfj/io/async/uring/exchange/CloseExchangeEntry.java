@@ -26,6 +26,7 @@ import org.pfj.lang.Unit;
 import java.util.function.BiConsumer;
 
 import static org.pfj.io.async.uring.AsyncOperation.IORING_OP_CLOSE;
+import static org.pfj.lang.Unit.unitResult;
 
 public class CloseExchangeEntry extends AbstractExchangeEntry<CloseExchangeEntry, Unit> {
     private int descriptor;
@@ -37,7 +38,7 @@ public class CloseExchangeEntry extends AbstractExchangeEntry<CloseExchangeEntry
 
     @Override
     protected void doAccept(final int res, final int flags, final Proactor proactor) {
-        completion.accept(res == 0 ? UNIT_RESULT : SystemError.result(res), proactor);
+        completion.accept(res == 0 ? unitResult() : SystemError.result(res), proactor);
     }
 
     public CloseExchangeEntry prepare(final BiConsumer<Result<Unit>, Proactor> completion,

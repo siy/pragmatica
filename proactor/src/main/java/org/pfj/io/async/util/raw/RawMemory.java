@@ -18,6 +18,9 @@ package org.pfj.io.async.util.raw;
 
 import jdk.internal.misc.Unsafe;
 
+/**
+ * Simple raw memory access API
+ */
 public final class RawMemory {
     private static final Unsafe instance = Unsafe.getUnsafe();
 

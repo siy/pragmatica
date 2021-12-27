@@ -21,12 +21,11 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 /**
- * Resizable pool of mutable objects. Low level utility class for creating pools of reusable (and therefore mutable) objects. Note that this
- * implementation goals were: 1) minimize memory allocation 2) minimal possible overhead As a consequence API is not null-safe, not completely
- * bulletproof and not thread safe. In particular, check for double releases is minimal and does not protect from all possible mistakes. Use with
- * care.
- *
- * @param <T>
+ * Resizable pool of mutable objects. Low level utility class for creating pools of reusable (and therefore mutable) objects.
+ * <p>
+ * Note that its implementation goals were: 1) minimize memory allocation 2) minimal possible overhead. As a consequence API is not null-safe, not
+ * completely bulletproof and not thread safe. In particular, check for double releases is minimal and does not protect from all possible mistakes.
+ * Use with care.
  */
 public class ObjectPool<T> {
     private Object[] elements;

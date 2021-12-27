@@ -35,6 +35,7 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Set;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 /**
  * Low level externally accessible API for submission of I/O operations. The API designed as a <a href="https://en.wikipedia.org/wiki/Proactor_pattern">Proactor</a>
@@ -75,6 +76,10 @@ public interface Proactor {
      * @param completion Callback which is invoked once operation is finished.
      */
     void nop(BiConsumer<Result<Unit>, Proactor> completion);
+
+    default void nop(Consumer<Result<Unit>> completion) {
+        nop((result, __) -> completion.accept(result));
+    }
 
     /**
      * Submit DELAY (TIMEOUT) operation.

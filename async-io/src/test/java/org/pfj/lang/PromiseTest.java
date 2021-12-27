@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.pfj.io.async.Timeout;
 
 import java.util.Objects;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -437,5 +438,18 @@ class PromiseTest {
         allPromise.join()
                   .onSuccess(tuple -> assertEquals(tuple(1, 2, 3, 4, 5, 6, 7, 8, 9), tuple))
                   .onFailureDo(Assertions::fail);
+    }
+
+    @Test
+    void promiseCanBeConfiguredAsynchronously() throws InterruptedException {
+        var ref = new AtomicInteger(0);
+        var latch = new CountDownLatch(1);
+
+        var promise = Promise.<Integer>promise(p -> p.onSuccess(ref::set).onSuccessDo(latch::countDown));
+
+        promise.success(1);
+        latch.await();
+
+        assertEquals(1, ref.get());
     }
 }

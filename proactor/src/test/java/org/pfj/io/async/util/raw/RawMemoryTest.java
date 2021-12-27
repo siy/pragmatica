@@ -18,13 +18,32 @@ package org.pfj.io.async.util.raw;
 
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class RawMemoryTest {
     @Test
     void instanceCanBeObtained() {
-        final long address = RawMemory.allocate(1024);
+        var address = RawMemory.allocate(1024);
         RawMemory.dispose(address);
+
+        assertTrue(address != 0);
+    }
+
+    @Test
+    void rewMemoryCanBeWrittenAndRead() {
+        var address = RawMemory.allocate(1024);
+
+        try {
+            RawMemory.putLong(address, 0xCAFEBABEL);
+
+            var value = RawMemory.getLong(address);
+
+            assertEquals(0xCAFEBABEL, value);
+        } finally {
+            RawMemory.dispose(address);
+        }
+
 
         assertTrue(address != 0);
     }

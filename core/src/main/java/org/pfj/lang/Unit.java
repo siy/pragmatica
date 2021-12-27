@@ -37,6 +37,7 @@ public final class Unit implements Tuple.Tuple0 {
     private Unit() {}
 
     private static final Unit UNIT = new Unit();
+    private static final Result<Unit> UNIT_RESULT = Result.success(UNIT);
 
     public static Unit unit() {
         return UNIT;
@@ -47,7 +48,7 @@ public final class Unit implements Tuple.Tuple0 {
     }
 
     public static Result<Unit> unitResult() {
-        return Result.success(unit());
+        return UNIT_RESULT;
     }
 
     @Override
