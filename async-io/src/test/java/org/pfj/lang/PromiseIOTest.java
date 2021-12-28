@@ -18,14 +18,38 @@
 package org.pfj.lang;
 
 import org.junit.jupiter.api.Test;
+import org.pfj.io.async.Proactor;
+import org.pfj.io.async.Timeout;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import java.time.Duration;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.pfj.io.async.Timeout.timeout;
 
 public class PromiseIOTest {
     @Test
     void nopCanBeSubmitted() {
-        var result = Promise.<Unit>promise((p1, proactor) -> proactor.nop(p1::resolve)).join();
+        var result = Promise.<Unit>promise((p1, proactor) -> proactor.nop(p1::resolve))
+                            .join();
 
         assertEquals(Unit.unitResult(), result);
     }
+
+    @Test
+    void delayCanBeSubmitted() {
+        var delay = 100;
+        var result = Promise.<Duration>promise((p1, proactor) -> proactor.delay(p1::resolve, timeout(delay).millis()))
+                            .join();
+
+        result.onSuccess(duration -> assertTrue(duration.compareTo(Duration.ofMillis(delay)) >= 0))
+            .onFailure(cause -> fail(cause.message()));
+    }
+
+//    @Test
+//    void fileCanBeOpenReadAndClosed() {
+//        final var fileName = "target/classes/" + Promise.class.getName().replace('.', '/') + ".class";
+//
+//        var result = Promise.<Duration>promise((p1, proactor) -> proactor.delay(p1::resolve, timeout(delay).millis()))
+//                            .join();
+//    }
 }

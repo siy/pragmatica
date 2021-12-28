@@ -81,7 +81,7 @@ class ProactorImpl implements Proactor {
     }
 
     @Override
-    public void close() {
+    public void shutdown() {
         uringApi.close();
         factory.clear();
     }
@@ -116,7 +116,7 @@ class ProactorImpl implements Proactor {
     }
 
     @Override
-    public void closeFileDescriptor(BiConsumer<Result<Unit>, Proactor> completion, FileDescriptor fd, Option<Timeout> timeout) {
+    public void close(BiConsumer<Result<Unit>, Proactor> completion, FileDescriptor fd, Option<Timeout> timeout) {
 
         queue.add(factory.forClose(completion, fd, timeout)
                          .register(pendingCompletions));
@@ -256,11 +256,11 @@ class ProactorImpl implements Proactor {
     }
 
     @Override
-    public void readVector(BiConsumer<Result<SizeT>, Proactor> completion,
-                           FileDescriptor fileDescriptor,
-                           OffsetT offset,
-                           Option<Timeout> timeout,
-                           OffHeapBuffer... buffers) {
+    public void read(BiConsumer<Result<SizeT>, Proactor> completion,
+                     FileDescriptor fileDescriptor,
+                     OffsetT offset,
+                     Option<Timeout> timeout,
+                     OffHeapBuffer... buffers) {
 
         queue.add(factory.forReadVector(completion, fileDescriptor, offset, timeout, OffHeapIoVector.withBuffers(buffers))
                          .register(pendingCompletions));
@@ -269,11 +269,11 @@ class ProactorImpl implements Proactor {
     }
 
     @Override
-    public void writeVector(BiConsumer<Result<SizeT>, Proactor> completion,
-                            FileDescriptor fileDescriptor,
-                            OffsetT offset,
-                            Option<Timeout> timeout,
-                            OffHeapBuffer... buffers) {
+    public void write(BiConsumer<Result<SizeT>, Proactor> completion,
+                      FileDescriptor fileDescriptor,
+                      OffsetT offset,
+                      Option<Timeout> timeout,
+                      OffHeapBuffer... buffers) {
 
         queue.add(factory.forWriteVector(completion, fileDescriptor, offset, timeout, OffHeapIoVector.withBuffers(buffers))
                          .register(pendingCompletions));

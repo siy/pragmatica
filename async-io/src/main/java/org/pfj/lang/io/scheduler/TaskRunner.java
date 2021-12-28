@@ -109,7 +109,7 @@ final class TaskRunner {
             }
             proactor.processIO();
         }
-        proactor.close();
+        proactor.shutdown();
 
         threshold.registerEvent();
     }

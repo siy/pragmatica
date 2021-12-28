@@ -43,7 +43,7 @@ import static org.pfj.lang.Tuple.tuple;
  */
 public class UringApi implements AutoCloseable {
     public static final int MIN_QUEUE_SIZE = 128;
-    private static final int ENTRY_SIZE = 8;    // each entry is a 64-bit pointer
+    private static final long ENTRY_SIZE = 8L;    // each entry is a 64-bit pointer
 
     private final long ringBase;
     private final int submissionEntries;

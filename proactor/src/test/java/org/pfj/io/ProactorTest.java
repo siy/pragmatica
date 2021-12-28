@@ -96,7 +96,7 @@ class ProactorTest {
 
         final var closeResult = new AtomicReference<Result<Unit>>();
         fileDescriptor.get()
-                      .onSuccess(fd -> proactor.closeFileDescriptor(((result, __) -> closeResult.set(result)), fd, empty()));
+                      .onSuccess(fd -> proactor.close(((result, __) -> closeResult.set(result)), fd, empty()));
 
         waitForResult(closeResult);
 
@@ -159,7 +159,7 @@ class ProactorTest {
                                 waitForResult(readResult);
 
                                 var closeResult = new AtomicReference<Result<Unit>>();
-                                proactor.closeFileDescriptor(((result, __) -> closeResult.set(result)), fd, empty());
+                                proactor.close(((result, __) -> closeResult.set(result)), fd, empty());
 
                                 waitForResult(closeResult);
 
