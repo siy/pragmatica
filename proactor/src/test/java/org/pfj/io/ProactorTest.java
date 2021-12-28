@@ -49,7 +49,7 @@ class ProactorTest {
 
     @Test
     void nopCanBeSubmitted() {
-        final var finalResult = new AtomicReference<Result<?>>();
+        var finalResult = new AtomicReference<Result<?>>();
 
         proactor.nop((result, __) -> finalResult.set(result));
 
@@ -63,7 +63,7 @@ class ProactorTest {
 
     @Test
     void delayCanBeSubmitted() {
-        final var finalResult = new AtomicReference<Result<Duration>>();
+        var finalResult = new AtomicReference<Result<Duration>>();
         proactor.delay((result, __) -> finalResult.set(result), Timeout.timeout(100).millis());
 
         waitForResult(finalResult);
@@ -76,8 +76,8 @@ class ProactorTest {
 
     @Test
     void fileCanBeOpenedAndClosed() {
-        final var fileDescriptor = new AtomicReference<Result<FileDescriptor>>();
-        final var fileName = "target/classes/" + Proactor.class.getName().replace('.', '/') + ".class";
+        var fileDescriptor = new AtomicReference<Result<FileDescriptor>>();
+        var fileName = "target/classes/" + Proactor.class.getName().replace('.', '/') + ".class";
 
         System.out.println("Trying to open " + fileName);
 
@@ -94,7 +94,7 @@ class ProactorTest {
                       .onSuccess(fd -> assertTrue(fd.descriptor() > 0))
                       .onFailure(f -> fail(f::message));
 
-        final var closeResult = new AtomicReference<Result<Unit>>();
+        var closeResult = new AtomicReference<Result<Unit>>();
         fileDescriptor.get()
                       .onSuccess(fd -> proactor.close(((result, __) -> closeResult.set(result)), fd, empty()));
 
@@ -107,16 +107,16 @@ class ProactorTest {
 
     @Test
     void externalHostCanBeConnectedAndRead() throws UnknownHostException {
-        final var addr = java.net.Inet4Address.getByName("www.google.com");
-        final var address = Inet4Address.inet4Address(addr.getAddress())
-                                        .fold(failure -> fail(failure::message),
-                                              inetAddress -> SocketAddressIn.create(InetPort.inetPort(80),
-                                                                                    inetAddress));
+        var addr = java.net.Inet4Address.getByName("www.google.com");
+        var address = Inet4Address.inet4Address(addr.getAddress())
+                                  .fold(failure -> fail(failure::message),
+                                        inetAddress -> SocketAddressIn.create(InetPort.inetPort(80),
+                                                                              inetAddress));
 
         System.out.println("Address: " + address);
 
-        try (final OffHeapBuffer preparedText = OffHeapBuffer.fromBytes("GET /\n".getBytes(StandardCharsets.US_ASCII))) {
-            try (final OffHeapBuffer buffer = OffHeapBuffer.fixedSize(768)) {
+        try (var preparedText = OffHeapBuffer.fromBytes("GET /\n".getBytes(StandardCharsets.US_ASCII))) {
+            try (var buffer = OffHeapBuffer.fixedSize(768)) {
                 buffer.clear().used(buffer.size());
 
                 var socketResult = new AtomicReference<Result<FileDescriptor>>();

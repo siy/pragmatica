@@ -18,6 +18,8 @@ package org.pfj.io.async.file;
 
 import org.pfj.io.async.uring.Bitmask;
 
+import java.util.EnumSet;
+
 /**
  * File open flags.
  */
@@ -43,6 +45,9 @@ public enum OpenFlags implements Bitmask {
     TMPFILE((020000000 | 00200000)),
     NDELAY(00004000);
 
+    private static final EnumSet<OpenFlags> OPEN_RO = EnumSet.of(READ_ONLY);
+    private static final EnumSet<OpenFlags> OPEN_RW = EnumSet.of(READ_WRITE);
+
     private final int mask;
 
     OpenFlags(final int mask) {
@@ -52,5 +57,13 @@ public enum OpenFlags implements Bitmask {
     @Override
     public int mask() {
         return mask;
+    }
+
+    public static EnumSet<OpenFlags> readOnly() {
+        return OPEN_RO;
+    }
+
+    public static EnumSet<OpenFlags> readWrite() {
+        return OPEN_RW;
     }
 }

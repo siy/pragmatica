@@ -19,7 +19,7 @@ package org.pfj.io.async.common;
 /**
  * Representation of the various values meaning 'offset' inside something, for example offset from beginning of the file.
  */
-public class OffsetT {
+public class OffsetT implements Comparable<OffsetT> {
     private final long value;
 
     private OffsetT(final long value) {
@@ -39,5 +39,10 @@ public class OffsetT {
     @Override
     public String toString() {
         return "OffsetT(" + value + ")";
+    }
+
+    @Override
+    public int compareTo(OffsetT o) {
+        return Long.compare(value, o.value);
     }
 }

@@ -46,7 +46,7 @@ public enum FilePermission implements Bitmask {
     private static final EnumSet<FilePermission> SUID = EnumSet.of(SUID_BIT);
     private static final EnumSet<FilePermission> SGID = EnumSet.of(SGID_BIT);
     private static final EnumSet<FilePermission> STICKY = EnumSet.of(STICKY_BIT);
-    private static final EnumSet<FilePermission> EMPTY = EnumSet.noneOf(FilePermission.class);
+    private static final EnumSet<FilePermission> NONE = EnumSet.noneOf(FilePermission.class);
 
     private final int mask;
 
@@ -54,8 +54,8 @@ public enum FilePermission implements Bitmask {
         this.mask = mask;
     }
 
-    public static EnumSet<FilePermission> empty() {
-        return EMPTY;
+    public static EnumSet<FilePermission> none() {
+        return NONE;
     }
 
     @Override

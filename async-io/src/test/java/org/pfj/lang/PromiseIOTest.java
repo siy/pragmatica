@@ -17,14 +17,22 @@
 
 package org.pfj.lang;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.pfj.io.async.Proactor;
-import org.pfj.io.async.Timeout;
+import org.pfj.io.async.common.OffsetT;
+import org.pfj.io.async.common.SizeT;
+import org.pfj.io.async.file.FileDescriptor;
+import org.pfj.io.async.util.OffHeapBuffer;
 
+import java.nio.file.Path;
 import java.time.Duration;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.pfj.io.async.Timeout.timeout;
+import static org.pfj.io.async.file.FilePermission.none;
+import static org.pfj.io.async.file.OpenFlags.readOnly;
+import static org.pfj.lang.Option.empty;
 
 public class PromiseIOTest {
     @Test
@@ -42,14 +50,36 @@ public class PromiseIOTest {
                             .join();
 
         result.onSuccess(duration -> assertTrue(duration.compareTo(Duration.ofMillis(delay)) >= 0))
-            .onFailure(cause -> fail(cause.message()));
+              .onFailure(PromiseIOTest::fail);
     }
 
-//    @Test
-//    void fileCanBeOpenReadAndClosed() {
-//        final var fileName = "target/classes/" + Promise.class.getName().replace('.', '/') + ".class";
-//
-//        var result = Promise.<Duration>promise((p1, proactor) -> proactor.delay(p1::resolve, timeout(delay).millis()))
-//                            .join();
-//    }
+    private static void fail(Cause cause) {
+        Assertions.fail(cause.message());
+    }
+
+    @Test
+    void fileCanBeOpenReadAndClosed() {
+        var fileName = Path.of("target/classes", Promise.class.getName().replace('.', '/') + ".class");
+
+
+        var openResult = Promise.<FileDescriptor>promise(
+                                    (promise, proactor) -> proactor.open(promise::resolve, fileName, readOnly(), none(), empty()))
+                                .join();
+
+        openResult.onFailure(PromiseIOTest::fail)
+                  .onSuccess(fd -> System.out.println("Open successful: " + fd))
+                  .onSuccess(fd -> {
+                      try (var buffer = OffHeapBuffer.fixedSize(4096)) {
+                          buffer.clear().forRead();
+
+                          Promise.<SizeT>promise((promise, proactor) -> proactor.read(promise::resolve, fd, buffer, OffsetT.ZERO, empty()))
+                                 .join()
+                                 .onFailure(PromiseIOTest::fail)
+                                 .onSuccess(sizeT -> System.out.println("Read " + sizeT + " bytes"))
+                                 .onSuccess(sizeT -> assertTrue(sizeT.compareTo(SizeT.ZERO) > 0));
+                      }
+                  })
+                  .flatMap(fd -> Promise.<Unit>promise((promise, proactor) -> proactor.close(promise::resolve, fd, empty())).join())
+                  .onFailure(PromiseIOTest::fail);
+    }
 }

@@ -19,7 +19,7 @@ package org.pfj.io.async.common;
 /**
  * Representation of the various values meaning 'size' of the something, for example size of read/writen chunk of data.
  */
-public class SizeT {
+public class SizeT implements Comparable<SizeT> {
     private final long value;
 
     private SizeT(final long value) {
@@ -54,5 +54,10 @@ public class SizeT {
     @Override
     public String toString() {
         return "SizeT(" + value + ")";
+    }
+
+    @Override
+    public int compareTo(SizeT o) {
+        return Long.compare(value, o.value);
     }
 }
