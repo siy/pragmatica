@@ -69,14 +69,14 @@ public class PromiseIOTest {
         openResult.onFailure(PromiseIOTest::fail)
                   .onSuccess(fd -> System.out.println("Open successful: " + fd))
                   .onSuccess(fd -> {
-                      try (var buffer = OffHeapBuffer.fixedSize(4096)) {
-                          buffer.clear().forRead();
-
-                          Promise.<SizeT>promise((promise, proactor) -> proactor.read(promise::resolve, fd, buffer, OffsetT.ZERO, empty()))
+                      try (var buffer = OffHeapBuffer.fixedSize(128)) {
+                          Promise.<SizeT>promise((promise, proactor) -> proactor.read(promise::resolve, fd, buffer.forRead(), OffsetT.ZERO, empty()))
                                  .join()
                                  .onFailure(PromiseIOTest::fail)
                                  .onSuccess(sizeT -> System.out.println("Read " + sizeT + " bytes"))
                                  .onSuccess(sizeT -> assertTrue(sizeT.compareTo(SizeT.ZERO) > 0));
+
+                          System.out.println("Buffer content: " + buffer.hexDump());
                       }
                   })
                   .flatMap(fd -> Promise.<Unit>promise((promise, proactor) -> proactor.close(promise::resolve, fd, empty())).join())

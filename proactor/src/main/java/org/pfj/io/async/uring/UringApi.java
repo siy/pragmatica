@@ -27,7 +27,7 @@ import org.pfj.io.async.uring.struct.raw.SubmitQueueEntry;
 import org.pfj.io.async.uring.utils.ObjectHeap;
 import org.pfj.io.async.util.raw.RawMemory;
 import org.pfj.lang.Result;
-import org.pfj.lang.Tuple.Tuple3;
+import org.pfj.lang.Result.Mapper3;
 
 import java.util.Deque;
 import java.util.Set;
@@ -126,7 +126,7 @@ public class UringApi implements AutoCloseable {
             return MIN_QUEUE_SIZE;
         }
 
-        //Round up to nearest power of two
+        //Round up to the nearest power of two
         return 1 << (32 - Integer.numberOfLeadingZeros(size - 1));
     }
 
@@ -134,42 +134,35 @@ public class UringApi implements AutoCloseable {
         return submissionEntries;
     }
 
-    public static Result<FileDescriptor> socket(AddressFamily addressFamily,
-                                                SocketType socketType,
-                                                Set<SocketFlag> openFlags,
-                                                Set<SocketOption> options) {
-        return result(UringNative.socket(addressFamily.familyId(),
-                                         socketType.code() | Bitmask.combine(openFlags),
-                                         Bitmask.combine(options)),
-                      (addressFamily == AddressFamily.INET6) ? FileDescriptor::socket6
-                                                             : FileDescriptor::socket);
+    public static Result<FileDescriptor> socket(AddressFamily af, SocketType type, Set<SocketFlag> flags, Set<SocketOption> options) {
+        return result(UringNative.socket(af.familyId(), type.code() | Bitmask.combine(flags), Bitmask.combine(options)),
+                      (af == AddressFamily.INET6) ? FileDescriptor::socket6 : FileDescriptor::socket);
     }
 
-    public static Result<ServerContext<?>> server(SocketAddress<?> socketAddress,
-                                                  SocketType socketType,
-                                                  Set<SocketFlag> openFlags,
-                                                  Set<SocketOption> options,
-                                                  SizeT queueDepth) {
-        return socket(socketAddress.family(), socketType, openFlags, options)
-            .flatMap(fileDescriptor -> configureForListen(fileDescriptor, socketAddress, (int) queueDepth.value()))
-            .map(tuple -> tuple.map(ServerContext::connector));
+    public static Result<ServerContext<?>> server(SocketAddress<?> address, SocketType type, Set<SocketFlag> flags,
+                                                  Set<SocketOption> options, SizeT queueLen) {
+
+        return socket(address.family(), type, flags, options)
+            .flatMap(fileDescriptor -> configureForListen(fileDescriptor, address, queueLen.value()).map(ServerContext::connector));
     }
 
-    private static Result<Tuple3<FileDescriptor, SocketAddress<?>, Integer>> configureForListen(FileDescriptor fileDescriptor,
-                                                                                                SocketAddress<?> socketAddress,
-                                                                                                int queueDepth) {
+    private static Mapper3<FileDescriptor, SocketAddress<?>, Integer> configureForListen(FileDescriptor fileDescriptor,
+                                                                                         SocketAddress<?> socketAddress,
+                                                                                         long queueLen) {
+
+        var qlen = (int) queueLen;
 
         if (!fileDescriptor.isSocket()) {
-            return ENOTSOCK.result();
+            return ENOTSOCK::result;
         }
 
         var rc = switch (socketAddress.family()) {
-            case INET -> configureForInet(fileDescriptor, socketAddress, queueDepth);
-            case INET6 -> configureForInet6(fileDescriptor, socketAddress, queueDepth);
+            case INET -> configureForInet(fileDescriptor, socketAddress, qlen);
+            case INET6 -> configureForInet6(fileDescriptor, socketAddress, qlen);
             default -> EPFNOSUPPORT.code();
         };
 
-        return result(rc, __ -> tuple(fileDescriptor, socketAddress, queueDepth));
+        return () -> result(rc, __ -> tuple(fileDescriptor, socketAddress, qlen));
     }
 
     private static int configureForInet6(FileDescriptor fileDescriptor, SocketAddress<?> socketAddress, int queueDepth) {
@@ -180,13 +173,10 @@ public class UringApi implements AutoCloseable {
         if (socketAddress instanceof SocketAddressIn6 socketAddressIn6) {
             var addressIn6 = addressIn6(socketAddressIn6);
 
-            return UringNative.prepareForListen(fileDescriptor.descriptor(),
-                                                addressIn6.sockAddrPtr(),
-                                                addressIn6.sockAddrSize(),
-                                                queueDepth);
+            return UringNative.prepareForListen(fileDescriptor.descriptor(), addressIn6.sockAddrPtr(), addressIn6.sockAddrSize(), queueDepth);
+        } else {
+            return -EPFNOSUPPORT.code();
         }
-
-        return -EPFNOSUPPORT.code();
     }
 
     private static int configureForInet(FileDescriptor fileDescriptor, SocketAddress<?> socketAddress, int queueDepth) {
@@ -202,8 +192,8 @@ public class UringApi implements AutoCloseable {
                                                 addressIn.sockAddrSize(),
                                                 queueDepth);
 
+        } else {
+            return -EPFNOSUPPORT.code();
         }
-
-        return -EPFNOSUPPORT.code();
     }
 }

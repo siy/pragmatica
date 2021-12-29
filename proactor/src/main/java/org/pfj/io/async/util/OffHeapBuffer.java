@@ -19,6 +19,8 @@ package org.pfj.io.async.util;
 import org.pfj.io.async.uring.struct.offheap.AbstractOffHeapStructure;
 import org.pfj.io.async.util.raw.RawMemory;
 
+import java.util.HexFormat;
+
 public class OffHeapBuffer extends AbstractOffHeapStructure<OffHeapBuffer> {
     private int used;
 
@@ -56,5 +58,9 @@ public class OffHeapBuffer extends AbstractOffHeapStructure<OffHeapBuffer> {
 
     public byte[] export() {
         return RawMemory.getByteArray(address(), used);
+    }
+
+    public String hexDump() {
+        return HexFormat.of().withUpperCase().formatHex(export());
     }
 }

@@ -18,8 +18,6 @@ package org.pfj.io.async.net;
 
 import org.pfj.io.async.file.FileDescriptor;
 
-import java.util.concurrent.atomic.AtomicBoolean;
-
 
 /**
  * Server connector handles incoming external connections.
@@ -27,18 +25,16 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class ServerContext<T extends SocketAddress<?>> {
     private final FileDescriptor socket;
     private final T address;
-    private final int queueDepth;
-    //private final ConcurrentMap<ULID, IncomingConnectionContext> connections = new ConcurrentHashMap<>();
-    private final AtomicBoolean shutdown = new AtomicBoolean(false);
+    private final int queueLen;
 
-    private ServerContext(FileDescriptor socket, T address, int queueDepth) {
+    private ServerContext(FileDescriptor socket, T address, int queueLen) {
         this.socket = socket;
         this.address = address;
-        this.queueDepth = queueDepth;
+        this.queueLen = queueLen;
     }
 
-    public static <T extends SocketAddress<?>> ServerContext<T> connector(FileDescriptor socket, SocketAddress<?> address, int queueDepth) {
-        return new ServerContext<>(socket, (T) address, queueDepth);
+    public static <T extends SocketAddress<?>> ServerContext<T> connector(FileDescriptor socket, SocketAddress<?> address, int queueLen) {
+        return new ServerContext<>(socket, (T) address, queueLen);
     }
 
     public FileDescriptor socket() {
@@ -49,34 +45,12 @@ public class ServerContext<T extends SocketAddress<?>> {
         return address;
     }
 
-    public int queueDepth() {
-        return queueDepth;
+    public int queueLen() {
+        return queueLen;
     }
-
-//    public ServerContext<T> addConnection( IncomingConnectionContext incomingConnectionContext) {
-//        connections.putIfAbsent(incomingConnectionContext.id(), incomingConnectionContext);
-//        return this;
-//    }
-//
-//    public ServerContext<T> removeConnection( IncomingConnectionContext incomingConnectionContext) {
-//        connections.remove(incomingConnectionContext.id());
-//        return this;
-//    }
 
     @Override
     public String toString() {
         return "ServerContext(" + socket + ", " + address + ')';
     }
-
-    public boolean shutdownInProgress() {
-        return shutdown.get();
-    }
-
-    //TODO: does not look convenient nor good enough, how to rework it?
-//    public void shutdown( Promise<Unit> shutdownPromise) {
-//        if (shutdown.compareAndSet(false, true)) {
-//            //wait for all connections to be closed???
-//            shutdownPromise.ok(unit());
-//        }
-//    }
 }
