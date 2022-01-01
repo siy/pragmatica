@@ -68,11 +68,11 @@ class ProactorImpl implements Proactor {
         pendingCompletions = ObjectHeap.objectHeap(uringApi.numEntries());
     }
 
-    public static ProactorImpl proactor(int queueSize) {
+    public static Proactor proactor(int queueSize) {
         return proactor(queueSize, UringSetupFlags.defaultFlags());
     }
 
-    static ProactorImpl proactor(int queueSize, Set<UringSetupFlags> openFlags) {
+    public static Proactor proactor(int queueSize, Set<UringSetupFlags> openFlags) {
         return new ProactorImpl(uringApi(queueSize, openFlags).fold(ProactorImpl::fail, Functions::id));
     }
 
@@ -103,7 +103,6 @@ class ProactorImpl implements Proactor {
 
     @Override
     public void nop(BiConsumer<Result<Unit>, Proactor> completion) {
-
         queue.add(factory.forNop(completion)
                          .register(pendingCompletions));
     }
@@ -200,7 +199,7 @@ class ProactorImpl implements Proactor {
     }
 
     @Override
-    public void accept(BiConsumer<Result<ClientConnection<?>>, Proactor> completion, FileDescriptor socket, Set<SocketFlag> flags) {
+    public void accept(BiConsumer<Result<ConnectionContext<?>>, Proactor> completion, FileDescriptor socket, Set<SocketFlag> flags) {
 
         queue.add(factory.forAccept(completion, socket, flags)
                          .register(pendingCompletions));

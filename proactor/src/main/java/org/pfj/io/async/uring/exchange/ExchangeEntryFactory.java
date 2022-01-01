@@ -135,7 +135,7 @@ public class ExchangeEntryFactory {
                          .prepare(completion, socketAddress, socketType, openFlags, queueDepth, options);
     }
 
-    public AcceptExchangeEntry forAccept(BiConsumer<Result<ClientConnection<?>>, Proactor> completion, FileDescriptor socket, Set<SocketFlag> flags) {
+    public AcceptExchangeEntry forAccept(BiConsumer<Result<ConnectionContext<?>>, Proactor> completion, FileDescriptor socket, Set<SocketFlag> flags) {
         return acceptPool.alloc()
                          .prepare(completion, socket.descriptor(), Bitmask.combine(flags));
     }
