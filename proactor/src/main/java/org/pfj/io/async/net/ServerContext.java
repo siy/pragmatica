@@ -18,39 +18,19 @@ package org.pfj.io.async.net;
 
 import org.pfj.io.async.file.FileDescriptor;
 
-
 /**
- * Server connector handles incoming external connections.
+ * Server context contains base information about server side of connection.
  */
-public class ServerContext<T extends SocketAddress<?>> {
-    private final FileDescriptor socket;
-    private final T address;
-    private final int queueLen;
+public interface ServerContext<T extends SocketAddress<?>> {
+    FileDescriptor socket();
 
-    private ServerContext(FileDescriptor socket, T address, int queueLen) {
-        this.socket = socket;
-        this.address = address;
-        this.queueLen = queueLen;
-    }
+    T address();
 
-    public static <T extends SocketAddress<?>> ServerContext<T> connector(FileDescriptor socket, SocketAddress<?> address, int queueLen) {
-        return new ServerContext<>(socket, (T) address, queueLen);
-    }
+    int queueLen();
 
-    public FileDescriptor socket() {
-        return socket;
-    }
-
-    public T address() {
-        return address;
-    }
-
-    public int queueLen() {
-        return queueLen;
-    }
-
-    @Override
-    public String toString() {
-        return "ServerContext(" + socket + ", " + address + ')';
+    @SuppressWarnings("unchecked")
+    static <T extends SocketAddress<?>> ServerContext<T> serverContext(FileDescriptor socket, SocketAddress<?> address, int queueLen) {
+        record serverContext<T extends SocketAddress<?>>(FileDescriptor socket, T address, int queueLen) implements ServerContext<T> {}
+        return new serverContext<>(socket, (T) address, queueLen);
     }
 }

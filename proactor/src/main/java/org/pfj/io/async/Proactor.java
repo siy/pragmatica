@@ -235,11 +235,11 @@ public interface Proactor {
      * @param socket     Server socket to accept connections on.
      * @param flags      Accept flags (see {@link SocketFlag} for more details)
      *
-     * @see ClientConnection
+     * @see ConnectionContext
      */
-    void accept(BiConsumer<Result<ClientConnection<?>>, Proactor> completion, FileDescriptor socket, Set<SocketFlag> flags);
+    void accept(BiConsumer<Result<ConnectionContext<?>>, Proactor> completion, FileDescriptor socket, Set<SocketFlag> flags);
 
-    default void accept(Consumer<Result<ClientConnection<?>>> completion, FileDescriptor socket, Set<SocketFlag> flags) {
+    default void accept(Consumer<Result<ConnectionContext<?>>> completion, FileDescriptor socket, Set<SocketFlag> flags) {
         accept((result, __) -> completion.accept(result), socket, flags);
     }
 

@@ -27,7 +27,6 @@ import org.pfj.io.async.uring.struct.raw.SubmitQueueEntry;
 import org.pfj.io.async.uring.utils.ObjectHeap;
 import org.pfj.io.async.util.raw.RawMemory;
 import org.pfj.lang.Result;
-import org.pfj.lang.Result.Mapper3;
 
 import java.util.Deque;
 import java.util.Set;
@@ -36,7 +35,6 @@ import static org.pfj.io.async.SystemError.*;
 import static org.pfj.io.async.uring.struct.offheap.OffHeapSocketAddress.addressIn;
 import static org.pfj.io.async.uring.struct.offheap.OffHeapSocketAddress.addressIn6;
 import static org.pfj.lang.Result.success;
-import static org.pfj.lang.Tuple.tuple;
 
 /**
  * Low-level IO URING API
@@ -142,55 +140,50 @@ public class UringApi implements AutoCloseable {
     public static Result<ServerContext<?>> server(SocketAddress<?> address, SocketType type, Set<SocketFlag> flags,
                                                   Set<SocketOption> options, SizeT queueLen) {
 
+        var qlen = (int) queueLen.value();
+
         return socket(address.family(), type, flags, options)
-            .flatMap(fileDescriptor -> configureForListen(fileDescriptor, address, queueLen.value()).map(ServerContext::connector));
+            .flatMap(fd -> configureForListen(fd, address, qlen))
+            .map(fd -> ServerContext.serverContext(fd, address, qlen));
     }
 
-    private static Mapper3<FileDescriptor, SocketAddress<?>, Integer> configureForListen(FileDescriptor fileDescriptor,
-                                                                                         SocketAddress<?> socketAddress,
-                                                                                         long queueLen) {
-
-        var qlen = (int) queueLen;
-
-        if (!fileDescriptor.isSocket()) {
-            return ENOTSOCK::result;
+    private static Result<FileDescriptor> configureForListen(FileDescriptor fd, SocketAddress<?> address, int qlen) {
+        if (!fd.isSocket()) {
+            return ENOTSOCK.result();
         }
 
-        var rc = switch (socketAddress.family()) {
-            case INET -> configureForInet(fileDescriptor, socketAddress, qlen);
-            case INET6 -> configureForInet6(fileDescriptor, socketAddress, qlen);
+        var rc = switch (address.family()) {
+            case INET -> configureForInet(fd, address, qlen);
+            case INET6 -> configureForInet6(fd, address, qlen);
             default -> EPFNOSUPPORT.code();
         };
 
-        return () -> result(rc, __ -> tuple(fileDescriptor, socketAddress, qlen));
+        return result(rc, __ -> fd);
     }
 
-    private static int configureForInet6(FileDescriptor fileDescriptor, SocketAddress<?> socketAddress, int queueDepth) {
-        if (!fileDescriptor.isSocket6() || socketAddress.family() != AddressFamily.INET6) {
+    private static int configureForInet6(FileDescriptor fd, SocketAddress<?> address, int qlen) {
+        if (!fd.isSocket6() || address.family() != AddressFamily.INET6) {
             return -EPFNOSUPPORT.code();
         }
 
-        if (socketAddress instanceof SocketAddressIn6 socketAddressIn6) {
+        if (address instanceof SocketAddressIn6 socketAddressIn6) {
             var addressIn6 = addressIn6(socketAddressIn6);
 
-            return UringNative.prepareForListen(fileDescriptor.descriptor(), addressIn6.sockAddrPtr(), addressIn6.sockAddrSize(), queueDepth);
+            return UringNative.prepareForListen(fd.descriptor(), addressIn6.sockAddrPtr(), addressIn6.sockAddrSize(), qlen);
         } else {
             return -EPFNOSUPPORT.code();
         }
     }
 
-    private static int configureForInet(FileDescriptor fileDescriptor, SocketAddress<?> socketAddress, int queueDepth) {
-        if (fileDescriptor.isSocket6() || socketAddress.family() == AddressFamily.INET6) {
+    private static int configureForInet(FileDescriptor fd, SocketAddress<?> address, int qlen) {
+        if (fd.isSocket6() || address.family() == AddressFamily.INET6) {
             return -EPFNOSUPPORT.code();
         }
 
-        if (socketAddress instanceof SocketAddressIn socketAddressIn) {
+        if (address instanceof SocketAddressIn socketAddressIn) {
             var addressIn = addressIn(socketAddressIn);
 
-            return UringNative.prepareForListen(fileDescriptor.descriptor(),
-                                                addressIn.sockAddrPtr(),
-                                                addressIn.sockAddrSize(),
-                                                queueDepth);
+            return UringNative.prepareForListen(fd.descriptor(), addressIn.sockAddrPtr(), addressIn.sockAddrSize(), qlen);
 
         } else {
             return -EPFNOSUPPORT.code();

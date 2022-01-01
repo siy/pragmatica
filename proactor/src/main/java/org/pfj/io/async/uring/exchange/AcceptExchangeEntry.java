@@ -19,7 +19,7 @@ package org.pfj.io.async.uring.exchange;
 import org.pfj.io.async.Proactor;
 import org.pfj.io.async.SystemError;
 import org.pfj.io.async.file.FileDescriptor;
-import org.pfj.io.async.net.ClientConnection;
+import org.pfj.io.async.net.ConnectionContext;
 import org.pfj.io.async.net.SocketAddressIn;
 import org.pfj.io.async.uring.struct.offheap.OffHeapSocketAddress;
 import org.pfj.io.async.uring.struct.raw.RawSocketAddressIn;
@@ -29,11 +29,11 @@ import org.pfj.lang.Result;
 
 import java.util.function.BiConsumer;
 
-import static org.pfj.io.async.net.ClientConnection.connectionIn;
+import static org.pfj.io.async.net.ConnectionContext.connectionIn;
 import static org.pfj.io.async.uring.AsyncOperation.IORING_OP_ACCEPT;
 
 //TODO: add support for v6
-public class AcceptExchangeEntry extends AbstractExchangeEntry<AcceptExchangeEntry, ClientConnection<?>> {
+public class AcceptExchangeEntry extends AbstractExchangeEntry<AcceptExchangeEntry, ConnectionContext<?>> {
     private final OffHeapSocketAddress<SocketAddressIn, RawSocketAddressIn> clientAddress = OffHeapSocketAddress.addressIn();
     private int descriptor;
     private int acceptFlags;
@@ -53,10 +53,7 @@ public class AcceptExchangeEntry extends AbstractExchangeEntry<AcceptExchangeEnt
             completion.accept(SystemError.result(res), proactor);
         }
 
-        completion.accept(clientAddress.extract()
-                                       .map(addr -> connectionIn(FileDescriptor.socket(res), addr)),
-                          proactor);
-
+        completion.accept(clientAddress.extract().map(address -> connectionIn(res, address)), proactor);
     }
 
     @Override
@@ -68,7 +65,7 @@ public class AcceptExchangeEntry extends AbstractExchangeEntry<AcceptExchangeEnt
                     .acceptFlags(acceptFlags);
     }
 
-    public AcceptExchangeEntry prepare(BiConsumer<Result<ClientConnection<?>>, Proactor> completion, int descriptor, int acceptFlags) {
+    public AcceptExchangeEntry prepare(BiConsumer<Result<ConnectionContext<?>>, Proactor> completion, int descriptor, int acceptFlags) {
         this.descriptor = descriptor;
         this.acceptFlags = acceptFlags;
         clientAddress.reset();
