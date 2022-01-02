@@ -1,4 +1,4 @@
-package org.pfj.lang.io.scheduler;
+package org.pfj.lang.scheduler;
 
 import org.junit.jupiter.api.Test;
 

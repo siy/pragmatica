@@ -15,7 +15,7 @@
  *
  */
 
-package org.pfj.lang.io.scheduler;
+package org.pfj.lang.scheduler;
 
 import org.pfj.io.async.Proactor;
 import org.pfj.lang.Promise;

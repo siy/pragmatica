@@ -21,7 +21,7 @@ import org.pfj.io.async.Proactor;
 import org.pfj.io.async.SystemError;
 import org.pfj.io.async.Timeout;
 import org.pfj.lang.Functions.FN1;
-import org.pfj.lang.io.scheduler.TaskExecutor;
+import org.pfj.lang.scheduler.TaskExecutor;
 
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
