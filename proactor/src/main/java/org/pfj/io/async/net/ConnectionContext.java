@@ -21,22 +21,23 @@ import org.pfj.io.async.file.FileDescriptor;
 /**
  * Connection context holds base client information - address and file descriptor.
  */
-public interface ConnectionContext<T extends SocketAddress<?>> {
+public interface ConnectionContext<T extends InetAddress> {
     FileDescriptor socket();
 
-    T address();
+    SocketAddress<T> address();
 
-    static ConnectionContext<SocketAddressIn> connectionIn(int fd, SocketAddressIn addressIn) {
-        record connectionContext(FileDescriptor socket, SocketAddressIn address)
-            implements ConnectionContext<SocketAddressIn> {}
+    static <T extends InetAddress> ConnectionContext<T> connection(FileDescriptor socket, SocketAddress<T> address) {
+        record connectionContext<K extends InetAddress>(FileDescriptor socket, SocketAddress<K> address)
+            implements ConnectionContext<K> {}
 
-        return new connectionContext(FileDescriptor.socket(fd), addressIn);
+        return new connectionContext<>(socket, address);
     }
 
-    static ConnectionContext<SocketAddressIn6> connectionIn6(int fd, SocketAddressIn6 addressIn6) {
-        record connectionContext(FileDescriptor socket, SocketAddressIn6 address)
-            implements ConnectionContext<SocketAddressIn6> {}
+    static ConnectionContext<Inet4Address> connectionIn(int fd, SocketAddressIn addressIn) {
+        return connection(FileDescriptor.socket(fd), addressIn);
+    }
 
-        return new connectionContext(FileDescriptor.socket6(fd), addressIn6);
+    static ConnectionContext<Inet6Address> connectionIn6(int fd, SocketAddressIn6 addressIn6) {
+        return connection(FileDescriptor.socket(fd), addressIn6);
     }
 }

@@ -20,6 +20,7 @@ import org.pfj.io.async.Proactor;
 import org.pfj.io.async.SystemError;
 import org.pfj.io.async.Timeout;
 import org.pfj.lang.Functions.*;
+import org.pfj.task.TaskExecutor;
 
 import java.util.List;
 import java.util.function.BiConsumer;
@@ -91,6 +92,16 @@ public interface Promise<T> {
      * @return Current instance
      */
     Promise<T> async(BiConsumer<Promise<T>, Proactor> action);
+
+    /**
+     * Run asynchronous task. The task will receive current instance of Promise, instance of {@link Proactor} and
+     * instance of {@link TaskExecutor} as a parameters.
+     *
+     * @param action The task to run
+     *
+     * @return Current instance
+     */
+    Promise<T> async(TriConsumer<Promise<T>, Proactor, TaskExecutor> action);
 
     /**
      * Run asynchronous task after specified timeout.

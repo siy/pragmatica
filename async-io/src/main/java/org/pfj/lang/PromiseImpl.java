@@ -21,7 +21,8 @@ import org.pfj.io.async.Proactor;
 import org.pfj.io.async.SystemError;
 import org.pfj.io.async.Timeout;
 import org.pfj.lang.Functions.FN1;
-import org.pfj.lang.scheduler.TaskExecutor;
+import org.pfj.lang.Functions.TriConsumer;
+import org.pfj.task.TaskExecutor;
 
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
@@ -149,6 +150,14 @@ final class PromiseImpl<T> implements Promise<T> {
     @Override
     public Promise<T> async(BiConsumer<Promise<T>, Proactor> action) {
         ExecutorHolder.executor().submit(proactor -> action.accept(this, proactor));
+
+        return this;
+    }
+
+    @Override
+    public Promise<T> async(TriConsumer<Promise<T>, Proactor, TaskExecutor> action) {
+        var executor = ExecutorHolder.executor();
+        executor.submit(proactor -> action.accept(this, proactor, executor));
 
         return this;
     }

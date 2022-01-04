@@ -70,7 +70,7 @@ public class PromiseIOTest {
                   .onSuccess(fd -> System.out.println("Open successful: " + fd))
                   .onSuccess(fd -> {
                       try (var buffer = OffHeapBuffer.fixedSize(128)) {
-                          Promise.<SizeT>promise((promise, proactor) -> proactor.read(promise::resolve, fd, buffer.forRead(), OffsetT.ZERO, empty()))
+                          Promise.<SizeT>promise((promise, proactor) -> proactor.read(promise::resolve, fd, buffer, OffsetT.ZERO, empty()))
                                  .join()
                                  .onFailure(PromiseIOTest::fail)
                                  .onSuccess(sizeT -> System.out.println("Read " + sizeT + " bytes"))

@@ -130,6 +130,14 @@ public interface Proactor {
         read((result, __) -> completion.accept(result), fd, buffer, offset, timeout);
     }
 
+    default void read(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fd, OffHeapBuffer buffer) {
+        read(completion, fd, buffer, OffsetT.ZERO, Option.empty());
+    }
+
+    default void read(Consumer<Result<SizeT>> completion, FileDescriptor fd, OffHeapBuffer buffer) {
+        read((result, __) -> completion.accept(result), fd, buffer);
+    }
+
     /**
      * Submit WRITE operation.
      * <p>
@@ -146,6 +154,14 @@ public interface Proactor {
 
     default void write(Consumer<Result<SizeT>> completion, FileDescriptor fd, OffHeapBuffer buffer, OffsetT offset, Option<Timeout> timeout) {
         write((result, __) -> completion.accept(result), fd, buffer, offset, timeout);
+    }
+
+    default void write(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fd, OffHeapBuffer buffer) {
+        write(completion, fd, buffer, OffsetT.ZERO, Option.empty());
+    }
+
+    default void write(Consumer<Result<SizeT>> completion, FileDescriptor fd, OffHeapBuffer buffer) {
+        write((result, __) -> completion.accept(result), fd, buffer);
     }
 
     /**

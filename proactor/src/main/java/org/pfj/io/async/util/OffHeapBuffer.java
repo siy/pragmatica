@@ -47,10 +47,6 @@ public class OffHeapBuffer extends AbstractOffHeapStructure<OffHeapBuffer> {
         return used;
     }
 
-    public OffHeapBuffer forRead() {
-        return used(size());
-    }
-
     public OffHeapBuffer used(int used) {
         this.used = Math.min(size(), used);
         return this;

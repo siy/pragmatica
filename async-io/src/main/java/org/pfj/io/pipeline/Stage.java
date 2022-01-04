@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2021 Sergiy Yevtushenko.
+ *  Copyright (c) 2022 Sergiy Yevtushenko.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,28 +15,25 @@
  *
  */
 
-package org.pfj.lang.scheduler;
+package org.pfj.io.pipeline;
 
-import org.pfj.io.async.Proactor;
-import org.pfj.lang.Promise;
-import org.pfj.lang.Unit;
+import org.pfj.lang.Functions.FN1;
 
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 
-public interface TaskExecutor {
-    int DEFAULT_THREAD_COUNT = Math.max(Runtime.getRuntime().availableProcessors() - 1, 2);
+public interface Stage<T> {
+    Stage<T> push(T value);
 
-    TaskExecutor submit(Consumer<Proactor> task);
+    Stage<T> onValue(Consumer<T> action);
 
-    Promise<Unit> shutdown();
+    Stage<T> filter(Predicate<T> predicate);
 
-    int parallelism();
+    <R> Stage<R> map(FN1<R, ? super T> mapper);
 
-    static TaskExecutor taskExecutor() {
-        return taskExecutor(DEFAULT_THREAD_COUNT);
-    }
+    <R> Stage<R> mapIf(Predicate<T> condition, FN1<R, ? super T> trueMapper, FN1<R, ? super T> falseMapper);
 
-    static TaskExecutor taskExecutor(int threadCount) {
-        return new TaskExecutorImpl(Math.max(threadCount, 2));
+    static <T> Stage<T> stage() {
+        return new StageImpl<>();
     }
 }
