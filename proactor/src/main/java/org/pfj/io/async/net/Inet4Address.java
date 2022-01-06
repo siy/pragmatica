@@ -21,7 +21,7 @@ import org.pfj.lang.Result;
 import static org.pfj.io.async.SystemError.EFAULT;
 
 //TODO: move to InetAddress and make it sealed
-public class Inet4Address implements InetAddress {
+public final class Inet4Address implements InetAddress {
     public static final int SIZE = 4;
     public static final Inet4Address INADDR_ANY = new Inet4Address(new byte[SIZE]);
 

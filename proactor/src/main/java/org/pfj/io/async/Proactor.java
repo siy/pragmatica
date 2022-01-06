@@ -232,11 +232,13 @@ public interface Proactor {
      *
      * @see ServerContext
      */
-    void server(BiConsumer<Result<ServerContext<?>>, Proactor> completion, SocketAddress<?> address, SocketType type,
-                Set<SocketFlag> flags, SizeT len, Set<SocketOption> options);
+    <T extends InetAddress> void server(BiConsumer<Result<ServerContext<T>>, Proactor> completion,
+                                        SocketAddress<T> socketAddress, SocketType socketType,
+                                        Set<SocketFlag> openFlags, SizeT queueDepth, Set<SocketOption> options);
 
-    default void server(Consumer<Result<ServerContext<?>>> completion, SocketAddress<?> address, SocketType type,
-                        Set<SocketFlag> flags, SizeT len, Set<SocketOption> options) {
+    default <T extends InetAddress> void server(Consumer<Result<ServerContext<T>>> completion,
+                                                SocketAddress<T> address, SocketType type,
+                                                Set<SocketFlag> flags, SizeT len, Set<SocketOption> options) {
         server((result, __) -> completion.accept(result), address, type, flags, len, options);
     }
 
@@ -247,16 +249,36 @@ public interface Proactor {
      * <p>
      * Accepted connection receives its own socket which then can be used to communicate (read/write) with particular client.
      *
-     * @param completion Callback which is invoked once operation is finished.
-     * @param socket     Server socket to accept connections on.
-     * @param flags      Accept flags (see {@link SocketFlag} for more details)
+     * @param completion  Callback which is invoked once operation is finished.
+     * @param socket      Server socket to accept connections on.
+     * @param flags       Accept flags (see {@link SocketFlag} for more details)
+     * @param addressType tag for address type (TCPv4 or TCPv6). Actual value is irrelevant, matters only type. Constants {@link
+     *                    Inet4Address#INADDR_ANY} and {@link Inet6Address#INADDR_ANY} could be used for this purpose.
      *
      * @see ConnectionContext
      */
-    void accept(BiConsumer<Result<ConnectionContext<?>>, Proactor> completion, FileDescriptor socket, Set<SocketFlag> flags);
+    <T extends InetAddress> void accept(BiConsumer<Result<ConnectionContext<T>>, Proactor> completion,
+                                        FileDescriptor socket, Set<SocketFlag> flags, T addressType);
 
-    default void accept(Consumer<Result<ConnectionContext<?>>> completion, FileDescriptor socket, Set<SocketFlag> flags) {
-        accept((result, __) -> completion.accept(result), socket, flags);
+    default <T extends InetAddress> void accept(Consumer<Result<ConnectionContext<T>>> completion,
+                                                FileDescriptor socket, Set<SocketFlag> flags, T addressType) {
+        accept((result, __) -> completion.accept(result), socket, flags, addressType);
+    }
+
+    default void acceptV4(BiConsumer<Result<ConnectionContext<Inet4Address>>, Proactor> completion, FileDescriptor socket, Set<SocketFlag> flags) {
+        accept(completion, socket, flags, Inet4Address.INADDR_ANY);
+    }
+
+    default void acceptV4(Consumer<Result<ConnectionContext<Inet4Address>>> completion, FileDescriptor socket, Set<SocketFlag> flags) {
+        accept(completion, socket, flags, Inet4Address.INADDR_ANY);
+    }
+
+    default void acceptV6(BiConsumer<Result<ConnectionContext<Inet4Address>>, Proactor> completion, FileDescriptor socket, Set<SocketFlag> flags) {
+        accept(completion, socket, flags, Inet4Address.INADDR_ANY);
+    }
+
+    default void acceptV6(Consumer<Result<ConnectionContext<Inet4Address>>> completion, FileDescriptor socket, Set<SocketFlag> flags) {
+        accept(completion, socket, flags, Inet4Address.INADDR_ANY);
     }
 
     /**
@@ -264,17 +286,17 @@ public interface Proactor {
      * <p>
      * Connect to external server at provided address (host/port). Upon completion callback is invoked with the file descriptor passed as a parameter
      * for convenience.
-     * <p>
-     * Returned {@link Promise} for convenience holds the same file descriptor as passed in {@code socket} parameter.
      *
      * @param completion Callback which is invoked once operation is finished.
      * @param socket     Socket to connect
      * @param address    Address to connect
      * @param timeout    Optional operation timeout.
      */
-    void connect(BiConsumer<Result<FileDescriptor>, Proactor> completion, FileDescriptor socket, SocketAddress<?> address, Option<Timeout> timeout);
+    <T extends InetAddress> void connect(BiConsumer<Result<FileDescriptor>, Proactor> completion, FileDescriptor socket,
+                                         SocketAddress<T> address, Option<Timeout> timeout);
 
-    default void connect(Consumer<Result<FileDescriptor>> completion, FileDescriptor socket, SocketAddress<?> address, Option<Timeout> timeout) {
+    default <T extends InetAddress> void connect(Consumer<Result<FileDescriptor>> completion, FileDescriptor socket,
+                                                 SocketAddress<T> address, Option<Timeout> timeout) {
         connect((result, __) -> completion.accept(result), socket, address, timeout);
     }
 
@@ -349,7 +371,11 @@ public interface Proactor {
     void write(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fileDescriptor, OffsetT offset,
                Option<Timeout> timeout, OffHeapBuffer... buffers);
 
-    default void write(Consumer<Result<SizeT>> completion, FileDescriptor fileDescriptor, OffsetT offset, Option<Timeout> timeout, OffHeapBuffer... buffers) {
+    default void write(Consumer<Result<SizeT>> completion,
+                       FileDescriptor fileDescriptor,
+                       OffsetT offset,
+                       Option<Timeout> timeout,
+                       OffHeapBuffer... buffers) {
         write((result, __) -> completion.accept(result), fileDescriptor, offset, timeout, buffers);
     }
 

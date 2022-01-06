@@ -51,9 +51,9 @@ public class RawStatx extends AbstractExternalRawStructure<RawStatx> {
     }
 
     @Override
-    public RawStatx reposition(long address) {
+    public void reposition(long address) {
         repositionInner(address);
-        return super.reposition(address);
+        super.reposition(address);
     }
 
     /* What results were written [uncond] */

@@ -16,7 +16,8 @@
 
 package org.pfj.io.async.uring.struct.raw;
 
-import org.pfj.io.async.net.SocketAddressIn6;
+import org.pfj.io.async.net.Inet6Address;
+import org.pfj.io.async.net.SocketAddress;
 import org.pfj.io.async.uring.struct.AbstractExternalRawStructure;
 import org.pfj.io.async.uring.struct.shape.SocketAddressIn6Offsets;
 import org.pfj.lang.Result;
@@ -29,10 +30,10 @@ import static org.pfj.io.async.net.InetPort.inetPort;
 import static org.pfj.io.async.uring.struct.shape.SocketAddressIn6Offsets.*;
 import static org.pfj.lang.Result.success;
 
-public class RawSocketAddressIn6 extends AbstractExternalRawStructure<RawSocketAddressIn6>
-    implements RawSocketAddress<SocketAddressIn6, RawSocketAddressIn6> {
+public final class RawSocketAddressIn6 extends AbstractExternalRawStructure<RawSocketAddressIn6>
+    implements RawSocketAddress<Inet6Address> {
 
-    protected RawSocketAddressIn6(long address) {
+    private RawSocketAddressIn6(long address) {
         super(address, SocketAddressIn6Offsets.SIZE);
     }
 
@@ -86,22 +87,25 @@ public class RawSocketAddressIn6 extends AbstractExternalRawStructure<RawSocketA
     }
 
     @Override
-    public void assign(SocketAddressIn6 input) {
+    public void assign(SocketAddress<Inet6Address> input) {
         family(input.family().familyId());
         port(input.port().port());
         addr(input.address().asBytes());
-        flowinfo(input.flowInfo().value());
-        scopeId(input.scopeId().scopeId());
+
+        if (input instanceof SocketAddress.SocketAddressIn6 in6) {
+            flowinfo(in6.flowInfo().value());
+            scopeId(in6.scopeId().scopeId());
+        }
     }
 
     @Override
-    public Result<SocketAddressIn6> extract() {
+    public Result<SocketAddress<Inet6Address>> extract() {
         return Result.all(addressFamily(family()),
                           success(inetPort(port())),
                           inet6Address(addr()),
                           success(inet6FlowInfo(flowinfo())),
                           success(inet6ScopeId(scopeId())))
-                     .map(SocketAddressIn6::create);
+                     .map(SocketAddress::socketAddress);
     }
 
     @Override

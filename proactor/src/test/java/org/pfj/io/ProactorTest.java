@@ -40,6 +40,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.pfj.io.async.net.SocketAddress.socketAddress;
 import static org.pfj.lang.Option.empty;
 import static org.pfj.lang.Option.option;
 
@@ -109,9 +110,7 @@ class ProactorTest {
     void externalHostCanBeConnectedAndRead() throws UnknownHostException {
         var addr = java.net.Inet4Address.getByName("www.google.com");
         var address = Inet4Address.inet4Address(addr.getAddress())
-                                  .fold(failure -> fail(failure::message),
-                                        inetAddress -> SocketAddressIn.create(InetPort.inetPort(80),
-                                                                              inetAddress));
+                                  .fold(failure -> fail(failure::message), inetAddress -> socketAddress(InetPort.inetPort(80), inetAddress));
 
         System.out.println("Address: " + address);
 

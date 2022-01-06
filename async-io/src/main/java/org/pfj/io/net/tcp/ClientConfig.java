@@ -19,6 +19,7 @@ package org.pfj.io.net.tcp;
 
 import org.pfj.io.async.Timeout;
 import org.pfj.io.async.net.InetAddress;
+import org.pfj.io.async.net.InetPort;
 import org.pfj.io.async.net.SocketAddress;
 import org.pfj.lang.Option;
 
@@ -27,5 +28,30 @@ public interface ClientConfig<T extends InetAddress> {
 
     Option<Timeout> connectTimeout();
 
-    //TODO: finish it
+    static <T extends InetAddress> ClientConfigBuilder<T> config(int port, T host) {
+        return new ClientConfigBuilder<>(port, host);
+    }
+
+    class ClientConfigBuilder<T extends InetAddress> {
+        private final int port;
+        private final T host;
+        private Option<Timeout> timeout = Option.empty();
+
+        private ClientConfigBuilder(int port, T host) {
+            this.port = port;
+            this.host = host;
+        }
+
+        ClientConfigBuilder<T> withTimeout(Timeout timeout) {
+            this.timeout = Option.option(timeout);
+            return this;
+        }
+
+        ClientConfig<T> build() {
+            record clientConfig<R extends InetAddress>(SocketAddress<R> address, Option<Timeout> connectTimeout)
+            implements ClientConfig<R> {}
+
+            return new clientConfig<>(SocketAddress.genericAddress(InetPort.inetPort(port), host), timeout);
+        }
+    }
 }

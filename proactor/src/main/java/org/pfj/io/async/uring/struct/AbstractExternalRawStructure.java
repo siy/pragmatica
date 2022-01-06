@@ -23,10 +23,8 @@ public abstract class AbstractExternalRawStructure<T extends ExternalRawStructur
         super(address, size);
     }
 
-    @SuppressWarnings("unchecked")
     @Override
-    public T reposition(long address) {
+    public void reposition(long address) {
         address(address);
-        return (T) this;
     }
 }

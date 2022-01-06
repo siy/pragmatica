@@ -22,6 +22,7 @@ import org.pfj.io.async.common.SizeT;
 import org.pfj.io.async.file.FileDescriptor;
 import org.pfj.io.async.net.*;
 import org.pfj.io.async.uring.exchange.ExchangeEntry;
+import org.pfj.io.async.uring.struct.offheap.OffHeapSocketAddress;
 import org.pfj.io.async.uring.struct.raw.CompletionQueueEntry;
 import org.pfj.io.async.uring.struct.raw.SubmitQueueEntry;
 import org.pfj.io.async.uring.utils.ObjectHeap;
@@ -31,9 +32,8 @@ import org.pfj.lang.Result;
 import java.util.Deque;
 import java.util.Set;
 
-import static org.pfj.io.async.SystemError.*;
-import static org.pfj.io.async.uring.struct.offheap.OffHeapSocketAddress.addressIn;
-import static org.pfj.io.async.uring.struct.offheap.OffHeapSocketAddress.addressIn6;
+import static org.pfj.io.async.SystemError.ENOTSOCK;
+import static org.pfj.io.async.SystemError.result;
 import static org.pfj.lang.Result.success;
 
 /**
@@ -137,56 +137,23 @@ public class UringApi implements AutoCloseable {
                       (af == AddressFamily.INET6) ? FileDescriptor::socket6 : FileDescriptor::socket);
     }
 
-    public static Result<ServerContext<?>> server(SocketAddress<?> address, SocketType type, Set<SocketFlag> flags,
-                                                  Set<SocketOption> options, SizeT queueLen) {
-
-        var qlen = (int) queueLen.value();
+    public static <T extends InetAddress> Result<ServerContext<T>> server(SocketAddress<T> address, SocketType type, Set<SocketFlag> flags,
+                                                                          Set<SocketOption> options, SizeT queueLen) {
+        var len = (int) queueLen.value();
 
         return socket(address.family(), type, flags, options)
-            .flatMap(fd -> configureForListen(fd, address, qlen))
-            .map(fd -> ServerContext.serverContext(fd, address, qlen));
+            .flatMap(fd -> configureForListen(fd, address, len))
+            .map(fd -> ServerContext.serverContext(fd, address, len));
     }
 
-    private static Result<FileDescriptor> configureForListen(FileDescriptor fd, SocketAddress<?> address, int qlen) {
+    private static <T extends InetAddress> Result<FileDescriptor> configureForListen(FileDescriptor fd, SocketAddress<T> address, int queueLen) {
         if (!fd.isSocket()) {
             return ENOTSOCK.result();
         }
 
-        var rc = switch (address.family()) {
-            case INET -> configureForInet(fd, address, qlen);
-            case INET6 -> configureForInet6(fd, address, qlen);
-            default -> EPFNOSUPPORT.code();
-        };
+        var offHeapAddress = OffHeapSocketAddress.unsafeSocketAddress(address);
+        var rc = UringNative.prepareForListen(fd.descriptor(), offHeapAddress.sockAddrPtr(), offHeapAddress.sockAddrSize(), queueLen);
 
         return result(rc, __ -> fd);
-    }
-
-    private static int configureForInet6(FileDescriptor fd, SocketAddress<?> address, int qlen) {
-        if (!fd.isSocket6() || address.family() != AddressFamily.INET6) {
-            return -EPFNOSUPPORT.code();
-        }
-
-        if (address instanceof SocketAddressIn6 socketAddressIn6) {
-            var addressIn6 = addressIn6(socketAddressIn6);
-
-            return UringNative.prepareForListen(fd.descriptor(), addressIn6.sockAddrPtr(), addressIn6.sockAddrSize(), qlen);
-        } else {
-            return -EPFNOSUPPORT.code();
-        }
-    }
-
-    private static int configureForInet(FileDescriptor fd, SocketAddress<?> address, int qlen) {
-        if (fd.isSocket6() || address.family() == AddressFamily.INET6) {
-            return -EPFNOSUPPORT.code();
-        }
-
-        if (address instanceof SocketAddressIn socketAddressIn) {
-            var addressIn = addressIn(socketAddressIn);
-
-            return UringNative.prepareForListen(fd.descriptor(), addressIn.sockAddrPtr(), addressIn.sockAddrSize(), qlen);
-
-        } else {
-            return -EPFNOSUPPORT.code();
-        }
     }
 }

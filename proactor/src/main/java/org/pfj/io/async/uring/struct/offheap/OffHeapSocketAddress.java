@@ -16,25 +16,33 @@
 
 package org.pfj.io.async.uring.struct.offheap;
 
+import org.pfj.io.async.net.Inet4Address;
+import org.pfj.io.async.net.Inet6Address;
+import org.pfj.io.async.net.InetAddress;
 import org.pfj.io.async.net.SocketAddress;
-import org.pfj.io.async.net.SocketAddressIn;
-import org.pfj.io.async.net.SocketAddressIn6;
-import org.pfj.io.async.uring.struct.ExternalRawStructure;
 import org.pfj.io.async.uring.struct.raw.RawSocketAddress;
 import org.pfj.io.async.uring.struct.raw.RawSocketAddressIn;
 import org.pfj.io.async.uring.struct.raw.RawSocketAddressIn6;
 import org.pfj.io.async.util.raw.RawProperty;
 import org.pfj.lang.Result;
 
-public class OffHeapSocketAddress<T extends SocketAddress<?>, R extends ExternalRawStructure<?>>
-    extends AbstractOffHeapStructure<OffHeapSocketAddress<T, R>> {
+//TODO: consider simultaneous support for both address types and dynamic reconfiguration for the address type
+public class OffHeapSocketAddress extends AbstractOffHeapStructure<OffHeapSocketAddress> {
     private static final int SIZE = 128 + 4;    //Equal to sizeof(struct sockaddr_storage) + sizeof(socklen_t)
     private static final RawProperty sockaddrLen = RawProperty.raw(0, 4);
-    private final RawSocketAddress<T, R> shape;
 
-    private OffHeapSocketAddress(RawSocketAddress<T, R> shape) {
+    @SuppressWarnings("rawtypes")
+    private RawSocketAddress shape;
+    private final RawSocketAddressIn shapeV4 = RawSocketAddressIn.at(0);
+    private final RawSocketAddressIn6 shapeV6 = RawSocketAddressIn6.at(0);
+
+    private OffHeapSocketAddress(boolean v6) {
         super(SIZE);
-        this.shape = shape;
+        protocolVersion(v6);
+    }
+
+    public final void protocolVersion(boolean v6) {
+        this.shape = v6 ? shapeV6 : shapeV4;
         reset();
     }
 
@@ -44,7 +52,8 @@ public class OffHeapSocketAddress<T extends SocketAddress<?>, R extends External
         putInt(sockaddrLen, shape.shape().size());
     }
 
-    public Result<T> extract() {
+    @SuppressWarnings("unchecked")
+    public <T extends InetAddress> Result<SocketAddress<T>> extract() {
         return shape.extract();
     }
 
@@ -60,35 +69,31 @@ public class OffHeapSocketAddress<T extends SocketAddress<?>, R extends External
         return shape.shape().address();
     }
 
-    public OffHeapSocketAddress<T, R> assign(T input) {
+    @SuppressWarnings("unchecked")
+    public <T extends InetAddress> OffHeapSocketAddress assign(SocketAddress<T> input) {
+        switch (input.address()) {
+            case Inet4Address __1 -> protocolVersion(false);
+            case Inet6Address __2 -> protocolVersion(true);
+            default -> throw new IllegalStateException("Unexpected value: " + input.address());
+        }
+
         shape.assign(input);
         return this;
     }
 
-    public static OffHeapSocketAddress<SocketAddressIn, RawSocketAddressIn> addressIn() {
-        return new OffHeapSocketAddress<>(RawSocketAddressIn.at(0));
+    public static OffHeapSocketAddress v4() {
+        return new OffHeapSocketAddress(false);
     }
 
-    public static OffHeapSocketAddress<SocketAddressIn, RawSocketAddressIn> addressIn(SocketAddressIn addressIn) {
-        return new OffHeapSocketAddress<>(RawSocketAddressIn.at(0)).assign(addressIn);
+    public static OffHeapSocketAddress v6() {
+        return new OffHeapSocketAddress(true);
     }
 
-    public static OffHeapSocketAddress<SocketAddressIn6, RawSocketAddressIn6> addressIn6() {
-        return new OffHeapSocketAddress<>(RawSocketAddressIn6.at(0));
-    }
-
-    public static OffHeapSocketAddress<SocketAddressIn6, RawSocketAddressIn6> addressIn6(SocketAddressIn6 addressIn6) {
-        return new OffHeapSocketAddress<>(RawSocketAddressIn6.at(0)).assign(addressIn6);
-    }
-
-    @SuppressWarnings("unchecked")
-    public static <SA extends SocketAddress<?>, RSA extends ExternalRawStructure<?>> OffHeapSocketAddress<SA, RSA> unsafeSocketAddress(SocketAddress<?> address) {
-        if (address instanceof SocketAddressIn addressIn) {
-            return (OffHeapSocketAddress<SA, RSA>) addressIn(addressIn);
-        } else if (address instanceof SocketAddressIn6 addressIn6) {
-            return (OffHeapSocketAddress<SA, RSA>) addressIn6(addressIn6);
-        } else {
-            return null;
-        }
+    public static <T extends InetAddress> OffHeapSocketAddress unsafeSocketAddress(SocketAddress<T> address) {
+        return switch (address.address()) {
+            case Inet4Address __1 -> new OffHeapSocketAddress(false).assign(address);
+            case Inet6Address __2 -> new OffHeapSocketAddress(true).assign(address);
+            default -> null;
+        };
     }
 }

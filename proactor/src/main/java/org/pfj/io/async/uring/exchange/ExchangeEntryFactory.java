@@ -27,7 +27,6 @@ import org.pfj.io.async.file.SpliceDescriptor;
 import org.pfj.io.async.file.stat.FileStat;
 import org.pfj.io.async.net.*;
 import org.pfj.io.async.uring.Bitmask;
-import org.pfj.io.async.uring.struct.ExternalRawStructure;
 import org.pfj.io.async.uring.struct.offheap.OffHeapCString;
 import org.pfj.io.async.uring.struct.offheap.OffHeapIoVector;
 import org.pfj.io.async.uring.struct.offheap.OffHeapSocketAddress;
@@ -53,12 +52,16 @@ public class ExchangeEntryFactory {
     private final PlainObjectPool<SpliceExchangeEntry> splicePool = new PlainObjectPool<>(SpliceExchangeEntry::new);
     private final PlainObjectPool<OpenExchangeEntry> openPool = new PlainObjectPool<>(OpenExchangeEntry::new);
     private final PlainObjectPool<SocketExchangeEntry> socketPool = new PlainObjectPool<>(SocketExchangeEntry::new);
-    private final PlainObjectPool<ServerExchangeEntry> serverPool = new PlainObjectPool<>(ServerExchangeEntry::new);
-    private final PlainObjectPool<AcceptExchangeEntry> acceptPool = new PlainObjectPool<>(AcceptExchangeEntry::new);
-    private final PlainObjectPool<ConnectExchangeEntry> connectPool = new PlainObjectPool<>(ConnectExchangeEntry::new);
     private final PlainObjectPool<StatExchangeEntry> statPool = new PlainObjectPool<>(StatExchangeEntry::new);
     private final PlainObjectPool<ReadVectorExchangeEntry> readVectorPool = new PlainObjectPool<>(ReadVectorExchangeEntry::new);
     private final PlainObjectPool<WriteVectorExchangeEntry> writeVectorPool = new PlainObjectPool<>(WriteVectorExchangeEntry::new);
+
+    @SuppressWarnings("rawtypes")
+    private final PlainObjectPool<ServerExchangeEntry> serverPool = new PlainObjectPool<>(ServerExchangeEntry::new);
+    @SuppressWarnings("rawtypes")
+    private final PlainObjectPool<AcceptExchangeEntry> acceptPool = new PlainObjectPool<>(AcceptExchangeEntry::new);
+    @SuppressWarnings("rawtypes")
+    private final PlainObjectPool<ConnectExchangeEntry> connectPool = new PlainObjectPool<>(ConnectExchangeEntry::new);
 
     public NopExchangeEntry forNop(BiConsumer<Result<Unit>, Proactor> completion) {
         return nopPool.alloc()
@@ -125,24 +128,23 @@ public class ExchangeEntryFactory {
                          .prepare(completion, addressFamily, socketType, openFlags, options);
     }
 
-    public ServerExchangeEntry forServer(BiConsumer<Result<ServerContext<?>>, Proactor> completion,
-                                         SocketAddress<?> socketAddress,
-                                         SocketType socketType,
-                                         Set<SocketFlag> openFlags,
-                                         SizeT queueDepth,
-                                         Set<SocketOption> options) {
+    @SuppressWarnings("unchecked")
+    public <T extends InetAddress> ServerExchangeEntry<T> forServer(BiConsumer<Result<ServerContext<T>>, Proactor> completion,
+                                                                    SocketAddress<T> socketAddress, SocketType socketType,
+                                                                    Set<SocketFlag> openFlags, SizeT queueDepth, Set<SocketOption> options) {
         return serverPool.alloc()
                          .prepare(completion, socketAddress, socketType, openFlags, queueDepth, options);
     }
 
-    public AcceptExchangeEntry forAccept(BiConsumer<Result<ConnectionContext<?>>, Proactor> completion, FileDescriptor socket, Set<SocketFlag> flags) {
+    @SuppressWarnings("unchecked")
+    public <T extends InetAddress> AcceptExchangeEntry<T> forAccept(BiConsumer<Result<ConnectionContext<T>>, Proactor> completion,
+                                                                    FileDescriptor socket, Set<SocketFlag> flags, boolean v6) {
         return acceptPool.alloc()
-                         .prepare(completion, socket.descriptor(), Bitmask.combine(flags));
+                         .prepare(completion, socket.descriptor(), Bitmask.combine(flags), v6);
     }
 
     public ConnectExchangeEntry forConnect(BiConsumer<Result<FileDescriptor>, Proactor> completion,
-                                           FileDescriptor socket,
-                                           OffHeapSocketAddress<SocketAddress<?>, ExternalRawStructure<?>> clientAddress,
+                                           FileDescriptor socket, OffHeapSocketAddress clientAddress,
                                            Option<Timeout> timeout) {
         return connectPool.alloc()
                           .prepare(completion, socket, clientAddress, calculateFlags(timeout));

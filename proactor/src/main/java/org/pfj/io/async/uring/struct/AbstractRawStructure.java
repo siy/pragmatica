@@ -19,7 +19,7 @@ package org.pfj.io.async.uring.struct;
 import org.pfj.io.async.util.raw.RawMemory;
 import org.pfj.io.async.util.raw.RawProperty;
 
-public abstract class AbstractRawStructure<T extends RawStructure<?>> implements RawStructure<T> {
+public abstract class AbstractRawStructure<T extends RawStructure<T>> implements RawStructure<T> {
     private long address;
     private final int size;
 

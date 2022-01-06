@@ -187,29 +187,24 @@ class ProactorImpl implements Proactor {
     }
 
     @Override
-    public void server(BiConsumer<Result<ServerContext<?>>, Proactor> completion,
-                       SocketAddress<?> socketAddress,
-                       SocketType socketType,
-                       Set<SocketFlag> openFlags,
-                       SizeT queueDepth,
-                       Set<SocketOption> options) {
+    public <T extends InetAddress> void server(BiConsumer<Result<ServerContext<T>>, Proactor> completion,
+                                               SocketAddress<T> socketAddress, SocketType socketType,
+                                               Set<SocketFlag> openFlags, SizeT queueDepth, Set<SocketOption> options) {
 
         queue.add(factory.forServer(completion, socketAddress, socketType, openFlags, queueDepth, options)
                          .register(pendingCompletions));
     }
 
     @Override
-    public void accept(BiConsumer<Result<ConnectionContext<?>>, Proactor> completion, FileDescriptor socket, Set<SocketFlag> flags) {
-
-        queue.add(factory.forAccept(completion, socket, flags)
+    public <T extends InetAddress> void accept(BiConsumer<Result<ConnectionContext<T>>, Proactor> completion,
+                                               FileDescriptor socket, Set<SocketFlag> flags, T addressType) {
+        queue.add(factory.forAccept(completion, socket, flags, addressType instanceof Inet6Address)
                          .register(pendingCompletions));
     }
 
     @Override
-    public void connect(BiConsumer<Result<FileDescriptor>, Proactor> completion,
-                        FileDescriptor socket,
-                        SocketAddress<?> address,
-                        Option<Timeout> timeout) {
+    public <T extends InetAddress> void connect(BiConsumer<Result<FileDescriptor>, Proactor> completion, FileDescriptor socket,
+                                                SocketAddress<T> address, Option<Timeout> timeout) {
         var clientAddress = OffHeapSocketAddress.unsafeSocketAddress(address);
 
         if (clientAddress == null) {

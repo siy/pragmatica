@@ -17,17 +17,18 @@
 
 package org.pfj.io.net;
 
+import org.pfj.io.async.net.InetAddress;
 import org.pfj.io.net.tcp.ServerConfig;
 import org.pfj.io.net.tcp.TcpServer;
 import org.pfj.lang.Promise;
 import org.pfj.lang.Unit;
 
-public interface Server {
+public interface Server<T extends InetAddress> {
     Promise<Unit> serve(ServerProtocol protocol);
 
     Promise<Unit> shutdown();
 
-    static Server tcp(ServerConfig config) {
+    static <T extends InetAddress> Server<T> tcp(ServerConfig<T> config) {
         return TcpServer.tcpServer(config);
     }
 }

@@ -26,18 +26,14 @@ public interface ConnectionContext<T extends InetAddress> {
 
     SocketAddress<T> address();
 
+    static <T extends InetAddress> ConnectionContext<T> connection(int socket, SocketAddress<T> address) {
+        return connection(FileDescriptor.socket(socket), address);
+    }
+
     static <T extends InetAddress> ConnectionContext<T> connection(FileDescriptor socket, SocketAddress<T> address) {
         record connectionContext<K extends InetAddress>(FileDescriptor socket, SocketAddress<K> address)
             implements ConnectionContext<K> {}
 
         return new connectionContext<>(socket, address);
-    }
-
-    static ConnectionContext<Inet4Address> connectionIn(int fd, SocketAddressIn addressIn) {
-        return connection(FileDescriptor.socket(fd), addressIn);
-    }
-
-    static ConnectionContext<Inet6Address> connectionIn6(int fd, SocketAddressIn6 addressIn6) {
-        return connection(FileDescriptor.socket(fd), addressIn6);
     }
 }

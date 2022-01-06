@@ -16,7 +16,7 @@
 
 package org.pfj.io.async.uring.struct;
 
-public interface RawStructure<T extends RawStructure<?>> {
+public interface RawStructure<T extends RawStructure<T>> {
     long address();
 
     int size();

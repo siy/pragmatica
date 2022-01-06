@@ -28,13 +28,14 @@ import java.util.function.BiConsumer;
 
 import static org.pfj.io.async.uring.AsyncOperation.IORING_OP_NOP;
 
-public class ServerExchangeEntry extends AbstractExchangeEntry<ServerExchangeEntry, ServerContext<?>> {
-    private SocketAddress<?> socketAddress;
+public class ServerExchangeEntry<T extends InetAddress> extends AbstractExchangeEntry<ServerExchangeEntry<T>, ServerContext<T>> {
+    private SocketAddress<T> socketAddress;
     private SocketType socketType;
     private Set<SocketFlag> openFlags;
     private SizeT queueDepth;
     private Set<SocketOption> options;
 
+    @SuppressWarnings("rawtypes")
     protected ServerExchangeEntry(PlainObjectPool<ServerExchangeEntry> pool) {
         super(IORING_OP_NOP, pool);
     }
@@ -49,8 +50,8 @@ public class ServerExchangeEntry extends AbstractExchangeEntry<ServerExchangeEnt
                           proactor);
     }
 
-    public ServerExchangeEntry prepare(BiConsumer<Result<ServerContext<?>>, Proactor> completion,
-                                       SocketAddress<?> socketAddress,
+    public ServerExchangeEntry<T> prepare(BiConsumer<Result<ServerContext<T>>, Proactor> completion,
+                                       SocketAddress<T> socketAddress,
                                        SocketType socketType,
                                        Set<SocketFlag> openFlags,
                                        SizeT queueDepth,

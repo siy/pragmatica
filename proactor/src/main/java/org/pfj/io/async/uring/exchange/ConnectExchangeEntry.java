@@ -19,8 +19,6 @@ package org.pfj.io.async.uring.exchange;
 import org.pfj.io.async.Proactor;
 import org.pfj.io.async.SystemError;
 import org.pfj.io.async.file.FileDescriptor;
-import org.pfj.io.async.net.SocketAddress;
-import org.pfj.io.async.uring.struct.ExternalRawStructure;
 import org.pfj.io.async.uring.struct.offheap.OffHeapSocketAddress;
 import org.pfj.io.async.uring.struct.raw.SubmitQueueEntry;
 import org.pfj.io.async.uring.utils.PlainObjectPool;
@@ -32,7 +30,7 @@ import static org.pfj.io.async.uring.AsyncOperation.IORING_OP_CONNECT;
 import static org.pfj.lang.Result.success;
 
 public class ConnectExchangeEntry extends AbstractExchangeEntry<ConnectExchangeEntry, FileDescriptor> {
-    private OffHeapSocketAddress<SocketAddress<?>, ExternalRawStructure<?>> clientAddress;
+    private OffHeapSocketAddress clientAddress;
     private byte flags;
     private FileDescriptor descriptor;
 
@@ -41,7 +39,7 @@ public class ConnectExchangeEntry extends AbstractExchangeEntry<ConnectExchangeE
     }
 
     @Override
-    protected void doAccept(int res,  int flags,  Proactor proactor) {
+    protected void doAccept(int res, int flags, Proactor proactor) {
         completion.accept(res < 0
                           ? SystemError.result(res)
                           : success(descriptor),
@@ -52,14 +50,16 @@ public class ConnectExchangeEntry extends AbstractExchangeEntry<ConnectExchangeE
     }
 
     @Override
-    public SubmitQueueEntry apply( SubmitQueueEntry entry) {
+    public SubmitQueueEntry apply(SubmitQueueEntry entry) {
         return super.apply(entry)
                     .fd(descriptor.descriptor())
+                    .flags(flags)
                     .addr(clientAddress.sockAddrPtr())
                     .off(clientAddress.sockAddrSize());
     }
 
-    public ConnectExchangeEntry prepare( BiConsumer<Result<FileDescriptor>, Proactor> completion, FileDescriptor descriptor, OffHeapSocketAddress<SocketAddress<?>, ExternalRawStructure<?>> clientAddress, byte flags) {
+    public ConnectExchangeEntry prepare(BiConsumer<Result<FileDescriptor>, Proactor> completion, FileDescriptor descriptor,
+                                        OffHeapSocketAddress clientAddress, byte flags) {
         this.clientAddress = clientAddress;
         this.descriptor = descriptor;
         this.flags = flags;

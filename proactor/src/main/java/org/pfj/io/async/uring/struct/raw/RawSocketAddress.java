@@ -16,14 +16,16 @@
 
 package org.pfj.io.async.uring.struct.raw;
 
+import org.pfj.io.async.net.InetAddress;
 import org.pfj.io.async.net.SocketAddress;
 import org.pfj.io.async.uring.struct.ExternalRawStructure;
 import org.pfj.lang.Result;
 
-public interface RawSocketAddress<T extends SocketAddress<?>, R extends ExternalRawStructure<?>> {
-    void assign(final T input);
+public sealed interface RawSocketAddress<T extends InetAddress> permits RawSocketAddressIn, RawSocketAddressIn6 {
 
-    Result<T> extract();
+    void assign(final SocketAddress<T> input);
 
-    R shape();
+    Result<SocketAddress<T>> extract();
+
+    <R extends ExternalRawStructure<R>> ExternalRawStructure<R> shape();
 }

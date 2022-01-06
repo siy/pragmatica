@@ -21,16 +21,17 @@ import org.pfj.io.async.file.FileDescriptor;
 /**
  * Server context contains base information about server side of connection.
  */
-public interface ServerContext<T extends SocketAddress<?>> {
+public interface ServerContext<T extends InetAddress> {
     FileDescriptor socket();
 
-    T address();
+    SocketAddress<T> address();
 
     int queueLen();
 
-    @SuppressWarnings("unchecked")
-    static <T extends SocketAddress<?>> ServerContext<T> serverContext(FileDescriptor socket, SocketAddress<?> address, int queueLen) {
-        record serverContext<T extends SocketAddress<?>>(FileDescriptor socket, T address, int queueLen) implements ServerContext<T> {}
-        return new serverContext<>(socket, (T) address, queueLen);
+    static <T extends InetAddress> ServerContext<T> serverContext(FileDescriptor socket, SocketAddress<T> address, int queueLen) {
+        record serverContext<T extends InetAddress>(FileDescriptor socket, SocketAddress<T> address, int queueLen)
+            implements ServerContext<T> {}
+
+        return new serverContext<>(socket, address, queueLen);
     }
 }

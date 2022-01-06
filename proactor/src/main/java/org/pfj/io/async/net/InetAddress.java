@@ -16,7 +16,7 @@
 
 package org.pfj.io.async.net;
 
-public interface InetAddress {
+public sealed interface InetAddress permits Inet4Address, Inet6Address {
     /**
      * Get byte representation of address in network byte order.
      *

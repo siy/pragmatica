@@ -18,26 +18,24 @@ package org.pfj.io.async.uring.exchange;
 
 import org.pfj.io.async.Proactor;
 import org.pfj.io.async.SystemError;
-import org.pfj.io.async.file.FileDescriptor;
 import org.pfj.io.async.net.ConnectionContext;
-import org.pfj.io.async.net.SocketAddressIn;
+import org.pfj.io.async.net.InetAddress;
 import org.pfj.io.async.uring.struct.offheap.OffHeapSocketAddress;
-import org.pfj.io.async.uring.struct.raw.RawSocketAddressIn;
 import org.pfj.io.async.uring.struct.raw.SubmitQueueEntry;
 import org.pfj.io.async.uring.utils.PlainObjectPool;
 import org.pfj.lang.Result;
 
 import java.util.function.BiConsumer;
 
-import static org.pfj.io.async.net.ConnectionContext.connectionIn;
+import static org.pfj.io.async.net.ConnectionContext.connection;
 import static org.pfj.io.async.uring.AsyncOperation.IORING_OP_ACCEPT;
 
-//TODO: add support for v6
-public class AcceptExchangeEntry extends AbstractExchangeEntry<AcceptExchangeEntry, ConnectionContext<?>> {
-    private final OffHeapSocketAddress<SocketAddressIn, RawSocketAddressIn> clientAddress = OffHeapSocketAddress.addressIn();
+public class AcceptExchangeEntry<T extends InetAddress> extends AbstractExchangeEntry<AcceptExchangeEntry<T>, ConnectionContext<T>> {
+    private final OffHeapSocketAddress clientAddress = OffHeapSocketAddress.v4();
     private int descriptor;
     private int acceptFlags;
 
+    @SuppressWarnings("rawtypes")
     protected AcceptExchangeEntry(PlainObjectPool<AcceptExchangeEntry> pool) {
         super(IORING_OP_ACCEPT, pool);
     }
@@ -47,13 +45,14 @@ public class AcceptExchangeEntry extends AbstractExchangeEntry<AcceptExchangeEnt
         clientAddress.dispose();
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     protected void doAccept(int res, int flags, Proactor proactor) {
         if (res <= 0) {
             completion.accept(SystemError.result(res), proactor);
         }
 
-        completion.accept(clientAddress.extract().map(address -> connectionIn(res, address)), proactor);
+        completion.accept(clientAddress.extract().map(address -> (ConnectionContext<T>) connection(res, address)), proactor);
     }
 
     @Override
@@ -65,10 +64,10 @@ public class AcceptExchangeEntry extends AbstractExchangeEntry<AcceptExchangeEnt
                     .acceptFlags(acceptFlags);
     }
 
-    public AcceptExchangeEntry prepare(BiConsumer<Result<ConnectionContext<?>>, Proactor> completion, int descriptor, int acceptFlags) {
+    public AcceptExchangeEntry<T> prepare(BiConsumer<Result<ConnectionContext<T>>, Proactor> completion, int descriptor, int acceptFlags, boolean v6) {
         this.descriptor = descriptor;
         this.acceptFlags = acceptFlags;
-        clientAddress.reset();
+        clientAddress.protocolVersion(v6);
         return super.prepare(completion);
     }
 }

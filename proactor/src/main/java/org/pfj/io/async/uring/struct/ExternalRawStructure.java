@@ -16,6 +16,6 @@
 
 package org.pfj.io.async.uring.struct;
 
-public interface ExternalRawStructure<T extends ExternalRawStructure<T>> extends RawStructure<T> {
-    T reposition(final long address);
+public interface ExternalRawStructure<T extends RawStructure<T>> extends RawStructure<T> {
+    void reposition(final long address);
 }

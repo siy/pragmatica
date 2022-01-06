@@ -19,10 +19,7 @@ package org.pfj.io.net.tcp;
 
 import org.pfj.io.async.Proactor;
 import org.pfj.io.async.SystemError;
-import org.pfj.io.async.net.ConnectionContext;
-import org.pfj.io.async.net.ServerContext;
-import org.pfj.io.async.net.SocketFlag;
-import org.pfj.io.async.net.SocketType;
+import org.pfj.io.async.net.*;
 import org.pfj.io.net.ServerProtocol;
 import org.pfj.io.net.Server;
 import org.pfj.lang.Option;
@@ -39,19 +36,19 @@ import java.util.function.Consumer;
 
 import static java.util.stream.IntStream.range;
 
-public class TcpServer implements Server {
+public class TcpServer<T extends InetAddress> implements Server<T> {
     private static final Logger LOG = LoggerFactory.getLogger(TcpServer.class);
 
-    private final ServerConfig config;
+    private final ServerConfig<T> config;
     private final Promise<Unit> shutdown = Promise.promise();
     private final AtomicReference<ServerContext<?>> serverContext = new AtomicReference<>();
 
-    private TcpServer(ServerConfig config) {
+    private TcpServer(ServerConfig<T> config) {
         this.config = config;
     }
 
-    public static Server tcpServer(ServerConfig config) {
-        return new TcpServer(config);
+    public static <T extends InetAddress> Server<T> tcpServer(ServerConfig<T> config) {
+        return new TcpServer<>(config);
     }
 
     @Override
@@ -75,13 +72,13 @@ public class TcpServer implements Server {
                                                       config.backlogSize(), config.listenerOptions()));
     }
 
-    private void startServing(Result<ServerContext<?>> result, Promise<Unit> servePromise, ServerProtocol protocol) {
+    private void startServing(Result<ServerContext<T>> result, Promise<Unit> servePromise, ServerProtocol protocol) {
         result.onFailure(servePromise::failure)
               .onFailure(shutdown::failure)
               .onSuccess(context -> startAccepting(servePromise, context, protocol));
     }
 
-    private void startAccepting(Promise<Unit> servePromise, ServerContext<?> context, ServerProtocol protocol) {
+    private void startAccepting(Promise<Unit> servePromise, ServerContext<T> context, ServerProtocol protocol) {
         if (!serverContext.compareAndSet(null, context)) {
             servePromise.failure(SystemError.EALREADY);
             return;
@@ -91,21 +88,22 @@ public class TcpServer implements Server {
                                                                     .submit(__ -> promise.success(Unit.unit())));
     }
 
-    private List<Consumer<Proactor>> makeTasks(TaskExecutor executor, ServerContext<?> context, ServerProtocol protocol) {
+    private List<Consumer<Proactor>> makeTasks(TaskExecutor executor, ServerContext<T> context, ServerProtocol protocol) {
         return range(0, executor.parallelism())
             .mapToObj(__ -> makeHandler(context, protocol))
             .toList();
     }
 
-    private Consumer<Proactor> makeHandler(ServerContext<?> context, ServerProtocol protocol) {
+    private Consumer<Proactor> makeHandler(ServerContext<T> context, ServerProtocol protocol) {
         return (proactor) -> initAccept(proactor, context, protocol);
     }
 
-    private void initAccept(Proactor proactor, ServerContext<?> context, ServerProtocol protocol) {
-        proactor.accept((result, proactor1) -> processAccept(context, protocol, result, proactor1), context.socket(), SocketFlag.closeOnExec());
+    private void initAccept(Proactor proactor, ServerContext<T> context, ServerProtocol protocol) {
+        proactor.accept((result, proactor1) -> processAccept(context, protocol, result, proactor1), context.socket(),
+                        config.acceptorFlags(), context.address().address());
     }
 
-    private void processAccept(ServerContext<?> context, ServerProtocol protocol, Result<ConnectionContext<?>> result, Proactor proactor) {
+    private void processAccept(ServerContext<T> context, ServerProtocol protocol, Result<ConnectionContext<T>> result, Proactor proactor) {
         result.onFailure(failure -> LOG.info("Accept error: {}", failure.message()))
               .onSuccess(connectionContext -> protocol.start(context, connectionContext, proactor))
               .onSuccess(__ -> initAccept(proactor, context, protocol));

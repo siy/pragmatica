@@ -16,7 +16,8 @@
 
 package org.pfj.io.async.uring.struct.raw;
 
-import org.pfj.io.async.net.SocketAddressIn;
+import org.pfj.io.async.net.Inet4Address;
+import org.pfj.io.async.net.SocketAddress;
 import org.pfj.io.async.uring.struct.AbstractExternalRawStructure;
 import org.pfj.io.async.uring.struct.shape.SocketAddressInOffsets;
 import org.pfj.lang.Result;
@@ -27,9 +28,9 @@ import static org.pfj.io.async.net.InetPort.inetPort;
 import static org.pfj.io.async.uring.struct.shape.SocketAddressInOffsets.*;
 import static org.pfj.lang.Result.success;
 
-public class RawSocketAddressIn
+public final class RawSocketAddressIn
     extends AbstractExternalRawStructure<RawSocketAddressIn>
-    implements RawSocketAddress<SocketAddressIn, RawSocketAddressIn> {
+    implements RawSocketAddress<Inet4Address> {
 
     private RawSocketAddressIn(long address) {
         super(address, SocketAddressInOffsets.SIZE);
@@ -64,18 +65,18 @@ public class RawSocketAddressIn
     }
 
     @Override
-    public void assign(SocketAddressIn addressIn) {
-        family(addressIn.family().familyId());
-        port(addressIn.port().port());
-        putBytes(sin_addr, addressIn.address().asBytes());
+    public void assign(SocketAddress<Inet4Address> input) {
+        family(input.family().familyId());
+        port(input.port().port());
+        putBytes(sin_addr, input.address().asBytes());
     }
 
     @Override
-    public Result<SocketAddressIn> extract() {
+    public Result<SocketAddress<Inet4Address>> extract() {
         return Result.all(addressFamily(family()),
                           success(inetPort(port())),
                           inet4Address(getBytes(sin_addr)))
-                     .map(SocketAddressIn::create);
+                     .map(SocketAddress::socketAddress);
     }
 
     @Override

@@ -16,10 +16,46 @@
 
 package org.pfj.io.async.net;
 
-public interface SocketAddress<T extends InetAddress> {
+public sealed interface SocketAddress<T extends InetAddress> {
     AddressFamily family();
 
     InetPort port();
 
     T address();
+
+    static SocketAddress<Inet4Address> socketAddress(InetPort port, Inet4Address address) {
+        return socketAddress(AddressFamily.INET, port, address);
+    }
+
+    static SocketAddress<Inet4Address> socketAddress(AddressFamily addressFamily, InetPort port, Inet4Address address) {
+        return new SocketAddressIn(addressFamily, port, address);
+    }
+
+    static SocketAddress<Inet6Address> socketAddress(InetPort port, Inet6Address address) {
+        return socketAddress(AddressFamily.INET6, port, address, Inet6FlowInfo.inet6FlowInfo(0), Inet6ScopeId.inet6ScopeId(0));
+    }
+
+    static SocketAddress<Inet6Address> socketAddress(AddressFamily family, InetPort port, Inet6Address address) {
+        return socketAddress(family, port, address, Inet6FlowInfo.inet6FlowInfo(0), Inet6ScopeId.inet6ScopeId(0));
+    }
+
+    static SocketAddress<Inet6Address> socketAddress(AddressFamily family, InetPort port, Inet6Address address,
+                                                     Inet6FlowInfo flowInfo, Inet6ScopeId scopeId) {
+        return new SocketAddressIn6(family, port, address, flowInfo, scopeId);
+    }
+
+    @SuppressWarnings("unchecked")
+    static <R extends InetAddress> SocketAddress<R> genericAddress(InetPort port, R address) {
+        return switch (address) {
+            case Inet4Address inet4Address -> (SocketAddress<R>) socketAddress(port, inet4Address);
+            case Inet6Address inet6Address -> (SocketAddress<R>) socketAddress(port, inet6Address);
+            default -> throw new IllegalStateException("Unexpected value: " + address);
+        };
+    }
+
+    record SocketAddressIn(AddressFamily family, InetPort port, Inet4Address address) implements SocketAddress<Inet4Address> {}
+
+    record SocketAddressIn6(AddressFamily family, InetPort port, Inet6Address address,
+                            Inet6FlowInfo flowInfo, Inet6ScopeId scopeId) implements SocketAddress<Inet6Address> {}
+
 }
