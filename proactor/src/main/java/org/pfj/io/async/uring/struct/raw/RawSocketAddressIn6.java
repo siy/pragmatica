@@ -16,16 +16,16 @@
 
 package org.pfj.io.async.uring.struct.raw;
 
-import org.pfj.io.async.net.Inet6Address;
+import org.pfj.io.async.net.InetAddress.Inet6Address;
 import org.pfj.io.async.net.SocketAddress;
 import org.pfj.io.async.uring.struct.AbstractExternalRawStructure;
 import org.pfj.io.async.uring.struct.shape.SocketAddressIn6Offsets;
 import org.pfj.lang.Result;
 
 import static org.pfj.io.async.net.AddressFamily.addressFamily;
-import static org.pfj.io.async.net.Inet6Address.inet6Address;
 import static org.pfj.io.async.net.Inet6FlowInfo.inet6FlowInfo;
 import static org.pfj.io.async.net.Inet6ScopeId.inet6ScopeId;
+import static org.pfj.io.async.net.InetAddress.inet6Address;
 import static org.pfj.io.async.net.InetPort.inetPort;
 import static org.pfj.io.async.uring.struct.shape.SocketAddressIn6Offsets.*;
 import static org.pfj.lang.Result.success;

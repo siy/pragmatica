@@ -26,6 +26,7 @@ import org.pfj.io.async.file.stat.FileStat;
 import org.pfj.io.async.file.stat.StatFlag;
 import org.pfj.io.async.file.stat.StatMask;
 import org.pfj.io.async.net.*;
+import org.pfj.io.async.net.InetAddress.Inet6Address;
 import org.pfj.io.async.uring.Bitmask;
 import org.pfj.io.async.uring.CompletionHandler;
 import org.pfj.io.async.uring.UringApi;

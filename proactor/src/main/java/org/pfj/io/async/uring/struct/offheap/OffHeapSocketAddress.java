@@ -16,9 +16,9 @@
 
 package org.pfj.io.async.uring.struct.offheap;
 
-import org.pfj.io.async.net.Inet4Address;
-import org.pfj.io.async.net.Inet6Address;
 import org.pfj.io.async.net.InetAddress;
+import org.pfj.io.async.net.InetAddress.Inet4Address;
+import org.pfj.io.async.net.InetAddress.Inet6Address;
 import org.pfj.io.async.net.SocketAddress;
 import org.pfj.io.async.uring.struct.raw.RawSocketAddress;
 import org.pfj.io.async.uring.struct.raw.RawSocketAddressIn;

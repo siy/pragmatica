@@ -19,6 +19,8 @@ package org.pfj.io.net.tcp;
 
 import org.pfj.io.async.common.SizeT;
 import org.pfj.io.async.net.*;
+import org.pfj.io.async.net.InetAddress.Inet4Address;
+import org.pfj.io.async.net.InetAddress.Inet6Address;
 
 import java.util.Set;
 

@@ -26,6 +26,8 @@ import org.pfj.io.async.file.stat.FileStat;
 import org.pfj.io.async.file.stat.StatFlag;
 import org.pfj.io.async.file.stat.StatMask;
 import org.pfj.io.async.net.*;
+import org.pfj.io.async.net.InetAddress.Inet4Address;
+import org.pfj.io.async.net.InetAddress.Inet6Address;
 import org.pfj.io.async.util.OffHeapBuffer;
 import org.pfj.lang.Option;
 import org.pfj.lang.Result;
@@ -273,12 +275,12 @@ public interface Proactor {
         accept(completion, socket, flags, Inet4Address.INADDR_ANY);
     }
 
-    default void acceptV6(BiConsumer<Result<ConnectionContext<Inet4Address>>, Proactor> completion, FileDescriptor socket, Set<SocketFlag> flags) {
-        accept(completion, socket, flags, Inet4Address.INADDR_ANY);
+    default void acceptV6(BiConsumer<Result<ConnectionContext<Inet6Address>>, Proactor> completion, FileDescriptor socket, Set<SocketFlag> flags) {
+        accept(completion, socket, flags, Inet6Address.INADDR_ANY);
     }
 
-    default void acceptV6(Consumer<Result<ConnectionContext<Inet4Address>>> completion, FileDescriptor socket, Set<SocketFlag> flags) {
-        accept(completion, socket, flags, Inet4Address.INADDR_ANY);
+    default void acceptV6(Consumer<Result<ConnectionContext<Inet6Address>>> completion, FileDescriptor socket, Set<SocketFlag> flags) {
+        accept(completion, socket, flags, Inet6Address.INADDR_ANY);
     }
 
     /**

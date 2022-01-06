@@ -16,14 +16,15 @@
 
 package org.pfj.io.async.uring.struct.raw;
 
-import org.pfj.io.async.net.Inet4Address;
+import org.pfj.io.async.net.InetAddress;
+import org.pfj.io.async.net.InetAddress.Inet4Address;
 import org.pfj.io.async.net.SocketAddress;
 import org.pfj.io.async.uring.struct.AbstractExternalRawStructure;
 import org.pfj.io.async.uring.struct.shape.SocketAddressInOffsets;
 import org.pfj.lang.Result;
 
 import static org.pfj.io.async.net.AddressFamily.addressFamily;
-import static org.pfj.io.async.net.Inet4Address.inet4Address;
+import static org.pfj.io.async.net.InetAddress.inet4Address;
 import static org.pfj.io.async.net.InetPort.inetPort;
 import static org.pfj.io.async.uring.struct.shape.SocketAddressInOffsets.*;
 import static org.pfj.lang.Result.success;

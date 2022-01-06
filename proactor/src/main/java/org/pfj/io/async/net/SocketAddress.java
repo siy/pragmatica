@@ -16,6 +16,9 @@
 
 package org.pfj.io.async.net;
 
+import org.pfj.io.async.net.InetAddress.Inet4Address;
+import org.pfj.io.async.net.InetAddress.Inet6Address;
+
 public sealed interface SocketAddress<T extends InetAddress> {
     AddressFamily family();
 
