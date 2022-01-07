@@ -66,32 +66,36 @@ public interface ServerConfig<T extends InetAddress> {
             this.address = address;
         }
 
-        ServerConfigBuilder<T> withPort(InetPort port) {
+        public ServerConfigBuilder<T> withPort(int port) {
+            return withPort(InetPort.inetPort(port));
+        }
+
+        public ServerConfigBuilder<T> withPort(InetPort port) {
             this.port = port;
             return this;
         }
 
-        ServerConfigBuilder<T> withListenerFlags(Set<SocketFlag> listenerFlags) {
+        public ServerConfigBuilder<T> withListenerFlags(Set<SocketFlag> listenerFlags) {
             this.listenerFlags = listenerFlags;
             return this;
         }
 
-        ServerConfigBuilder<T> withAcceptorFlags(Set<SocketFlag> acceptorFlags) {
+        public ServerConfigBuilder<T> withAcceptorFlags(Set<SocketFlag> acceptorFlags) {
             this.acceptorFlags = acceptorFlags;
             return this;
         }
 
-        ServerConfigBuilder<T> withListenerOptions(Set<SocketOption> listenerOptions) {
+        public ServerConfigBuilder<T> withListenerOptions(Set<SocketOption> listenerOptions) {
             this.listenerOptions = listenerOptions;
             return this;
         }
 
-        ServerConfigBuilder<T> withBacklogSize(SizeT backlogSize) {
+        public ServerConfigBuilder<T> withBacklogSize(SizeT backlogSize) {
             this.backlogSize = backlogSize;
             return this;
         }
 
-        ServerConfig<T> build() {
+        public ServerConfig<T> build() {
             record serverConfig<R extends InetAddress>(SocketAddress<R> address, Set<SocketFlag> listenerFlags,
                                                        Set<SocketFlag> acceptorFlags, Set<SocketOption> listenerOptions, SizeT backlogSize)
                 implements ServerConfig<R> {}

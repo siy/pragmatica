@@ -181,6 +181,14 @@ public interface Proactor {
         close((result, __) -> completion.accept(result), fd, timeout);
     }
 
+    default void close(Consumer<Result<Unit>> completion, FileDescriptor fd) {
+        close((result, __) -> completion.accept(result), fd, Option.empty());
+    }
+
+    default void close(FileDescriptor fd) {
+        close((result, __) -> {}, fd, Option.empty());
+    }
+
     /**
      * Submit OPEN operation.
      * <p>

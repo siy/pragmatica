@@ -26,7 +26,6 @@ import org.pfj.io.async.uring.struct.raw.RawSocketAddressIn6;
 import org.pfj.io.async.util.raw.RawProperty;
 import org.pfj.lang.Result;
 
-//TODO: consider simultaneous support for both address types and dynamic reconfiguration for the address type
 public class OffHeapSocketAddress extends AbstractOffHeapStructure<OffHeapSocketAddress> {
     private static final int SIZE = 128 + 4;    //Equal to sizeof(struct sockaddr_storage) + sizeof(socklen_t)
     private static final RawProperty sockaddrLen = RawProperty.raw(0, 4);

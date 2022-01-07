@@ -15,28 +15,25 @@
  *
  */
 
-package org.pfj.io.net;
+package org.pfj.io.net.protocols;
 
-import org.pfj.io.async.net.InetAddress;
+import org.junit.jupiter.api.Test;
+import org.pfj.io.net.Server;
 import org.pfj.io.net.tcp.ServerConfig;
-import org.pfj.io.net.tcp.TcpServer;
-import org.pfj.lang.Promise;
-import org.pfj.lang.Unit;
 
-import java.util.function.Supplier;
+class EchoServerProtocolTest {
+    @Test
+    void serverCanBeStarted() {
+        var config = ServerConfig.config().withPort(12345).build();
+        var server = Server.tcp(config);
 
-public interface Server<T extends InetAddress> {
-    Promise<Unit> serve(Supplier<ServerProtocol> protocol);
+        Runtime.getRuntime()
+               .addShutdownHook(server.shutdownHook());
 
-    Promise<Unit> shutdown();
-
-    default Promise<Unit> shutdown(Unit unit) {
-        return shutdown();
+        server.serve(EchoServerProtocol::echoServer)
+              .onFailure(System.out::println)
+              .flatMap(server::shutdown)
+              .onFailure(System.out::println)
+              .join();
     }
-
-    static <T extends InetAddress> Server<T> tcp(ServerConfig<T> config) {
-        return TcpServer.tcpServer(config);
-    }
-
-    Thread shutdownHook();
 }

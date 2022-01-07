@@ -26,10 +26,12 @@ import org.pfj.io.async.util.OffHeapBuffer;
 import org.pfj.io.net.ServerProtocol;
 import org.pfj.lang.Option;
 
+import java.util.HexFormat;
+
 import static org.pfj.lang.Option.empty;
 import static org.pfj.lang.Option.option;
 
-public class EchoServer implements ServerProtocol {
+public class EchoServerProtocol implements ServerProtocol {
     private static final int DEFAULT_READ_BUFFER_SIZE = 16 * 1024;
 
     private final OffHeapBuffer buffer;
@@ -38,29 +40,29 @@ public class EchoServer implements ServerProtocol {
     private ServerContext<?> server;
     private ConnectionContext<?> connection;
 
-    private EchoServer(Option<Timeout> timeout, int bufferSize) {
+    private EchoServerProtocol(Option<Timeout> timeout, int bufferSize) {
         this.timeout = timeout;
         this.buffer = OffHeapBuffer.fixedSize(bufferSize);
     }
 
-    public static EchoServer echoServer() {
+    public static EchoServerProtocol echoServer() {
         return echoServer(empty(), DEFAULT_READ_BUFFER_SIZE);
     }
 
-    public static EchoServer echoServer(Timeout timeout) {
+    public static EchoServerProtocol echoServer(Timeout timeout) {
         return echoServer(option(timeout), DEFAULT_READ_BUFFER_SIZE);
     }
 
-    public static EchoServer echoServer(Timeout timeout, int bufferSize) {
+    public static EchoServerProtocol echoServer(Timeout timeout, int bufferSize) {
         return echoServer(option(timeout), bufferSize);
     }
 
-    public static EchoServer echoServer(int bufferSize) {
+    public static EchoServerProtocol echoServer(int bufferSize) {
         return echoServer(empty(), bufferSize);
     }
 
-    private static EchoServer echoServer(Option<Timeout> timeout, int bufferSize) {
-        return new EchoServer(timeout, bufferSize);
+    private static EchoServerProtocol echoServer(Option<Timeout> timeout, int bufferSize) {
+        return new EchoServerProtocol(timeout, bufferSize);
     }
 
     @Override
@@ -84,6 +86,6 @@ public class EchoServer implements ServerProtocol {
     }
 
     private void cleanup(Proactor proactor) {
-        proactor.close(__ -> {}, connection.socket(), empty());
+        proactor.close(connection.socket());
     }
 }

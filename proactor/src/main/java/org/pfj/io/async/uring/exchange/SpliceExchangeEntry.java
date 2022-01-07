@@ -47,7 +47,7 @@ public class SpliceExchangeEntry extends AbstractExchangeEntry<SpliceExchangeEnt
         return super.apply(entry)
                     .flags(flags)
                     .fd(descriptor.toDescriptor().descriptor())
-                    .len((int) descriptor.bytesToCopy().value())    //TODO: investigate len
+                    .len((int) descriptor.bytesToCopy().value())
                     .off(descriptor.toOffset().value())
                     .spliceFdIn(descriptor.fromDescriptor().descriptor())
                     .spliceOffIn(descriptor.fromOffset().value())
