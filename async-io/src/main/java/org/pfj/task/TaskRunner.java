@@ -36,8 +36,8 @@ final class TaskRunner {
     private final ExecutorService executor;
     private final ActionableThreshold threshold;
 
-    private volatile int ioFactor = Integer.MAX_VALUE;
     private volatile Task head;
+    private volatile boolean shutdown = false;
 
     private static final VarHandle HEAD;
 
@@ -69,27 +69,26 @@ final class TaskRunner {
         } while (!HEAD.compareAndSet(this, oldHead, newHead));
     }
 
-    void adjustIoFactor(int newIoFactor) {
-        ioFactor = newIoFactor;
-    }
-
     private void run() {
         var proactor = createProactor();
-        int idleRunCount = 0;
 
-        while (!executor.isShutdown()) {
+        while (!shutdown) {
             var head = swapHead();
 
             if (head == null) {
-                idleRunCount++;
+                var idleRunCount = 0;
+                while (proactor.processIO() > 0) {
+                    idleRunCount++;
 
-                if (idleRunCount == 2048) {
+                    if (idleRunCount == 1024) {
+                        break;
+                    }
+                }
+
+                if (idleRunCount == 0) {
                     Thread.yield();
-                    idleRunCount = 0;
                 }
             } else {
-                int taskCount = 0;
-
                 while (head != null) {
                     try {
                         head.task.accept(proactor);
@@ -98,16 +97,9 @@ final class TaskRunner {
                     }
 
                     head = head.next;
-
-                    taskCount++;
-
-                    if (taskCount > ioFactor) {
-                        proactor.processIO();
-                        taskCount = 0;
-                    }
                 }
+                proactor.processIO();
             }
-            proactor.processIO();
         }
         proactor.shutdown();
 
@@ -123,6 +115,10 @@ final class TaskRunner {
             System.exit(-1);
             throw new RuntimeException("Unreachable statement");
         }
+    }
+
+    public void shutdown() {
+        this.shutdown = true;
     }
 
     private static class Task {

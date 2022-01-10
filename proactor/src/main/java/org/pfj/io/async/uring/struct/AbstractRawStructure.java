@@ -45,7 +45,7 @@ public abstract class AbstractRawStructure<T extends RawStructure<T>> implements
     @Override
     @SuppressWarnings("unchecked")
     public T clear() {
-        RawMemory.clear(address(), size());
+        RawMemory.clear(address, size);
         return (T) this;
     }
 

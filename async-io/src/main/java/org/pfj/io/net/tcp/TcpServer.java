@@ -80,14 +80,15 @@ public class TcpServer<T extends InetAddress> implements Server<T> {
 
     private Promise<Unit> start(Supplier<ServerProtocol> protocol) {
         return serve.async((promise, proactor) ->
-                                      proactor.server(result -> startServing(result, protocol),
-                                                      config.address(), SocketType.STREAM, config.listenerFlags(),
-                                                      config.backlogSize(), config.listenerOptions()));
+                               proactor.server(result -> startServing(result, protocol),
+                                               config.address(), SocketType.STREAM, config.listenerFlags(),
+                                               config.backlogSize(), config.listenerOptions()));
     }
 
     private void startServing(Result<ServerContext<T>> result, Supplier<ServerProtocol> protocol) {
         result.onFailure(serve::failure)
               .onFailure(shutdown::failure)
+              .onSuccess(context -> LOG.debug("Listening at {}", context))
               .onSuccess(context -> startAccepting(context, protocol));
     }
 
@@ -116,8 +117,9 @@ public class TcpServer<T extends InetAddress> implements Server<T> {
     }
 
     private void processAccept(ServerContext<T> context, Supplier<ServerProtocol> protocol, Result<ConnectionContext<T>> result, Proactor proactor) {
-        result.onFailure(failure -> LOG.info("Accept error: {}", failure.message()))
+        result.onFailure(failure -> LOG.warn("Accept error: {}", failure.message()))
               .onFailure(serve::failure)
+              //.onSuccess(connectionContext -> LOG.info("Accepted connection {} at {}", connectionContext, Thread.currentThread().getName()))
               .onSuccess(connectionContext -> protocol.get().start(context, connectionContext, proactor))
               .onSuccess(__ -> initAccept(proactor, context, protocol));
     }

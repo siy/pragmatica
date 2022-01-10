@@ -69,6 +69,8 @@ final class TaskExecutorImpl implements TaskExecutor {
 
     @Override
     public Promise<Unit> shutdown() {
+        runners.forEach(TaskRunner::shutdown);
+
         executor.shutdown();
 
         return shutdownPromise;

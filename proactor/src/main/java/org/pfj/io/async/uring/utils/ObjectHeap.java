@@ -47,6 +47,7 @@ public class ObjectHeap<T> {
         return new ObjectHeap<>(initialCapacity);
     }
 
+    @SuppressWarnings("unchecked")
     public T releaseUnsafe(int key) {
         if (key < 0 || key >= nextFree || elements[key] == null || key == firstFree) {
             return null;

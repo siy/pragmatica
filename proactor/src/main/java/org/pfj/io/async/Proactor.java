@@ -62,8 +62,10 @@ public interface Proactor {
 
     /**
      * Perform internal tasks
+     *
+     * @return number of pending completions
      */
-    Proactor processIO();
+    int processIO();
 
     /**
      * Shutdown current Proactor instance.
