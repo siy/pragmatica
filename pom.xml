@@ -145,8 +145,12 @@
                     <target>${java.release}</target>
                     <compilerArgs>
                         <arg>${java.enable-preview}</arg>
+                        <arg>--add-modules</arg>
+                        <arg>jdk.incubator.foreign</arg>
                         <arg>--add-exports</arg>
                         <arg>java.base/jdk.internal.misc=ALL-UNNAMED</arg>
+                        <arg>--add-exports</arg>
+                        <arg>jdk.incubator.foreign/jdk.incubator.foreign=ALL-UNNAMED</arg>
                     </compilerArgs>
                 </configuration>
             </plugin>

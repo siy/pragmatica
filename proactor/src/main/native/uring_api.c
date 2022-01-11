@@ -7,45 +7,36 @@
 #include <asm-generic/socket.h>
 #include <netinet/in.h>
 #include <linux/stat.h>
-#include "include/org_pfj_io_async_uring_UringNative.h"
 
 #define RING_PTR        ((struct io_uring *) base_address)
 #define CQE_BATCH_PTR   ((struct io_uring_cqe **) completions_address)
 #define COUNT           ((unsigned) count)
 
-JNIEXPORT jint JNICALL Java_org_pfj_io_async_uring_UringNative_init(JNIEnv *env, jclass clazz, jint num_entries, jlong base_address, jint flags) {
-    return (jint) io_uring_queue_init((unsigned) num_entries, RING_PTR, (unsigned) flags);
+int native_init(int num_entries, long base_address, int flags) {
+    return io_uring_queue_init((unsigned) num_entries, RING_PTR, (unsigned) flags);
 }
 
-JNIEXPORT void JNICALL Java_org_pfj_io_async_uring_UringNative_close(JNIEnv *env, jclass clazz, jlong base_address) {
+void native_close(long base_address) {
     io_uring_queue_exit(RING_PTR);
 }
 
-JNIEXPORT jint JNICALL Java_org_pfj_io_async_uring_UringNative_peekCQ(JNIEnv *env, jclass clazz, jlong base_address, jlong completions_address, jlong count) {
-    return (jint) io_uring_peek_batch_cqe(RING_PTR, CQE_BATCH_PTR, COUNT);
+int native_peekCQ(long base_address, long completions_address, long count) {
+    return io_uring_peek_batch_cqe(RING_PTR, CQE_BATCH_PTR, COUNT);
 }
 
-JNIEXPORT void JNICALL Java_org_pfj_io_async_uring_UringNative_advanceCQ(JNIEnv *env, jclass clazz, jlong base_address, jlong count) {
+void native_advanceCQ(long base_address, long count) {
     io_uring_cq_advance(RING_PTR, COUNT);
 }
 
-JNIEXPORT jint JNICALL Java_org_pfj_io_async_uring_UringNative_readyCQ(JNIEnv *env, jclass clazz, jlong base_address) {
-    return (jint) io_uring_cq_ready(RING_PTR);
-}
-
-JNIEXPORT jlong JNICALL Java_org_pfj_io_async_uring_UringNative_spaceLeft(JNIEnv *env, jclass clazz, jlong base_address) {
-    return (jlong) io_uring_sq_space_left(RING_PTR);
-}
-
-JNIEXPORT jlong JNICALL Java_org_pfj_io_async_uring_UringNative_nextSQEntry(JNIEnv *env, jclass clazz, jlong base_address) {
+long native_nextSQEntry(long base_address) {
     if (io_uring_sq_space_left(RING_PTR) < 1) {
         io_uring_submit_and_wait(RING_PTR, 1);
     }
 
-    return (jlong) io_uring_get_sqe(RING_PTR);
+    return (long) io_uring_get_sqe(RING_PTR);
 }
 
-JNIEXPORT jint JNICALL Java_org_pfj_io_async_uring_UringNative_peekSQEntries(JNIEnv *env, jclass clazz, jlong base_address, jlong submissions_address, jlong space) {
+int native_peekSQEntries(long base_address, long submissions_address, long space) {
     if (io_uring_sq_space_left(RING_PTR) < 1) {
         io_uring_submit_and_wait(RING_PTR, 1);
     }
@@ -63,11 +54,11 @@ JNIEXPORT jint JNICALL Java_org_pfj_io_async_uring_UringNative_peekSQEntries(JNI
         buffer[count] = entry;
     }
 
-    return (jint) count;
+    return count;
 }
 
-JNIEXPORT jlong JNICALL Java_org_pfj_io_async_uring_UringNative_submitAndWait(JNIEnv *env, jclass clazz, jlong base_address, jint count) {
-    return (jlong) io_uring_submit_and_wait(RING_PTR, COUNT);
+long native_submitAndWait(long base_address, int count) {
+    return io_uring_submit_and_wait(RING_PTR, COUNT);
 }
 
 //-----------------------------------------------------
@@ -78,7 +69,7 @@ JNIEXPORT jlong JNICALL Java_org_pfj_io_async_uring_UringNative_submitAndWait(JN
 #define INT_SO_REUSEPORT 0x0004
 #define INT_SO_LINGER    0x0008
 
-static jint get_errno(void) {
+static int get_errno(void) {
     int rc = errno;
     return rc > 0 ? -rc : rc;
 }
@@ -88,7 +79,7 @@ static int set_binary_option(int sock, int option) {
     return setsockopt(sock, SOL_SOCKET, option, &val, sizeof(val));
 }
 
-JNIEXPORT jint JNICALL Java_org_pfj_io_async_uring_UringNative_socket(JNIEnv *env, jclass clazz, jint domain, jint socket_type, jint socket_options) {
+int native_socket(int domain, int socket_type, int socket_options) {
     int sock = socket((int) domain, (int) socket_type, 0);
 
     if (sock < 0) {
@@ -117,10 +108,10 @@ JNIEXPORT jint JNICALL Java_org_pfj_io_async_uring_UringNative_socket(JNIEnv *en
         }
     }
 
-    return (jint) sock;
+    return sock;
 }
 
-JNIEXPORT jint JNICALL Java_org_pfj_io_async_uring_UringNative_prepareForListen(JNIEnv *env, jclass clazz, jint sock, jlong address, jint len, jint queue_depth) {
+int native_prepareForListen(int sock, long address, int len, int queue_depth) {
     if(bind((int) sock, (struct sockaddr *)address, len)) {
         return get_errno();
     }

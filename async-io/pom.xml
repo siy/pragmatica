@@ -31,8 +31,12 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
                     <argLine>
+                        --enable-native-access=ALL-UNNAMED
+                        --add-modules jdk.incubator.foreign
                         --add-opens java.base/jdk.internal.misc=ALL-UNNAMED
+                        --add-opens jdk.incubator.foreign/jdk.incubator.foreign=ALL-UNNAMED
                         --add-exports java.base/jdk.internal.misc=ALL-UNNAMED
+                        --add-exports jdk.incubator.foreign/jdk.incubator.foreign=ALL-UNNAMED
                         ${java.enable-preview}
                         -Xmx1024m
                     </argLine>
