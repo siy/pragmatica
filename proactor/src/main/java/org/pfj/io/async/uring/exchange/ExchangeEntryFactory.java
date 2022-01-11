@@ -55,13 +55,12 @@ public class ExchangeEntryFactory {
     private final PlainObjectPool<StatExchangeEntry> statPool = new PlainObjectPool<>(StatExchangeEntry::new);
     private final PlainObjectPool<ReadVectorExchangeEntry> readVectorPool = new PlainObjectPool<>(ReadVectorExchangeEntry::new);
     private final PlainObjectPool<WriteVectorExchangeEntry> writeVectorPool = new PlainObjectPool<>(WriteVectorExchangeEntry::new);
+    private final PlainObjectPool<ConnectExchangeEntry> connectPool = new PlainObjectPool<>(ConnectExchangeEntry::new);
 
     @SuppressWarnings("rawtypes")
-    private final PlainObjectPool<ServerExchangeEntry> serverPool = new PlainObjectPool<>(ServerExchangeEntry::new);
+    private final PlainObjectPool<ListenExchangeEntry> listenPool = new PlainObjectPool<>(ListenExchangeEntry::new);
     @SuppressWarnings("rawtypes")
     private final PlainObjectPool<AcceptExchangeEntry> acceptPool = new PlainObjectPool<>(AcceptExchangeEntry::new);
-    @SuppressWarnings("rawtypes")
-    private final PlainObjectPool<ConnectExchangeEntry> connectPool = new PlainObjectPool<>(ConnectExchangeEntry::new);
 
     public NopExchangeEntry forNop(BiConsumer<Result<Unit>, Proactor> completion) {
         return nopPool.alloc()
@@ -129,10 +128,10 @@ public class ExchangeEntryFactory {
     }
 
     @SuppressWarnings("unchecked")
-    public <T extends InetAddress> ServerExchangeEntry<T> forServer(BiConsumer<Result<ServerContext<T>>, Proactor> completion,
+    public <T extends InetAddress> ListenExchangeEntry<T> forListen(BiConsumer<Result<ListenContext<T>>, Proactor> completion,
                                                                     SocketAddress<T> socketAddress, SocketType socketType,
                                                                     Set<SocketFlag> openFlags, SizeT queueDepth, Set<SocketOption> options) {
-        return serverPool.alloc()
+        return listenPool.alloc()
                          .prepare(completion, socketAddress, socketType, openFlags, queueDepth, options);
     }
 
@@ -187,7 +186,7 @@ public class ExchangeEntryFactory {
         splicePool.clear();
         openPool.clear();
         socketPool.clear();
-        serverPool.clear();
+        listenPool.clear();
         acceptPool.clear();
         connectPool.clear();
         statPool.clear();

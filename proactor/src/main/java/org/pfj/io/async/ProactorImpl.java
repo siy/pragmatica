@@ -168,10 +168,10 @@ class ProactorImpl implements Proactor {
     }
 
     @Override
-    public <T extends InetAddress> void server(BiConsumer<Result<ServerContext<T>>, Proactor> completion,
+    public <T extends InetAddress> void listen(BiConsumer<Result<ListenContext<T>>, Proactor> completion,
                                                SocketAddress<T> socketAddress, SocketType socketType,
                                                Set<SocketFlag> openFlags, SizeT queueDepth, Set<SocketOption> options) {
-        queue.add(factory.forServer(completion, socketAddress, socketType, openFlags, queueDepth, options)
+        queue.add(factory.forListen(completion, socketAddress, socketType, openFlags, queueDepth, options)
                          .register(pendingCompletions));
     }
 

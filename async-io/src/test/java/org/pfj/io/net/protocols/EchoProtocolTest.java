@@ -18,21 +18,23 @@
 package org.pfj.io.net.protocols;
 
 import org.junit.jupiter.api.Test;
-import org.pfj.io.net.Server;
-import org.pfj.io.net.tcp.ServerConfig;
+import org.pfj.io.net.Listener;
 
-class EchoServerProtocolTest {
+import static org.pfj.io.net.AcceptProtocol.acceptProtocol;
+import static org.pfj.io.net.tcp.ListenConfig.listenConfig;
+import static org.pfj.lang.Option.empty;
+
+class EchoProtocolTest {
     @Test
     void serverCanBeStarted() {
-        var config = ServerConfig.config().withPort(12345).build();
-        var server = Server.tcp(config);
+        var listener = Listener.listener(listenConfig().withPort(12345).build());
 
         Runtime.getRuntime()
-               .addShutdownHook(server.shutdownHook());
+               .addShutdownHook(listener.shutdownHook());
 
-        server.serve(EchoServerProtocol::echoServer)
+        listener.listen(acceptProtocol(EchoProtocol.starter(4096, empty())))
               .onFailure(System.out::println)
-              .flatMap(server::shutdown)
+              .flatMap(listener::shutdown)
               .onFailure(System.out::println)
               .join();
     }

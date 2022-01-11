@@ -19,19 +19,19 @@ package org.pfj.io.async.net;
 import org.pfj.io.async.file.FileDescriptor;
 
 /**
- * Server context contains base information about server side of connection.
+ * Listen context contains base information about server (listener) side of connection.
  */
-public interface ServerContext<T extends InetAddress> {
+public interface ListenContext<T extends InetAddress> {
     FileDescriptor socket();
 
     SocketAddress<T> address();
 
     int queueLen();
 
-    static <T extends InetAddress> ServerContext<T> serverContext(FileDescriptor socket, SocketAddress<T> address, int queueLen) {
-        record serverContext<T extends InetAddress>(FileDescriptor socket, SocketAddress<T> address, int queueLen)
-            implements ServerContext<T> {}
+    static <T extends InetAddress> ListenContext<T> listenContext(FileDescriptor socket, SocketAddress<T> address, int queueLen) {
+        record listenContext<T extends InetAddress>(FileDescriptor socket, SocketAddress<T> address, int queueLen)
+            implements ListenContext<T> {}
 
-        return new serverContext<>(socket, address, queueLen);
+        return new listenContext<>(socket, address, queueLen);
     }
 }

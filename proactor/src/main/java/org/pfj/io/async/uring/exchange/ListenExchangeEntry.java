@@ -28,7 +28,7 @@ import java.util.function.BiConsumer;
 
 import static org.pfj.io.async.uring.AsyncOperation.IORING_OP_NOP;
 
-public class ServerExchangeEntry<T extends InetAddress> extends AbstractExchangeEntry<ServerExchangeEntry<T>, ServerContext<T>> {
+public class ListenExchangeEntry<T extends InetAddress> extends AbstractExchangeEntry<ListenExchangeEntry<T>, ListenContext<T>> {
     private SocketAddress<T> socketAddress;
     private SocketType socketType;
     private Set<SocketFlag> openFlags;
@@ -36,26 +36,17 @@ public class ServerExchangeEntry<T extends InetAddress> extends AbstractExchange
     private Set<SocketOption> options;
 
     @SuppressWarnings("rawtypes")
-    protected ServerExchangeEntry(PlainObjectPool<ServerExchangeEntry> pool) {
+    protected ListenExchangeEntry(PlainObjectPool<ListenExchangeEntry> pool) {
         super(IORING_OP_NOP, pool);
     }
 
     @Override
     protected void doAccept(int result, int flags, Proactor proactor) {
-        completion.accept(UringApi.server(socketAddress,
-                                          socketType,
-                                          openFlags,
-                                          options,
-                                          queueDepth),
-                          proactor);
+        completion.accept(UringApi.listen(socketAddress, socketType, openFlags, options, queueDepth), proactor);
     }
 
-    public ServerExchangeEntry<T> prepare(BiConsumer<Result<ServerContext<T>>, Proactor> completion,
-                                       SocketAddress<T> socketAddress,
-                                       SocketType socketType,
-                                       Set<SocketFlag> openFlags,
-                                       SizeT queueDepth,
-                                       Set<SocketOption> options) {
+    public ListenExchangeEntry<T> prepare(BiConsumer<Result<ListenContext<T>>, Proactor> completion, SocketAddress<T> socketAddress,
+                                          SocketType socketType, Set<SocketFlag> openFlags, SizeT queueDepth, Set<SocketOption> options) {
         this.socketAddress = socketAddress;
         this.socketType = socketType;
         this.openFlags = openFlags;

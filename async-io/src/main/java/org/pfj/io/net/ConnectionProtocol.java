@@ -18,10 +18,11 @@
 package org.pfj.io.net;
 
 import org.pfj.io.async.Proactor;
-import org.pfj.io.async.net.ConnectionContext;
-import org.pfj.lang.Promise;
+import org.pfj.io.async.net.InetAddress;
 
-//TODO: cleanup generic types - context should be typed
-public interface ClientProtocol<T> {
-    Promise<T> start(ConnectionContext<?> context, Proactor proactor);
+/**
+ * Basic connection-oriented protocol.
+ */
+public interface ConnectionProtocol<T extends InetAddress> {
+    void run(Proactor proactor);
 }

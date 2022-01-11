@@ -137,13 +137,13 @@ public class UringApi implements AutoCloseable {
                       (af == AddressFamily.INET6) ? FileDescriptor::socket6 : FileDescriptor::socket);
     }
 
-    public static <T extends InetAddress> Result<ServerContext<T>> server(SocketAddress<T> address, SocketType type, Set<SocketFlag> flags,
+    public static <T extends InetAddress> Result<ListenContext<T>> listen(SocketAddress<T> address, SocketType type, Set<SocketFlag> flags,
                                                                           Set<SocketOption> options, SizeT queueLen) {
         var len = (int) queueLen.value();
 
         return socket(address.family(), type, flags, options)
             .flatMap(fd -> configureForListen(fd, address, len))
-            .map(fd -> ServerContext.serverContext(fd, address, len));
+            .map(fd -> ListenContext.listenContext(fd, address, len));
     }
 
     private static <T extends InetAddress> Result<FileDescriptor> configureForListen(FileDescriptor fd, SocketAddress<T> address, int queueLen) {

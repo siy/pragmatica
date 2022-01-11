@@ -17,19 +17,29 @@
 
 package org.pfj.io.net;
 
-import org.pfj.io.async.Proactor;
-import org.pfj.io.async.net.ConnectionContext;
-import org.pfj.io.async.net.ServerContext;
+import org.pfj.io.async.net.InetAddress;
+import org.pfj.io.net.tcp.ListenConfig;
+import org.pfj.io.net.tcp.TcpListener;
+import org.pfj.lang.Promise;
+import org.pfj.lang.Unit;
 
-public interface ServerProtocol {
-    /**
-     * Start protocol.
-     * <p>
-     * WARNING: Provided {@link Proactor} instance is transient, it should not be stored or used outside the context of this method.
-     *
-     * @param server     server context
-     * @param connection connection context
-     * @param proactor   transient {@link Proactor} instance
-     */
-    void start(ServerContext<?> server, ConnectionContext<?> connection, Proactor proactor);
+import java.util.function.Supplier;
+
+/**
+ * Incoming connection listener.
+ */
+public interface Listener<T extends InetAddress> {
+    Promise<Unit> listen(AcceptProtocol<T> protocol);
+
+    Promise<Unit> shutdown();
+
+    default Promise<Unit> shutdown(Unit unit) {
+        return shutdown();
+    }
+
+    Thread shutdownHook();
+
+    static <T extends InetAddress> Listener<T> listener(ListenConfig<T> config) {
+        return TcpListener.tcpListener(config);
+    }
 }

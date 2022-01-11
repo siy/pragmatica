@@ -17,26 +17,9 @@
 
 package org.pfj.io.net;
 
+import org.pfj.io.async.Proactor;
 import org.pfj.io.async.net.InetAddress;
-import org.pfj.io.net.tcp.ServerConfig;
-import org.pfj.io.net.tcp.TcpServer;
-import org.pfj.lang.Promise;
-import org.pfj.lang.Unit;
 
-import java.util.function.Supplier;
-
-public interface Server<T extends InetAddress> {
-    Promise<Unit> serve(Supplier<ServerProtocol> protocol);
-
-    Promise<Unit> shutdown();
-
-    default Promise<Unit> shutdown(Unit unit) {
-        return shutdown();
-    }
-
-    static <T extends InetAddress> Server<T> tcp(ServerConfig<T> config) {
-        return TcpServer.tcpServer(config);
-    }
-
-    Thread shutdownHook();
+public interface ConnectionProtocolStarter<T extends InetAddress> {
+    void start(ConnectionProtocolContext<T> connectionProtocolContext, Proactor proactor);
 }

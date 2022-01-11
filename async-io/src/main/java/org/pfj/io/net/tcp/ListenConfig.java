@@ -27,7 +27,7 @@ import java.util.Set;
 import static org.pfj.io.async.common.SizeT.sizeT;
 import static org.pfj.io.async.net.InetPort.inetPort;
 
-public interface ServerConfig<T extends InetAddress> {
+public interface ListenConfig<T extends InetAddress> {
     SocketAddress<T> address();
 
     Set<SocketFlag> listenerFlags();
@@ -38,23 +38,23 @@ public interface ServerConfig<T extends InetAddress> {
 
     SizeT backlogSize();
 
-    static ServerConfigBuilder<Inet4Address> config() {
-        return config(Inet4Address.INADDR_ANY);
+    static ListenConfigBuilder<Inet4Address> listenConfig() {
+        return listenConfig(Inet4Address.INADDR_ANY);
     }
 
-    static ServerConfigBuilder<Inet4Address> config(Inet4Address address) {
-        return new ServerConfigBuilder<>(address);
+    static ListenConfigBuilder<Inet4Address> listenConfig(Inet4Address address) {
+        return new ListenConfigBuilder<>(address);
     }
 
-    static ServerConfigBuilder<Inet6Address> config6() {
-        return config6(Inet6Address.INADDR_ANY);
+    static ListenConfigBuilder<Inet6Address> listenConfig6() {
+        return listenConfig6(Inet6Address.INADDR_ANY);
     }
 
-    static ServerConfigBuilder<Inet6Address> config6(Inet6Address address) {
-        return new ServerConfigBuilder<>(address);
+    static ListenConfigBuilder<Inet6Address> listenConfig6(Inet6Address address) {
+        return new ListenConfigBuilder<>(address);
     }
 
-    class ServerConfigBuilder<T extends InetAddress> {
+    class ListenConfigBuilder<T extends InetAddress> {
         private InetPort port = inetPort(8081);
         private Set<SocketFlag> listenerFlags = SocketFlag.closeOnExec();
         private Set<SocketFlag> acceptorFlags = SocketFlag.closeOnExec();
@@ -62,45 +62,45 @@ public interface ServerConfig<T extends InetAddress> {
         private SizeT backlogSize = sizeT(16);
         private final T address;
 
-        private ServerConfigBuilder(T address) {
+        private ListenConfigBuilder(T address) {
             this.address = address;
         }
 
-        public ServerConfigBuilder<T> withPort(int port) {
+        public ListenConfigBuilder<T> withPort(int port) {
             return withPort(InetPort.inetPort(port));
         }
 
-        public ServerConfigBuilder<T> withPort(InetPort port) {
+        public ListenConfigBuilder<T> withPort(InetPort port) {
             this.port = port;
             return this;
         }
 
-        public ServerConfigBuilder<T> withListenerFlags(Set<SocketFlag> listenerFlags) {
+        public ListenConfigBuilder<T> withListenerFlags(Set<SocketFlag> listenerFlags) {
             this.listenerFlags = listenerFlags;
             return this;
         }
 
-        public ServerConfigBuilder<T> withAcceptorFlags(Set<SocketFlag> acceptorFlags) {
+        public ListenConfigBuilder<T> withAcceptorFlags(Set<SocketFlag> acceptorFlags) {
             this.acceptorFlags = acceptorFlags;
             return this;
         }
 
-        public ServerConfigBuilder<T> withListenerOptions(Set<SocketOption> listenerOptions) {
+        public ListenConfigBuilder<T> withListenerOptions(Set<SocketOption> listenerOptions) {
             this.listenerOptions = listenerOptions;
             return this;
         }
 
-        public ServerConfigBuilder<T> withBacklogSize(SizeT backlogSize) {
+        public ListenConfigBuilder<T> withBacklogSize(SizeT backlogSize) {
             this.backlogSize = backlogSize;
             return this;
         }
 
-        public ServerConfig<T> build() {
-            record serverConfig<R extends InetAddress>(SocketAddress<R> address, Set<SocketFlag> listenerFlags,
+        public ListenConfig<T> build() {
+            record listenConfig<R extends InetAddress>(SocketAddress<R> address, Set<SocketFlag> listenerFlags,
                                                        Set<SocketFlag> acceptorFlags, Set<SocketOption> listenerOptions, SizeT backlogSize)
-                implements ServerConfig<R> {}
+                implements ListenConfig<R> {}
 
-            return new serverConfig<>(SocketAddress.genericAddress(port, address), listenerFlags, acceptorFlags,
+            return new listenConfig<>(SocketAddress.genericAddress(port, address), listenerFlags, acceptorFlags,
                                       listenerOptions, backlogSize);
         }
     }

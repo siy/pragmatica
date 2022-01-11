@@ -232,8 +232,8 @@ public interface Proactor {
     }
 
     /**
-     * Create server connector bound to specified address/port and is ready to accept incoming connection. Upon completion provided callback is
-     * invoked with the filled server context instance.
+     * Create listener bound to specified address/port and ready to accept incoming connection. Upon completion provided callback is
+     * invoked with the filled listen context instance.
      *
      * @param completion Callback which is invoked once operation is finished.
      * @param address    Socket address
@@ -242,16 +242,16 @@ public interface Proactor {
      * @param len        Length of the listening queue
      * @param options    Socket options. See {@link SocketOption} for more details
      *
-     * @see ServerContext
+     * @see ListenContext
      */
-    <T extends InetAddress> void server(BiConsumer<Result<ServerContext<T>>, Proactor> completion,
+    <T extends InetAddress> void listen(BiConsumer<Result<ListenContext<T>>, Proactor> completion,
                                         SocketAddress<T> socketAddress, SocketType socketType,
                                         Set<SocketFlag> openFlags, SizeT queueDepth, Set<SocketOption> options);
 
-    default <T extends InetAddress> void server(Consumer<Result<ServerContext<T>>> completion,
+    default <T extends InetAddress> void listen(Consumer<Result<ListenContext<T>>> completion,
                                                 SocketAddress<T> address, SocketType type,
                                                 Set<SocketFlag> flags, SizeT len, Set<SocketOption> options) {
-        server((result, __) -> completion.accept(result), address, type, flags, len, options);
+        listen((result, __) -> completion.accept(result), address, type, flags, len, options);
     }
 
     /**
@@ -262,7 +262,7 @@ public interface Proactor {
      * Accepted connection receives its own socket which then can be used to communicate (read/write) with particular client.
      *
      * @param completion  Callback which is invoked once operation is finished.
-     * @param socket      Server socket to accept connections on.
+     * @param socket      Listening socket to accept connections on.
      * @param flags       Accept flags (see {@link SocketFlag} for more details)
      * @param addressType tag for address type (TCPv4 or TCPv6). Actual value is irrelevant, matters only type. Constants {@link
      *                    Inet4Address#INADDR_ANY} and {@link Inet6Address#INADDR_ANY} could be used for this purpose.
