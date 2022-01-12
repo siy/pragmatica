@@ -17,7 +17,7 @@
 
 package org.pfj.io.net.protocols;
 
-import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.pfj.io.net.Listener;
 
@@ -25,7 +25,7 @@ import static org.pfj.io.net.AcceptProtocol.acceptProtocol;
 import static org.pfj.io.net.tcp.ListenConfig.listenConfig;
 import static org.pfj.lang.Option.empty;
 
-//@Disabled
+@Tag("Infinite")
 class EchoProtocolTest {
     @Test
     void serverCanBeStarted() {
