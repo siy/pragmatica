@@ -78,19 +78,17 @@ public class UringApi implements AutoCloseable {
         closed = true;
     }
 
-    public void processCompletions(ObjectHeap<CompletionHandler> pendingCompletions, Proactor proactor) {
-        long ready = UringNative.peekCQ(ringBase, completionBuffer, completionEntries);
+    public int processCompletions(ObjectHeap<CompletionHandler> pendingCompletions, Proactor proactor) {
+        var ready = UringNative.peekCQ(ringBase, completionBuffer, completionEntries);
+        var address = completionBuffer;
 
-        for (long i = 0, address = completionBuffer; i < ready; i++, address += ENTRY_SIZE) {
+        for (var i = 0; i < ready; i++, address += ENTRY_SIZE) {
             cqEntry.reposition(RawMemory.getLong(address));
 
             pendingCompletions.releaseUnsafe((int) cqEntry.userData())
                               .accept(cqEntry.res(), cqEntry.flags(), proactor);
         }
-
-        if (ready > 0) {
-            UringNative.advanceCQ(ringBase, ready);
-        }
+        return ready;
     }
 
     public void processSubmissions(Deque<ExchangeEntry<?>> queue) {

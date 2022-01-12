@@ -22,7 +22,13 @@ JNIEXPORT void JNICALL Java_org_pfj_io_async_uring_UringNative_close(JNIEnv *env
 }
 
 JNIEXPORT jint JNICALL Java_org_pfj_io_async_uring_UringNative_peekCQ(JNIEnv *env, jclass clazz, jlong base_address, jlong completions_address, jlong count) {
-    return (jint) io_uring_peek_batch_cqe(RING_PTR, CQE_BATCH_PTR, COUNT);
+    int ready = io_uring_peek_batch_cqe(RING_PTR, CQE_BATCH_PTR, COUNT);
+
+    if (ready) {
+        io_uring_cq_advance(RING_PTR, ready);
+    }
+
+    return (jint) ready;
 }
 
 JNIEXPORT void JNICALL Java_org_pfj_io_async_uring_UringNative_advanceCQ(JNIEnv *env, jclass clazz, jlong base_address, jlong count) {

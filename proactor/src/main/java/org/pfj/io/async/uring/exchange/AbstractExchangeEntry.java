@@ -37,7 +37,7 @@ public abstract class AbstractExchangeEntry<T extends AbstractExchangeEntry<T, R
     private static final Result[] RESULT_SIZET_POOL;
 
     static {
-        RESULT_SIZET_POOL = new Result[RESULT_SIZET_POOL_SIZE + 1];
+        RESULT_SIZET_POOL = new Result[RESULT_SIZET_POOL_SIZE];
 
         for (int i = 0; i < RESULT_SIZET_POOL.length; i++) {
             RESULT_SIZET_POOL[i] = success(sizeT(i));
@@ -46,7 +46,7 @@ public abstract class AbstractExchangeEntry<T extends AbstractExchangeEntry<T, R
 
     private final PlainObjectPool pool;
     private final AsyncOperation operation;
-    private T next;
+    public T next;
     private int key;
     protected BiConsumer<Result<R>, Proactor> completion;
 
@@ -57,12 +57,8 @@ public abstract class AbstractExchangeEntry<T extends AbstractExchangeEntry<T, R
 
     @SuppressWarnings("unchecked")
     public void release() {
-        cleanup();
-        pool.release(this);
-    }
-
-    protected void cleanup() {
         completion = null;
+        pool.release(this);
     }
 
     @Override
@@ -75,18 +71,6 @@ public abstract class AbstractExchangeEntry<T extends AbstractExchangeEntry<T, R
 
     @Override
     public void close() {
-    }
-
-    @Override
-    public T next() {
-        return next;
-    }
-
-    @Override
-    @SuppressWarnings("unchecked")
-    public T next(T next) {
-        this.next = next;
-        return (T) this;
     }
 
     @Override

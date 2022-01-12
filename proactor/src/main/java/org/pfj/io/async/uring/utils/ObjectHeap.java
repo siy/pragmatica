@@ -49,10 +49,6 @@ public class ObjectHeap<T> {
 
     @SuppressWarnings("unchecked")
     public T releaseUnsafe(int key) {
-        if (key < 0 || key >= nextFree || elements[key] == null || key == firstFree) {
-            return null;
-        }
-
         indexes[key] = firstFree;
         firstFree = key;
         T result = (T) elements[key];

@@ -94,10 +94,10 @@ class ProactorImpl implements Proactor {
         }
 
         if (pendingCompletions.count() > 0) {
-            uringApi.processCompletions(pendingCompletions, this);
+            return uringApi.processCompletions(pendingCompletions, this);
         }
 
-        return pendingCompletions.count();
+        return 0;
     }
 
     @Override
@@ -132,10 +132,10 @@ class ProactorImpl implements Proactor {
     @Override
     public void write(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fd, OffHeapBuffer buffer,
                       OffsetT offset, Option<Timeout> timeout) {
-        if (buffer.used() == 0) {
-            completion.accept(SystemError.ENODATA.result(), this);
-            return;
-        }
+//        if (buffer.used() == 0) {
+//            completion.accept(SystemError.ENODATA.result(), this);
+//            return;
+//        }
 
         queue.add(factory.forWrite(completion, fd, buffer, offset, timeout)
                          .register(pendingCompletions));

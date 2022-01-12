@@ -47,8 +47,10 @@ final class UringNative {
     public static native void close(long baseAddress);
 
     // Completion
+    // note: it also performs advanceCQ
     public static native int peekCQ(long baseAddress, long completionsAddress, long count);
 
+    // Used only in tests
     public static native void advanceCQ(long baseAddress, long count);
 
     public static native int readyCQ(long baseAddress);
@@ -56,6 +58,7 @@ final class UringNative {
     // Submissions
     public static native long spaceLeft(long baseAddress);
 
+    // Used only in tests
     public static native long nextSQEntry(long baseAddress);
 
     public static native int peekSQEntries(long baseAddress, long submissionsAddress, long count);

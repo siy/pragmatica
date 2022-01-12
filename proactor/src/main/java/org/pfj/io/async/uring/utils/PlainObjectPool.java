@@ -16,44 +16,43 @@
 
 package org.pfj.io.async.uring.utils;
 
+import org.pfj.io.async.uring.exchange.AbstractExchangeEntry;
 import org.pfj.lang.Functions.FN1;
 
-public class PlainObjectPool<T extends Poolable> {
+@SuppressWarnings({"unchecked", "rawtypes"})
+public class PlainObjectPool<T extends AbstractExchangeEntry> {
     private T head;
     private final FN1<T, PlainObjectPool<T>> factory;
 
-    public PlainObjectPool(final FN1<T, PlainObjectPool<T>> factory) {
+    private PlainObjectPool(final FN1<T, PlainObjectPool<T>> factory) {
         this.factory = factory;
     }
 
+    public static <T extends AbstractExchangeEntry> PlainObjectPool<T> objectPool(final FN1<T, PlainObjectPool<T>> factory) {
+        return new PlainObjectPool<>(factory);
+    }
+
     public T alloc() {
-        final T result = head;
+        var result = head;
 
         if (head == null) {
             return factory.apply(this);
         }
 
-        //noinspection unchecked
-        head = (T) result.next();
-        //noinspection unchecked
-        result.next(null);
-
+        head = (T) head.next;
         return result;
     }
 
     public void release(final T element) {
-        //noinspection unchecked
-        element.next(head);
+        element.next = head;
         head = element;
     }
 
     public void clear() {
         while (head != null) {
-            final T element = head;
-            //noinspection unchecked
-            head = (T) element.next();
-            //noinspection unchecked
-            element.next(null);
+            var element = head;
+            head = (T) element.next;
+            element.next = null;
         }
     }
 }

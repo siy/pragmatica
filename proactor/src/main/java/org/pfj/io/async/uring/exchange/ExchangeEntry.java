@@ -19,9 +19,8 @@ package org.pfj.io.async.uring.exchange;
 import org.pfj.io.async.uring.CompletionHandler;
 import org.pfj.io.async.uring.struct.raw.SubmitQueueEntry;
 import org.pfj.io.async.uring.utils.ObjectHeap;
-import org.pfj.io.async.uring.utils.Poolable;
 
-public interface ExchangeEntry<T extends ExchangeEntry<T> & Poolable<T>> extends Poolable<T>, CompletionHandler {
+public interface ExchangeEntry<T extends ExchangeEntry<T>> extends CompletionHandler {
     /**
      * Finally close the instance and release associated resources
      */

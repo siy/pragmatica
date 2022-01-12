@@ -42,25 +42,27 @@ import java.time.Duration;
 import java.util.Set;
 import java.util.function.BiConsumer;
 
-public class ExchangeEntryFactory {
-    private final PlainObjectPool<NopExchangeEntry> nopPool = new PlainObjectPool<>(NopExchangeEntry::new);
-    private final PlainObjectPool<DelayExchangeEntry> delayPool = new PlainObjectPool<>(DelayExchangeEntry::new);
-    private final PlainObjectPool<CloseExchangeEntry> closePool = new PlainObjectPool<>(CloseExchangeEntry::new);
-    private final PlainObjectPool<TimeoutExchangeEntry> timeoutPool = new PlainObjectPool<>(TimeoutExchangeEntry::new);
-    private final PlainObjectPool<ReadExchangeEntry> readPool = new PlainObjectPool<>(ReadExchangeEntry::new);
-    private final PlainObjectPool<WriteExchangeEntry> writePool = new PlainObjectPool<>(WriteExchangeEntry::new);
-    private final PlainObjectPool<SpliceExchangeEntry> splicePool = new PlainObjectPool<>(SpliceExchangeEntry::new);
-    private final PlainObjectPool<OpenExchangeEntry> openPool = new PlainObjectPool<>(OpenExchangeEntry::new);
-    private final PlainObjectPool<SocketExchangeEntry> socketPool = new PlainObjectPool<>(SocketExchangeEntry::new);
-    private final PlainObjectPool<StatExchangeEntry> statPool = new PlainObjectPool<>(StatExchangeEntry::new);
-    private final PlainObjectPool<ReadVectorExchangeEntry> readVectorPool = new PlainObjectPool<>(ReadVectorExchangeEntry::new);
-    private final PlainObjectPool<WriteVectorExchangeEntry> writeVectorPool = new PlainObjectPool<>(WriteVectorExchangeEntry::new);
-    private final PlainObjectPool<ConnectExchangeEntry> connectPool = new PlainObjectPool<>(ConnectExchangeEntry::new);
+import static org.pfj.io.async.uring.utils.PlainObjectPool.objectPool;
 
-    @SuppressWarnings("rawtypes")
-    private final PlainObjectPool<ListenExchangeEntry> listenPool = new PlainObjectPool<>(ListenExchangeEntry::new);
-    @SuppressWarnings("rawtypes")
-    private final PlainObjectPool<AcceptExchangeEntry> acceptPool = new PlainObjectPool<>(AcceptExchangeEntry::new);
+public class ExchangeEntryFactory {
+    private final PlainObjectPool<NopExchangeEntry> nopPool = objectPool(NopExchangeEntry::new);
+    private final PlainObjectPool<DelayExchangeEntry> delayPool = objectPool(DelayExchangeEntry::new);
+    private final PlainObjectPool<CloseExchangeEntry> closePool = objectPool(CloseExchangeEntry::new);
+    private final PlainObjectPool<TimeoutExchangeEntry> timeoutPool = objectPool(TimeoutExchangeEntry::new);
+    private final PlainObjectPool<ReadExchangeEntry> readPool = objectPool(ReadExchangeEntry::new);
+    private final PlainObjectPool<WriteExchangeEntry> writePool = objectPool(WriteExchangeEntry::new);
+    private final PlainObjectPool<SpliceExchangeEntry> splicePool = objectPool(SpliceExchangeEntry::new);
+    private final PlainObjectPool<OpenExchangeEntry> openPool = objectPool(OpenExchangeEntry::new);
+    private final PlainObjectPool<SocketExchangeEntry> socketPool = objectPool(SocketExchangeEntry::new);
+    private final PlainObjectPool<StatExchangeEntry> statPool = objectPool(StatExchangeEntry::new);
+    private final PlainObjectPool<ReadVectorExchangeEntry> readVectorPool = objectPool(ReadVectorExchangeEntry::new);
+    private final PlainObjectPool<WriteVectorExchangeEntry> writeVectorPool = objectPool(WriteVectorExchangeEntry::new);
+    private final PlainObjectPool<ConnectExchangeEntry> connectPool = objectPool(ConnectExchangeEntry::new);
+
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private final PlainObjectPool<ListenExchangeEntry> listenPool = objectPool(ListenExchangeEntry::new);
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private final PlainObjectPool<AcceptExchangeEntry> acceptPool = objectPool(AcceptExchangeEntry::new);
 
     public NopExchangeEntry forNop(BiConsumer<Result<Unit>, Proactor> completion) {
         return nopPool.alloc()
@@ -86,20 +88,14 @@ public class ExchangeEntryFactory {
         return timeout.equals(Option.empty()) ? 0 : SubmitQueueEntryFlags.IOSQE_IO_LINK;
     }
 
-    public ReadExchangeEntry forRead(BiConsumer<Result<SizeT>, Proactor> completion,
-                                     FileDescriptor fd,
-                                     OffHeapBuffer buffer,
-                                     OffsetT offset,
-                                     Option<Timeout> timeout) {
+    public ReadExchangeEntry forRead(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fd, OffHeapBuffer buffer,
+                                     OffsetT offset, Option<Timeout> timeout) {
         return readPool.alloc()
                        .prepare(completion, fd.descriptor(), buffer, offset.value(), calculateFlags(timeout));
     }
 
-    public WriteExchangeEntry forWrite(BiConsumer<Result<SizeT>, Proactor> completion,
-                                       FileDescriptor fd,
-                                       OffHeapBuffer buffer,
-                                       OffsetT offset,
-                                       Option<Timeout> timeout) {
+    public WriteExchangeEntry forWrite(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fd, OffHeapBuffer buffer,
+                                       OffsetT offset, Option<Timeout> timeout) {
         return writePool.alloc()
                         .prepare(completion, fd.descriptor(), buffer, offset.value(), calculateFlags(timeout));
     }
@@ -109,20 +105,14 @@ public class ExchangeEntryFactory {
                          .prepare(completion, descriptor, calculateFlags(timeout));
     }
 
-    public OpenExchangeEntry forOpen(BiConsumer<Result<FileDescriptor>, Proactor> completion,
-                                     Path path,
-                                     Set<OpenFlags> openFlags,
-                                     Set<FilePermission> mode,
-                                     Option<Timeout> timeout) {
+    public OpenExchangeEntry forOpen(BiConsumer<Result<FileDescriptor>, Proactor> completion, Path path, Set<OpenFlags> openFlags,
+                                     Set<FilePermission> mode, Option<Timeout> timeout) {
         return openPool.alloc()
                        .prepare(completion, path, Bitmask.combine(openFlags), Bitmask.combine(mode), calculateFlags(timeout));
     }
 
-    public SocketExchangeEntry forSocket(BiConsumer<Result<FileDescriptor>, Proactor> completion,
-                                         AddressFamily addressFamily,
-                                         SocketType socketType,
-                                         Set<SocketFlag> openFlags,
-                                         Set<SocketOption> options) {
+    public SocketExchangeEntry forSocket(BiConsumer<Result<FileDescriptor>, Proactor> completion, AddressFamily addressFamily,
+                                         SocketType socketType, Set<SocketFlag> openFlags, Set<SocketOption> options) {
         return socketPool.alloc()
                          .prepare(completion, addressFamily, socketType, openFlags, options);
     }
@@ -150,28 +140,19 @@ public class ExchangeEntryFactory {
     }
 
     public StatExchangeEntry forStat(BiConsumer<Result<FileStat>, Proactor> completion,
-                                     int descriptor,
-                                     int statFlags,
-                                     int statMask,
-                                     OffHeapCString rawPath) {
+                                     int descriptor, int statFlags, int statMask, OffHeapCString rawPath) {
         return statPool.alloc()
                        .prepare(completion, descriptor, statFlags, statMask, rawPath);
     }
 
-    public ReadVectorExchangeEntry forReadVector(BiConsumer<Result<SizeT>, Proactor> completion,
-                                                 FileDescriptor fileDescriptor,
-                                                 OffsetT offset,
-                                                 Option<Timeout> timeout,
-                                                 OffHeapIoVector ioVector) {
+    public ReadVectorExchangeEntry forReadVector(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fileDescriptor,
+                                                 OffsetT offset, Option<Timeout> timeout, OffHeapIoVector ioVector) {
         return readVectorPool.alloc()
                              .prepare(completion, fileDescriptor.descriptor(), offset.value(), calculateFlags(timeout), ioVector);
     }
 
-    public WriteVectorExchangeEntry forWriteVector(BiConsumer<Result<SizeT>, Proactor> completion,
-                                                   FileDescriptor fileDescriptor,
-                                                   OffsetT offset,
-                                                   Option<Timeout> timeout,
-                                                   OffHeapIoVector ioVector) {
+    public WriteVectorExchangeEntry forWriteVector(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fileDescriptor,
+                                                   OffsetT offset, Option<Timeout> timeout, OffHeapIoVector ioVector) {
         return writeVectorPool.alloc()
                               .prepare(completion, fileDescriptor.descriptor(), offset.value(), calculateFlags(timeout), ioVector);
     }

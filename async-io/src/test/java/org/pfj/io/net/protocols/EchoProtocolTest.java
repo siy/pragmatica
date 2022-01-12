@@ -25,7 +25,7 @@ import static org.pfj.io.net.AcceptProtocol.acceptProtocol;
 import static org.pfj.io.net.tcp.ListenConfig.listenConfig;
 import static org.pfj.lang.Option.empty;
 
-@Disabled
+//@Disabled
 class EchoProtocolTest {
     @Test
     void serverCanBeStarted() {
