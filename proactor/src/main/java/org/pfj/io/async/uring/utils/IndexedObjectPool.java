@@ -27,7 +27,7 @@ import java.util.function.Supplier;
  * completely bulletproof and not thread safe. In particular, check for double releases is minimal and does not protect from all possible mistakes.
  * Use with care.
  */
-public class ObjectPool<T> {
+public class IndexedObjectPool<T> {
     private Object[] elements;
     private int[] indexes;
     private final Supplier<T> supplier;
@@ -36,15 +36,15 @@ public class ObjectPool<T> {
     private int nextFree = 0;
     private int count = 0;
 
-    private ObjectPool(int initialCapacity, Supplier<T> supplier, Consumer<T> janitor) {
+    private IndexedObjectPool(int initialCapacity, Supplier<T> supplier, Consumer<T> janitor) {
         elements = new Object[initialCapacity];
         indexes = new int[initialCapacity];
         this.supplier = supplier;
         this.janitor = janitor;
     }
 
-    public static <T> ObjectPool<T> objectPool(int initialCapacity, Supplier<T> newElement, Consumer<T> janitor) {
-        return new ObjectPool<>(initialCapacity, newElement, janitor);
+    public static <T> IndexedObjectPool<T> objectPool(int initialCapacity, Supplier<T> newElement, Consumer<T> janitor) {
+        return new IndexedObjectPool<>(initialCapacity, newElement, janitor);
     }
 
     @SuppressWarnings("unchecked")

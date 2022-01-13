@@ -48,9 +48,9 @@ final class TaskExecutorImpl implements TaskExecutor {
 
         IntStream
             .range(0, numThreads)
-            .forEach(n -> runners.add(new TaskRunner(executor, threshold)));
+            .forEach(n -> runners.add(new TaskRunner(threshold)));
 
-        runners.forEach(TaskRunner::start);
+        runners.forEach(runner -> runner.start(executor));
     }
 
     @Override

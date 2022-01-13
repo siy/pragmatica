@@ -33,7 +33,6 @@ import java.util.function.Consumer;
 final class TaskRunner {
     private static final Logger LOG = LoggerFactory.getLogger(TaskRunner.class);
 
-    private final ExecutorService executor;
     private final ActionableThreshold threshold;
 
     private volatile Task head;
@@ -50,12 +49,11 @@ final class TaskRunner {
         }
     }
 
-    TaskRunner(ExecutorService executor, ActionableThreshold threshold) {
-        this.executor = executor;
+    TaskRunner(ActionableThreshold threshold) {
         this.threshold = threshold;
     }
 
-    void start() {
+    void start(ExecutorService executor) {
         executor.submit(this::run);
     }
 
@@ -77,27 +75,32 @@ final class TaskRunner {
 
             if (head == null) {
                 var idleRunCount = 0;
+
                 while (proactor.processIO() > 0) {
                     idleRunCount++;
 
-                    if (idleRunCount == 1024) {
+                    if (idleRunCount == 64) {
                         break;
                     }
+
+                    Thread.onSpinWait();
                 }
 
                 if (idleRunCount == 0) {
-                    Thread.yield();
+                    Thread.onSpinWait();
                 }
             } else {
                 while (head != null) {
                     try {
                         head.task.accept(proactor);
+
                     } catch (Throwable e) {
                         LOG.error("Unexpected task exception", e);
                     }
 
                     head = head.next;
                 }
+
                 proactor.processIO();
             }
         }

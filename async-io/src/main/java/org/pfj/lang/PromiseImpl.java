@@ -131,6 +131,7 @@ final class PromiseImpl<T> implements Promise<T> {
         CompletionAction<T> action;
 
         while ((action = processed) == null) {
+            Thread.onSpinWait();
             Thread.yield();
         }
 
@@ -198,7 +199,7 @@ final class PromiseImpl<T> implements Promise<T> {
         CompletionAction<T> action;
 
         while ((action = processed) == null) {
-            Thread.yield();
+            Thread.onSpinWait();
 
             if (System.nanoTime() - start > delayNanos) {
                 return SystemError.ETIME.result();
