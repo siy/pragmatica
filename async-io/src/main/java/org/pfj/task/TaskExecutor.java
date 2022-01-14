@@ -49,6 +49,15 @@ public interface TaskExecutor {
     TaskExecutor submit(List<Consumer<Proactor>> tasks);
 
     /**
+     * Submit task for execution across all threads.
+     *
+     * @param task task to execute
+     *
+     * @return Current instance
+     */
+    TaskExecutor spread(Consumer<Proactor> task);
+
+    /**
      * Shutdown task executor. Returned promise is resolved once all internal processing is stopped and resources are released.
      *
      * @return {@link Promise} instance which is get resolved when shutdown is complete

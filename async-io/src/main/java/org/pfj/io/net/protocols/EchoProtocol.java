@@ -19,7 +19,6 @@ package org.pfj.io.net.protocols;
 
 import org.pfj.io.async.Proactor;
 import org.pfj.io.async.Timeout;
-import org.pfj.io.async.common.OffsetT;
 import org.pfj.io.async.file.FileDescriptor;
 import org.pfj.io.async.net.InetAddress;
 import org.pfj.io.async.util.OffHeapBuffer;
@@ -27,6 +26,8 @@ import org.pfj.io.net.ConnectionProtocol;
 import org.pfj.io.net.ConnectionProtocolContext;
 import org.pfj.io.net.ConnectionProtocolStarter;
 import org.pfj.lang.Option;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Simple TCP Echo protocol implementation. All it does is sending back received data.
@@ -45,6 +46,8 @@ public interface EchoProtocol<T extends InetAddress> extends ConnectionProtocol<
     }
 
     class EchoProtocolImpl<T extends InetAddress> implements ConnectionProtocol<T> {
+        private static final Logger LOG = LoggerFactory.getLogger(EchoProtocol.class);
+
         private final EchoProtocolConfig<T> config;
         private final ConnectionProtocolContext<T> context;
         private final OffHeapBuffer buffer;
@@ -69,19 +72,21 @@ public interface EchoProtocol<T extends InetAddress> extends ConnectionProtocol<
         }
 
         private void startRead(Proactor proactor) {
-            proactor.read((result, proactor1) -> result.onFailureDo(() -> cleanup(proactor1))
+            proactor.read((result, proactor1) -> result.onFailure(failure -> LOG.warn("Read error: {}", failure.message()))
+                                                       .onFailureDo(() -> cleanup(proactor1))
                                                        .onSuccess(size -> startWrite(proactor1)),
-                          socket(), buffer, OffsetT.ZERO, timeout());
+                          socket(), buffer, timeout());
         }
 
         private void startWrite(Proactor proactor) {
-            proactor.write((result, proactor1) -> result.onFailureDo(() -> cleanup(proactor1))
+            proactor.write((result, proactor1) -> result.onFailure(failure -> LOG.warn("Write error: {}", failure.message()))
+                                                        .onFailureDo(() -> cleanup(proactor1))
                                                         .onSuccess(size -> startRead(proactor1)),
-                           socket(), buffer, OffsetT.ZERO, timeout());
+                           socket(), buffer, timeout());
         }
 
         private void cleanup(Proactor proactor) {
-            proactor.close(socket());
+            proactor.close(result -> LOG.debug("Socket {} closed", socket()), socket());
         }
     }
 }

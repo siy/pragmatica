@@ -55,15 +55,25 @@ final class TaskExecutorImpl implements TaskExecutor {
 
     @Override
     public final TaskExecutor submit(Consumer<Proactor> task) {
+        pushTask(task);
+
+        return this;
+    }
+
+    private void pushTask(Consumer<Proactor> task) {
         runners.get(next++ % numThreads).push(task);
+    }
+
+    @Override
+    public TaskExecutor submit(List<Consumer<Proactor>> tasks) {
+        tasks.forEach(this::pushTask);
 
         return this;
     }
 
     @Override
-    public TaskExecutor submit(List<Consumer<Proactor>> tasks) {
-        tasks.forEach(task -> runners.get(next++ % numThreads).push(task));
-
+    public TaskExecutor spread(Consumer<Proactor> task) {
+        runners.forEach(runner -> runner.push(task));
         return this;
     }
 

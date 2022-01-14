@@ -23,8 +23,6 @@ import org.pfj.io.net.tcp.TcpListener;
 import org.pfj.lang.Promise;
 import org.pfj.lang.Unit;
 
-import java.util.function.Supplier;
-
 /**
  * Incoming connection listener.
  */

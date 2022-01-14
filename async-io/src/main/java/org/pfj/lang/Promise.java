@@ -94,8 +94,8 @@ public interface Promise<T> {
     Promise<T> async(BiConsumer<Promise<T>, Proactor> action);
 
     /**
-     * Run asynchronous task. The task will receive current instance of Promise, instance of {@link Proactor} and
-     * instance of {@link TaskExecutor} as a parameters.
+     * Run asynchronous task. The task will receive current instance of Promise, instance of {@link Proactor} and instance of {@link TaskExecutor} as
+     * a parameters.
      *
      * @param action The task to run
      *
@@ -268,13 +268,32 @@ public interface Promise<T> {
     }
 
     /**
-     * Create an unresolved instance and run asynchronous action which will receive created instance as a parameter.
+     * Create an unresolved instance and run asynchronous action which will receive created instance and an instance of {@link Proactor} as
+     * parameters.
+     * <p>
+     * WARNING: Passed {@link Proactor} instance is valid only within body of the consumer. It should not be stored nor reused outside the execution
+     * scope of the consumer.
      *
      * @param consumer The action to run
      *
      * @return Created instance
      */
     static <R> Promise<R> promise(BiConsumer<Promise<R>, Proactor> consumer) {
+        return Promise.<R>promise().async(consumer);
+    }
+
+    /**
+     * Create an unresolved instance and run asynchronous action which will receive created instance, an instance of {@link Proactor} and instance of
+     * {@link TaskExecutor} as parameters.
+     * <p>
+     * WARNING: Passed {@link Proactor} instance is valid only within body of the consumer. It should not be stored nor reused outside the execution
+     * scope of the consumer.
+     *
+     * @param consumer The action to run
+     *
+     * @return Created instance
+     */
+    static <R> Promise<R> promise(TriConsumer<Promise<R>, Proactor, TaskExecutor> consumer) {
         return Promise.<R>promise().async(consumer);
     }
 

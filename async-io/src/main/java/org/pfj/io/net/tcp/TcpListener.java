@@ -101,7 +101,7 @@ public class TcpListener<T extends InetAddress> implements Listener<T> {
                                Proactor proactor, TaskExecutor executor) {
         result.onFailure(failure -> LOG.warn("Accept error: {}", failure.message()))
               .onFailure(serve::failure)
-              //.onSuccess(connectionContext -> LOG.info("Accepted connection {} at {}", connectionContext, Thread.currentThread().getName()))
+              .onSuccess(connectionContext -> LOG.debug("Accepted connection {}", connectionContext))
               .onSuccess(connectionContext -> executor.submit(proactor1 -> protocol.accept(context, connectionContext, proactor1)))
               .onSuccess(__ -> repeatAccept(proactor, context, protocol, executor));
     }

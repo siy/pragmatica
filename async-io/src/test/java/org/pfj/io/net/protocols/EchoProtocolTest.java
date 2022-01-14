@@ -20,6 +20,9 @@ package org.pfj.io.net.protocols;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.pfj.io.net.Listener;
+import org.pfj.lang.Cause;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static org.pfj.io.net.AcceptProtocol.acceptProtocol;
 import static org.pfj.io.net.tcp.ListenConfig.listenConfig;
@@ -27,17 +30,24 @@ import static org.pfj.lang.Option.empty;
 
 @Tag("Infinite")
 class EchoProtocolTest {
+    private static final Logger LOG = LoggerFactory.getLogger(EchoProtocolTest.class);
+
     @Test
     void serverCanBeStarted() {
-        var listener = Listener.listener(listenConfig().withPort(12345).build());
+        var config = listenConfig().withPort(12345).build();
+        var listener = Listener.listener(config);
 
         Runtime.getRuntime()
                .addShutdownHook(listener.shutdownHook());
 
         listener.listen(acceptProtocol(EchoProtocol.starter(4096, empty())))
-              .onFailure(System.out::println)
-              .flatMap(listener::shutdown)
-              .onFailure(System.out::println)
-              .join();
+                .onFailure(this::printFailure)
+                .flatMap(listener::shutdown)
+                .onFailure(this::printFailure)
+                .join();
+    }
+
+    private void printFailure(Cause cause) {
+        LOG.warn("Error: {}", cause.message());
     }
 }
