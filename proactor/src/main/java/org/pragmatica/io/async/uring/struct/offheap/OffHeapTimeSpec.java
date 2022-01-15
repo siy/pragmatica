@@ -46,7 +46,7 @@ public class OffHeapTimeSpec extends AbstractOffHeapStructure<OffHeapTimeSpec> {
     }
 
     public static OffHeapTimeSpec forTimeout(Timeout timeout) {
-        return timeout.asSecondsAndNanos()
+        return timeout.secondsAndNanos()
                       .map(OffHeapTimeSpec::forSecondsNanos);
     }
 }

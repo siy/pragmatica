@@ -26,12 +26,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class TimeoutTest {
     @Test
     void timeoutCreatedProperly() {
-        assertEquals(1234, Timeout.timeout(1_234_000_000L).nanos().asMillis());
-        assertEquals(1234, Timeout.timeout(1_234_000L).micros().asMillis());
-        assertEquals(TimeUnit.SECONDS.toMillis(123), Timeout.timeout(123).seconds().asMillis());
-        assertEquals(TimeUnit.MINUTES.toMillis(12), Timeout.timeout(12).minutes().asMillis());
-        assertEquals(TimeUnit.HOURS.toMillis(32), Timeout.timeout(32).hours().asMillis());
-        assertEquals(TimeUnit.NANOSECONDS.toNanos(32), Timeout.timeout(32).nanos().asNanos());
+        assertEquals(1234, Timeout.timeout(1_234_000_000L).nanos().milliseconds());
+        assertEquals(1234, Timeout.timeout(1_234_000L).micros().milliseconds());
+        assertEquals(TimeUnit.SECONDS.toMillis(123), Timeout.timeout(123).seconds().milliseconds());
+        assertEquals(TimeUnit.MINUTES.toMillis(12), Timeout.timeout(12).minutes().milliseconds());
+        assertEquals(TimeUnit.HOURS.toMillis(32), Timeout.timeout(32).hours().milliseconds());
+        assertEquals(TimeUnit.NANOSECONDS.toNanos(32), Timeout.timeout(32).nanos().nanoseconds());
     }
 
     @Test

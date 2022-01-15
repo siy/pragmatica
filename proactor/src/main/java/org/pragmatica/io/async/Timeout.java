@@ -20,7 +20,6 @@ package org.pragmatica.io.async;
 import org.pragmatica.lang.Tuple.Tuple2;
 
 import java.time.Duration;
-import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 import static org.pragmatica.lang.Tuple.tuple;
@@ -28,54 +27,32 @@ import static org.pragmatica.lang.Tuple.tuple;
 /**
  * Representation of timeout value.
  */
-public final class Timeout {
+//TODO rework as interface
+public record Timeout(long timeout) {
     private static final long NANOS_IN_SECOND = 1_000_000_000L;
-    private final long timeout;
-
-    private Timeout(long timeout) {
-        this.timeout = timeout;
-    }
 
     public static TimeoutBuilder timeout(long value) {
         return new TimeoutBuilder(value);
     }
 
-    public long asMillis() {
-        return TimeUnit.NANOSECONDS.toMillis(timeout);
+    public long milliseconds() {
+        return TimeUnit.NANOSECONDS.toMillis(timeout());
     }
 
-    public long asNanos() {
-        return timeout;
+    public long nanoseconds() {
+        return timeout();
     }
 
-    public long asMicros() {
-        return TimeUnit.NANOSECONDS.toMicros(timeout);
+    public long microseconds() {
+        return TimeUnit.NANOSECONDS.toMicros(timeout());
     }
 
-    public Tuple2<Long, Integer> asSecondsAndNanos() {
-        return tuple(timeout / NANOS_IN_SECOND, (int) (timeout % NANOS_IN_SECOND));
+    public Tuple2<Long, Integer> secondsAndNanos() {
+        return tuple(timeout() / NANOS_IN_SECOND, (int) (timeout() % NANOS_IN_SECOND));
     }
 
-    public Duration asDuration() {
-        return asSecondsAndNanos().map(Duration::ofSeconds);
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-
-        if (o instanceof Timeout other) {
-            return timeout == other.timeout;
-        }
-
-        return false;
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(timeout);
+    public Duration duration() {
+        return secondsAndNanos().map(Duration::ofSeconds);
     }
 
     @Override

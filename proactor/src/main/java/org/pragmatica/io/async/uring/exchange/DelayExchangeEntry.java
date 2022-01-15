@@ -51,7 +51,7 @@ public class DelayExchangeEntry extends AbstractExchangeEntry<DelayExchangeEntry
 
         var result = Math.abs(res) != SystemError.ETIME.code()
                      ? SystemError.<Duration>result(res)
-                     : success(timeout(totalNanos).nanos().asDuration());
+                     : success(timeout(totalNanos).nanos().duration());
 
         completion.accept(result, proactor);
     }
@@ -59,7 +59,7 @@ public class DelayExchangeEntry extends AbstractExchangeEntry<DelayExchangeEntry
     public DelayExchangeEntry prepare(BiConsumer<Result<Duration>, Proactor> completion, Timeout timeout) {
         startNanos = System.nanoTime();
 
-        timeout.asSecondsAndNanos()
+        timeout.secondsAndNanos()
                .map(timeSpec::setSecondsNanos);
 
         return super.prepare(completion);

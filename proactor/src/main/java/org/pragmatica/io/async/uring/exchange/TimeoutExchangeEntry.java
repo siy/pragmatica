@@ -43,7 +43,7 @@ public class TimeoutExchangeEntry extends AbstractExchangeEntry<TimeoutExchangeE
     }
 
     public TimeoutExchangeEntry prepare(Timeout timeout) {
-        timeout.asSecondsAndNanos()
+        timeout.secondsAndNanos()
                .map(timeSpec::setSecondsNanos);
 
         return this;

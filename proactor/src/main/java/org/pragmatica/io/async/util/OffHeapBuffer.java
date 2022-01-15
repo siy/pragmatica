@@ -22,6 +22,9 @@ import org.pragmatica.io.async.util.raw.RawMemory;
 
 import java.util.HexFormat;
 
+/**
+ * Memory buffer allocated outside Java heap.
+ */
 public class OffHeapBuffer extends AbstractOffHeapStructure<OffHeapBuffer> {
     private int used;
 

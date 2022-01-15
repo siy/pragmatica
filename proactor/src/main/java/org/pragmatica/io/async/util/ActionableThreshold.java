@@ -24,20 +24,7 @@ import java.util.function.Consumer;
  * Helper class used to track number of events and trigger action once threshold is reached. The action is triggered only once, when number of events
  * exactly matches configured threshold.
  */
-public class ActionableThreshold {
-    private final AtomicInteger counter;
-    private final Runnable action;
-
-    private ActionableThreshold(int count, Runnable action) {
-        counter = new AtomicInteger(count);
-        this.action = action;
-    }
-
-    public ActionableThreshold apply(Consumer<ActionableThreshold> setup) {
-        setup.accept(this);
-        return this;
-    }
-
+public record ActionableThreshold(AtomicInteger counter, Runnable action) {
     /**
      * Create an instance configured for threshold and action.
      *
@@ -47,7 +34,17 @@ public class ActionableThreshold {
      * @return Created instance
      */
     public static ActionableThreshold threshold(int count, Runnable action) {
-        return new ActionableThreshold(count, action);
+        return new ActionableThreshold(new AtomicInteger(count), action);
+    }
+
+    /**
+     * Perform operation on current instance.
+     *
+     * @return Current instance
+     */
+    public ActionableThreshold apply(Consumer<ActionableThreshold> setup) {
+        setup.accept(this);
+        return this;
     }
 
     /**

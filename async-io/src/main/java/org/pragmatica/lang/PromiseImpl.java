@@ -145,7 +145,7 @@ final class PromiseImpl<T> implements Promise<T> {
 
     @Override
     public Result<T> join(Timeout timeout) {
-        return join(timeout.asNanos());
+        return join(timeout.nanoseconds());
     }
 
     @Override
@@ -165,7 +165,7 @@ final class PromiseImpl<T> implements Promise<T> {
 
     @Override
     public Promise<T> async(Timeout timeout, BiConsumer<Promise<T>, Proactor> action) {
-        return async(timeout.asNanos(), System.nanoTime(), action);
+        return async(timeout.nanoseconds(), System.nanoTime(), action);
     }
 
     @Override

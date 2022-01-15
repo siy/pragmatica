@@ -201,8 +201,8 @@ class PromiseTest {
         System.out.println("Diff total: " + (ref3.get() - ref1.get()));
 
         // Expect that timeout should be between requested and twice as requested
-        assertTrue((ref2.get() - ref1.get()) >= Timeout.timeout(10).millis().asNanos());
-        assertTrue((ref2.get() - ref1.get()) < Timeout.timeout(20).millis().asNanos());
+        assertTrue((ref2.get() - ref1.get()) >= Timeout.timeout(10).millis().nanoseconds());
+        assertTrue((ref2.get() - ref1.get()) < Timeout.timeout(20).millis().nanoseconds());
     }
 
     @Test

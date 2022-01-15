@@ -24,16 +24,9 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Implementation of {@link ThreadFactory} which creates threads in <code>daemon</code> mode, i.e. threads which while running do not prevent
  * application to stop.
  */
-public class DaemonThreadFactory implements ThreadFactory {
-    private final AtomicInteger counter = new AtomicInteger();
-    private final String pattern;
-
-    private DaemonThreadFactory(String pattern) {
-        this.pattern = pattern;
-    }
-
+public record DaemonThreadFactory(AtomicInteger counter, String pattern) implements ThreadFactory {
     public static DaemonThreadFactory threadFactory(String pattern) {
-        return new DaemonThreadFactory(pattern);
+        return new DaemonThreadFactory(new AtomicInteger(), pattern);
     }
 
     @Override
