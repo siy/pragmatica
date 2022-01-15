@@ -27,70 +27,8 @@ import java.util.EnumSet;
  * <p>
  * This operation performs copying from one file descriptor to another completely at kernel space without involving any user space code or memory.
  */
-public class SpliceDescriptor {
-    private final FileDescriptor fromDescriptor;
-    private final FileDescriptor toDescriptor;
-    private final OffsetT fromOffset;
-    private final OffsetT toOffset;
-    private final SizeT bytesToCopy;
-    private final EnumSet<SpliceFlags> flags;
-
-    private SpliceDescriptor(final FileDescriptor fromDescriptor,
-                             final FileDescriptor toDescriptor,
-                             final OffsetT fromOffset,
-                             final OffsetT toOffset,
-                             final SizeT bytesToCopy,
-                             final EnumSet<SpliceFlags> flags) {
-        this.fromDescriptor = fromDescriptor;
-        this.toDescriptor = toDescriptor;
-        this.fromOffset = fromOffset;
-        this.toOffset = toOffset;
-        this.bytesToCopy = bytesToCopy;
-        this.flags = flags;
-    }
-
-    /**
-     * Source file descriptor.
-     */
-    public FileDescriptor fromDescriptor() {
-        return fromDescriptor;
-    }
-
-    /**
-     * Destination file descriptor.
-     */
-    public FileDescriptor toDescriptor() {
-        return toDescriptor;
-    }
-
-    /**
-     * Offset in the source file. Must be 0 if source file descriptor is a socket.
-     */
-    public OffsetT fromOffset() {
-        return fromOffset;
-    }
-
-    /**
-     * Offset in the destination file. Must be 0 if destination file descriptor is a socket.
-     */
-    public OffsetT toOffset() {
-        return toOffset;
-    }
-
-    /**
-     * Number of bytes to copy.
-     */
-    public SizeT bytesToCopy() {
-        return bytesToCopy;
-    }
-
-    /**
-     * Operation flags.
-     */
-    public EnumSet<SpliceFlags> flags() {
-        return flags;
-    }
-
+public record SpliceDescriptor(FileDescriptor fromDescriptor, FileDescriptor toDescriptor, OffsetT fromOffset, OffsetT toOffset,
+                               SizeT bytesToCopy, EnumSet<SpliceFlags> flags) {
     @Override
     public String toString() {
         return "SpliceDescriptor(" +
@@ -107,12 +45,13 @@ public class SpliceDescriptor {
      * Create new builder for assembling complete {@link SpliceDescriptor} instance.
      */
     public static SpliceDescriptorBuilder builder() {
-        return fromDescriptor ->
-            toDescriptor ->
-                fromOffset ->
-                    toOffset ->
-                        bytesToCopy ->
-                            flags -> new SpliceDescriptor(fromDescriptor, toDescriptor, fromOffset, toOffset, bytesToCopy, flags);
+        return
+            fromDescriptor ->
+                toDescriptor ->
+                    fromOffset ->
+                        toOffset ->
+                            bytesToCopy ->
+                                flags -> new SpliceDescriptor(fromDescriptor, toDescriptor, fromOffset, toOffset, bytesToCopy, flags);
     }
 
     public interface SpliceDescriptorBuilder {

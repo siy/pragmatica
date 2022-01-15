@@ -23,7 +23,6 @@ import org.pragmatica.io.async.uring.struct.ExternalRawStructure;
 import org.pragmatica.lang.Result;
 
 public sealed interface RawSocketAddress<T extends InetAddress> permits RawSocketAddressIn, RawSocketAddressIn6 {
-
     void assign(final SocketAddress<T> input);
 
     Result<SocketAddress<T>> extract();

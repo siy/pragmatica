@@ -32,8 +32,7 @@ public interface ConnectionContext<T extends InetAddress> {
     }
 
     static <T extends InetAddress> ConnectionContext<T> connection(FileDescriptor socket, SocketAddress<T> address) {
-        record connectionContext<K extends InetAddress>(FileDescriptor socket, SocketAddress<K> address)
-            implements ConnectionContext<K> {}
+        record connectionContext<K extends InetAddress>(FileDescriptor socket, SocketAddress<K> address) implements ConnectionContext<K> {}
 
         return new connectionContext<>(socket, address);
     }

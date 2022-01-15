@@ -49,7 +49,7 @@ public final class RawSocketAddressIn6 extends AbstractExternalRawStructure<RawS
         return getShortInNetOrder(SocketAddressIn6Offsets.sin6_port);
     }
 
-    public int flowinfo() {
+    public int flowInfo() {
         return getInt(SocketAddressIn6Offsets.sin6_flowinfo);
     }
 
@@ -71,8 +71,8 @@ public final class RawSocketAddressIn6 extends AbstractExternalRawStructure<RawS
         return this;
     }
 
-    public RawSocketAddressIn6 flowinfo(int flowinfo) {
-        putInt(SocketAddressIn6Offsets.sin6_flowinfo, flowinfo);
+    public RawSocketAddressIn6 flowInfo(int flowInfo) {
+        putInt(SocketAddressIn6Offsets.sin6_flowinfo, flowInfo);
         return this;
     }
 
@@ -93,7 +93,7 @@ public final class RawSocketAddressIn6 extends AbstractExternalRawStructure<RawS
         addr(input.address().asBytes());
 
         if (input instanceof SocketAddress.SocketAddressIn6 in6) {
-            flowinfo(in6.flowInfo().value());
+            flowInfo(in6.flowInfo().value());
             scopeId(in6.scopeId().scopeId());
         }
     }
@@ -103,11 +103,12 @@ public final class RawSocketAddressIn6 extends AbstractExternalRawStructure<RawS
         return Result.all(addressFamily(family()),
                           success(inetPort(port())),
                           inet6Address(addr()),
-                          success(inet6FlowInfo(flowinfo())),
+                          success(inet6FlowInfo(flowInfo())),
                           success(inet6ScopeId(scopeId())))
                      .map(SocketAddress::socketAddress);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public RawSocketAddressIn6 shape() {
         return this;

@@ -23,25 +23,9 @@ import java.time.ZoneOffset;
 /**
  * File status timestamps.
  */
-public class StatTimestamp {
-    private final long seconds;
-    private final int nanos;
-
-    private StatTimestamp(final long seconds, final int nanos) {
-        this.seconds = seconds;
-        this.nanos = nanos;
-    }
-
+public record StatTimestamp(long seconds, int nanos) {
     public static StatTimestamp timestamp(final long seconds, final int nanos) {
         return new StatTimestamp(seconds, nanos);
-    }
-
-    public long seconds() {
-        return seconds;
-    }
-
-    public int nanos() {
-        return nanos;
     }
 
     public LocalDateTime localDateTime() {

@@ -41,41 +41,33 @@ public sealed interface InetAddress {
                : Result.success(new Inet6Address(address));
     }
 
-    final class Inet4Address implements InetAddress {
+    record Inet4Address(byte[] asBytes) implements InetAddress {
         public static final int SIZE = 4;
         public static final Inet4Address INADDR_ANY = new Inet4Address(new byte[SIZE]);
-
-        private final byte[] address;
-
-        private Inet4Address(final byte[] address) {
-            this.address = address;
-        }
-
-        @Override
-        public byte[] asBytes() {
-            return address;
-        }
 
         @Override
         public String toString() {
             return String.format("Inet4Address(%d.%d.%d.%d)",
-                                 (int) address[0] & 0xFF, (int) address[1] & 0xFF,
-                                 (int) address[2] & 0xFF, (int) address[3] & 0xFF);
+                                 (int) asBytes[0] & 0xFF, (int) asBytes[1] & 0xFF,
+                                 (int) asBytes[2] & 0xFF, (int) asBytes[3] & 0xFF);
         }
     }
 
-    final class Inet6Address implements InetAddress {
+    record Inet6Address(byte[] asBytes) implements InetAddress {
         public static final int SIZE = 16;
-        private final byte[] address;
         public static final Inet6Address INADDR_ANY = new Inet6Address(new byte[SIZE]);
 
-        private Inet6Address(final byte[] address) {
-            this.address = address;
-        }
-
         @Override
-        public byte[] asBytes() {
-            return address;
+        public String toString() {
+            return String.format("Inet6Address(%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x)",
+                                 (int) asBytes[0] & 0xFF, (int) asBytes[1] & 0xFF,
+                                 (int) asBytes[2] & 0xFF, (int) asBytes[3] & 0xFF,
+                                 (int) asBytes[4] & 0xFF, (int) asBytes[5] & 0xFF,
+                                 (int) asBytes[6] & 0xFF, (int) asBytes[7] & 0xFF,
+                                 (int) asBytes[8] & 0xFF, (int) asBytes[9] & 0xFF,
+                                 (int) asBytes[10] & 0xFF, (int) asBytes[11] & 0xFF,
+                                 (int) asBytes[12] & 0xFF, (int) asBytes[13] & 0xFF,
+                                 (int) asBytes[14] & 0xFF, (int) asBytes[15] & 0xFF);
         }
     }
 }

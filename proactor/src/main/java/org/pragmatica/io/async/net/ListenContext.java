@@ -30,8 +30,7 @@ public interface ListenContext<T extends InetAddress> {
     int queueLen();
 
     static <T extends InetAddress> ListenContext<T> listenContext(FileDescriptor socket, SocketAddress<T> address, int queueLen) {
-        record listenContext<T extends InetAddress>(FileDescriptor socket, SocketAddress<T> address, int queueLen)
-            implements ListenContext<T> {}
+        record listenContext<T extends InetAddress>(FileDescriptor socket, SocketAddress<T> address, int queueLen) implements ListenContext<T> {}
 
         return new listenContext<>(socket, address, queueLen);
     }

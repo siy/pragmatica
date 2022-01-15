@@ -23,8 +23,6 @@ import java.util.Arrays;
  * Temporary storage for objects. Main use case - storing object corresponding to in-flight requests and obtaining integer index which can be passed
  * instead of the whole object to external entity. Upon request completion object then is released from the heap by using corresponding integer
  * index.
- *
- * @param <T>
  */
 public class ObjectHeap<T> {
     private static final int INITIAL_SIZE = 256;

@@ -17,20 +17,13 @@
 
 package org.pragmatica.io.async.net;
 
-//TODO: finish it
-//TODO: toString
-public class Inet6ScopeId {
-    private final int scopeId;
-
-    private Inet6ScopeId(final int scopeId) {
-        this.scopeId = scopeId;
-    }
-
+public record Inet6ScopeId(int scopeId) {
     public static Inet6ScopeId inet6ScopeId(int scopeId) {
         return new Inet6ScopeId(scopeId);
     }
 
-    public int scopeId() {
-        return scopeId;
+    @Override
+    public String toString() {
+        return "Inet6ScopeId(" + scopeId + ')';
     }
 }

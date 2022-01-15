@@ -17,32 +17,10 @@
 
 package org.pragmatica.io.async.file;
 
-import java.util.Objects;
-
 /**
  * General purpose Linux file descriptor.
  */
-public class FileDescriptor {
-    private final int fd;
-    private final DescriptorType type;
-
-    private FileDescriptor(int fd, DescriptorType type) {
-        this.fd = fd;
-        this.type = type;
-    }
-
-    public boolean isSocket() {
-        return type != DescriptorType.FILE;
-    }
-
-    public boolean isSocket6() {
-        return type == DescriptorType.SOCKET6;
-    }
-
-    public int descriptor() {
-        return fd;
-    }
-
+public record FileDescriptor(int descriptor, DescriptorType type) {
     public static FileDescriptor file(int fd) {
         return new FileDescriptor(fd, DescriptorType.FILE);
     }
@@ -55,19 +33,16 @@ public class FileDescriptor {
         return new FileDescriptor(fd, DescriptorType.SOCKET6);
     }
 
-    @Override
-    public boolean equals(Object o) {
-        return this == o
-               || o instanceof FileDescriptor other && fd == other.fd && type == other.type;
+    public boolean isSocket() {
+        return type != DescriptorType.FILE;
     }
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(fd, type);
+    public boolean isSocket6() {
+        return type == DescriptorType.SOCKET6;
     }
 
     @Override
     public String toString() {
-        return "FileDescriptor(" + fd + ", " + type + ")";
+        return "FileDescriptor(" + descriptor + ", " + type + ")";
     }
 }

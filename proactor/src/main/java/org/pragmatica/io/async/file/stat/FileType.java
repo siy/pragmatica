@@ -21,13 +21,13 @@ package org.pragmatica.io.async.file.stat;
  * File descriptor types.
  */
 public enum FileType {
-    REGULAR(0100000),   /* Regular file.  */
-    DIRECTORY(0040000), /* Directory.  */
-    CHARACTER(0020000), /* Character device.  */
-    BLOCK(0060000),     /* Block device.  */
-    FIFO(0010000),      /* FIFO.  */
-    LINK(0120000),      /* Symbolic link.  */
-    SOCKET(0140000),    /* Socket.  */;
+    REGULAR(0_100_000),   /* Regular file.  */
+    DIRECTORY(0_040_000), /* Directory.  */
+    CHARACTER(0_020_000), /* Character device.  */
+    BLOCK(0_060_000),     /* Block device.  */
+    FIFO(0_010_000),      /* FIFO.  */
+    LINK(0_120_000),      /* Symbolic link.  */
+    SOCKET(0_140_000),    /* Socket.  */;
 
     private final short mask;
 
