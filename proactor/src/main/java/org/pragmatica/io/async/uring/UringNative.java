@@ -21,9 +21,9 @@ import org.pragmatica.io.async.net.AddressFamily;
 import org.pragmatica.io.async.net.SocketFlag;
 import org.pragmatica.io.async.net.SocketOption;
 import org.pragmatica.io.async.net.SocketType;
-import org.pragmatica.io.async.uring.utils.LibraryLoader;
 import org.pragmatica.io.async.uring.struct.raw.RawSocketAddressIn;
 import org.pragmatica.io.async.uring.struct.raw.RawSocketAddressIn6;
+import org.pragmatica.io.async.uring.utils.LibraryLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
