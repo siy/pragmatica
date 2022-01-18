@@ -20,14 +20,16 @@ package org.pragmatica.io.async;
 import org.pragmatica.lang.Tuple.Tuple2;
 
 import java.time.Duration;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
+import static org.pragmatica.io.async.Timeout.TimeoutImpl.fromNanos;
 import static org.pragmatica.lang.Tuple.tuple;
 
 /**
  * Representation of timeout value.
  */
-public interface Timeout {
+public sealed interface Timeout extends Comparable<Timeout> {
     /**
      * Timeout value represented as number of nanoseconds.
      *
@@ -75,6 +77,11 @@ public interface Timeout {
         return secondsAndNanos().map(Duration::ofSeconds);
     }
 
+    @Override
+    default int compareTo(Timeout o) {
+        return Long.compare(nanoseconds(), o.nanoseconds());
+    }
+
     /**
      * Create instance of timeout builder.
      *
@@ -84,6 +91,38 @@ public interface Timeout {
      */
     static TimeoutBuilder timeout(long value) {
         return () -> value;
+    }
+
+    final class TimeoutImpl implements Timeout {
+        private final long nanoseconds;
+
+        private TimeoutImpl(long nanoseconds) {
+            this.nanoseconds = nanoseconds;
+        }
+
+        @Override
+        public long nanoseconds() {
+            return nanoseconds;
+        }
+
+        static Timeout fromNanos(long nanoseconds) {
+            return new TimeoutImpl(nanoseconds);
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            return (this == o) || (o instanceof TimeoutImpl timeout && nanoseconds == timeout.nanoseconds);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(nanoseconds);
+        }
+
+        @Override
+        public String toString() {
+            return "Timeout(" + nanoseconds + "ns)";
+        }
     }
 
     /**
@@ -98,7 +137,7 @@ public interface Timeout {
          * @return Created instance
          */
         default Timeout nanos() {
-            return this::value;
+            return fromNanos(value());
         }
 
         /**
@@ -107,7 +146,7 @@ public interface Timeout {
          * @return Created instance
          */
         default Timeout micros() {
-            return () -> TimeUnit.MICROSECONDS.toNanos(value());
+            return fromNanos(TimeUnit.MICROSECONDS.toNanos(value()));
         }
 
         /**
@@ -116,7 +155,7 @@ public interface Timeout {
          * @return Created instance
          */
         default Timeout millis() {
-            return () -> TimeUnit.MILLISECONDS.toNanos(value());
+            return fromNanos(TimeUnit.MILLISECONDS.toNanos(value()));
         }
 
         /**
@@ -125,7 +164,7 @@ public interface Timeout {
          * @return Created instance
          */
         default Timeout seconds() {
-            return () -> TimeUnit.SECONDS.toNanos(value());
+            return fromNanos(TimeUnit.SECONDS.toNanos(value()));
         }
 
         /**
@@ -134,7 +173,7 @@ public interface Timeout {
          * @return Created instance
          */
         default Timeout minutes() {
-            return () -> TimeUnit.MINUTES.toNanos(value());
+            return fromNanos(TimeUnit.MINUTES.toNanos(value()));
         }
 
         /**
@@ -143,7 +182,7 @@ public interface Timeout {
          * @return Created instance
          */
         default Timeout hours() {
-            return () -> TimeUnit.HOURS.toNanos(value());
+            return fromNanos(TimeUnit.HOURS.toNanos(value()));
         }
 
         /**
@@ -152,7 +191,7 @@ public interface Timeout {
          * @return Created instance
          */
         default Timeout days() {
-            return () -> TimeUnit.DAYS.toNanos(value());
+            return fromNanos(TimeUnit.DAYS.toNanos(value()));
         }
     }
 }
