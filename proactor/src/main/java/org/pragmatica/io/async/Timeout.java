@@ -27,56 +27,78 @@ import static org.pragmatica.lang.Tuple.tuple;
 /**
  * Representation of timeout value.
  */
-//TODO rework as interface
-public record Timeout(long timeout) {
-    private static final long NANOS_IN_SECOND = 1_000_000_000L;
+public interface Timeout {
+    /**
+     * Timeout value represented as number of nanoseconds.
+     *
+     * @return timeout in nanoseconds
+     */
+    long nanoseconds();
 
-    public static TimeoutBuilder timeout(long value) {
-        return new TimeoutBuilder(value);
+    /**
+     * Timeout value represented as number of microseconds.
+     *
+     * @return timeout in microseconds
+     */
+    default long microseconds() {
+        return TimeUnit.NANOSECONDS.toMicros(nanoseconds());
     }
 
-    public long milliseconds() {
-        return TimeUnit.NANOSECONDS.toMillis(timeout());
+    /**
+     * Timeout value represented as number of milliseconds.
+     *
+     * @return timeout in milliseconds
+     */
+    default long milliseconds() {
+        return TimeUnit.NANOSECONDS.toMillis(nanoseconds());
     }
 
-    public long nanoseconds() {
-        return timeout();
+    long NANOS_IN_SECOND = TimeUnit.SECONDS.toNanos(1);
+
+    /**
+     * Timeout value represented as number of whole seconds and remaining nanoseconds. This representation is compatible with many use cases, for
+     * example with {@link Duration} (see {@link #duration()}) and timeout representation used by the kernel API (see {@link
+     * org.pragmatica.io.async.uring.struct.offheap.OffHeapTimeSpec}).
+     *
+     * @return timeout represented as tuple containing number of seconds and remaining nanoseconds
+     */
+    default Tuple2<Long, Integer> secondsAndNanos() {
+        return tuple(nanoseconds() / NANOS_IN_SECOND, (int) (nanoseconds() % NANOS_IN_SECOND));
     }
 
-    public long microseconds() {
-        return TimeUnit.NANOSECONDS.toMicros(timeout());
-    }
-
-    public Tuple2<Long, Integer> secondsAndNanos() {
-        return tuple(timeout() / NANOS_IN_SECOND, (int) (timeout() % NANOS_IN_SECOND));
-    }
-
-    public Duration duration() {
+    /**
+     * Timeout value represented as {@link Duration}.
+     *
+     * @return timeout as {@link Duration}
+     */
+    default Duration duration() {
         return secondsAndNanos().map(Duration::ofSeconds);
     }
 
-    @Override
-    public String toString() {
-        return "Timeout(" + timeout + "ns)";
+    /**
+     * Create instance of timeout builder.
+     *
+     * @param value initial value passed to builder.
+     *
+     * @return builder instance
+     */
+    static TimeoutBuilder timeout(long value) {
+        return () -> value;
     }
 
     /**
      * Fluent interval conversion builder
      */
-    public static final class TimeoutBuilder {
-        private final long value;
-
-        private TimeoutBuilder(long value) {
-            this.value = value;
-        }
+    interface TimeoutBuilder {
+        long value();
 
         /**
          * Create {@link Timeout} instance by interpreting value as nanoseconds.
          *
          * @return Created instance
          */
-        public Timeout nanos() {
-            return new Timeout(value);
+        default Timeout nanos() {
+            return this::value;
         }
 
         /**
@@ -84,8 +106,8 @@ public record Timeout(long timeout) {
          *
          * @return Created instance
          */
-        public Timeout micros() {
-            return new Timeout(TimeUnit.MICROSECONDS.toNanos(value));
+        default Timeout micros() {
+            return () -> TimeUnit.MICROSECONDS.toNanos(value());
         }
 
         /**
@@ -93,8 +115,8 @@ public record Timeout(long timeout) {
          *
          * @return Created instance
          */
-        public Timeout millis() {
-            return new Timeout(TimeUnit.MILLISECONDS.toNanos(value));
+        default Timeout millis() {
+            return () -> TimeUnit.MILLISECONDS.toNanos(value());
         }
 
         /**
@@ -102,8 +124,8 @@ public record Timeout(long timeout) {
          *
          * @return Created instance
          */
-        public Timeout seconds() {
-            return new Timeout(TimeUnit.SECONDS.toNanos(value));
+        default Timeout seconds() {
+            return () -> TimeUnit.SECONDS.toNanos(value());
         }
 
         /**
@@ -111,8 +133,8 @@ public record Timeout(long timeout) {
          *
          * @return Created instance
          */
-        public Timeout minutes() {
-            return new Timeout(TimeUnit.MINUTES.toNanos(value));
+        default Timeout minutes() {
+            return () -> TimeUnit.MINUTES.toNanos(value());
         }
 
         /**
@@ -120,8 +142,8 @@ public record Timeout(long timeout) {
          *
          * @return Created instance
          */
-        public Timeout hours() {
-            return new Timeout(TimeUnit.HOURS.toNanos(value));
+        default Timeout hours() {
+            return () -> TimeUnit.HOURS.toNanos(value());
         }
 
         /**
@@ -129,8 +151,8 @@ public record Timeout(long timeout) {
          *
          * @return Created instance
          */
-        public Timeout days() {
-            return new Timeout(TimeUnit.DAYS.toNanos(value));
+        default Timeout days() {
+            return () -> TimeUnit.DAYS.toNanos(value());
         }
     }
 }
