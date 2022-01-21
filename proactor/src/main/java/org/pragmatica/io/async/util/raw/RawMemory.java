@@ -46,19 +46,35 @@ public final class RawMemory {
 
     // Raw access of different size
     public static long getLong(long address) {
-        return instance.getLong(address);
+        return instance.getLong(null, address);
+    }
+
+    public static long getLongVolatile(long address) {
+        return instance.getLongVolatile(null, address);
     }
 
     public static int getInt(long address) {
-        return instance.getInt(address);
+        return instance.getInt(null, address);
+    }
+
+    public static int getIntVolatile(long address) {
+        return instance.getIntVolatile(null, address);
     }
 
     public static short getShort(long address) {
-        return instance.getShort(address);
+        return instance.getShort(null, address);
+    }
+
+    public static short getShortVolatile(long address) {
+        return instance.getShortVolatile(null, address);
     }
 
     public static byte getByte(long address) {
-        return instance.getByte(address);
+        return instance.getByte(null, address);
+    }
+
+    public static byte getByteVolatile(long address) {
+        return instance.getByteVolatile(null, address);
     }
 
     public static byte[] getByteArray(long address, int length) {
@@ -68,19 +84,35 @@ public final class RawMemory {
     }
 
     public static void putLong(long address, long value) {
-        instance.putLong(address, value);
+        instance.putLong(null, address, value);
+    }
+
+    public static void putLongVolatile(long address, long value) {
+        instance.putLongVolatile(null, address, value);
     }
 
     public static void putInt(long address, int value) {
-        instance.putInt(address, value);
+        instance.putInt(null, address, value);
+    }
+
+    public static void putIntVolatile(long address, int value) {
+        instance.putIntVolatile(null, address, value);
     }
 
     public static void putShort(long address, short value) {
-        instance.putShort(address, value);
+        instance.putShort(null, address, value);
+    }
+
+    public static void putShortVolatile(long address, short value) {
+        instance.putShortVolatile(null, address, value);
     }
 
     public static void putByte(long address, byte value) {
-        instance.putByte(address, value);
+        instance.putByte(null, address, value);
+    }
+
+    public static void putByteVolatile(long address, byte value) {
+        instance.putByteVolatile(null, address, value);
     }
 
     public static void putByteArray(long address, byte[] input) {

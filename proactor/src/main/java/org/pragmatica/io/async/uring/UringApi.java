@@ -24,7 +24,7 @@ import org.pragmatica.io.async.file.FileDescriptor;
 import org.pragmatica.io.async.net.*;
 import org.pragmatica.io.async.uring.exchange.ExchangeEntry;
 import org.pragmatica.io.async.uring.struct.offheap.OffHeapSocketAddress;
-import org.pragmatica.io.async.uring.struct.raw.CompletionQueueEntry;
+import org.pragmatica.io.async.uring.struct.raw.IoUring;
 import org.pragmatica.io.async.uring.struct.raw.SubmitQueueEntry;
 import org.pragmatica.io.async.uring.utils.ObjectHeap;
 import org.pragmatica.io.async.util.raw.RawMemory;
@@ -47,23 +47,17 @@ public class UringApi implements AutoCloseable {
     private final long ringBase;
     private final int submissionEntries;
     private final long submissionBuffer;
-
-    private final int completionEntries;
-    private final long completionBuffer;
-
-    private final CompletionQueueEntry cqEntry;
     private final SubmitQueueEntry sqEntry;
+    private final IoUring ioUring;
 
     private boolean closed = false;
 
     private UringApi(int numEntries, long ringBase) {
         submissionEntries = numEntries;
-        completionEntries = numEntries * 2;
         this.ringBase = ringBase;
         submissionBuffer = RawMemory.allocate(submissionEntries * ENTRY_SIZE);
-        completionBuffer = RawMemory.allocate(completionEntries * ENTRY_SIZE);
-        cqEntry = CompletionQueueEntry.at(0);
         sqEntry = SubmitQueueEntry.at(0);
+        ioUring = IoUring.at(ringBase);
     }
 
     @Override
@@ -74,35 +68,34 @@ public class UringApi implements AutoCloseable {
 
         UringNative.close(ringBase);
         RawMemory.dispose(submissionBuffer);
-        RawMemory.dispose(completionBuffer);
         RawMemory.dispose(ringBase);
         closed = true;
     }
 
     public int processCompletions(ObjectHeap<CompletionHandler> pendingCompletions, Proactor proactor) {
-        var ready = UringNative.peekCQ(ringBase, completionBuffer, completionEntries);
-        var address = completionBuffer;
-
-        for (var i = 0; i < ready; i++, address += ENTRY_SIZE) {
-            cqEntry.reposition(RawMemory.getLong(address));
-
-            pendingCompletions.releaseUnsafe((int) cqEntry.userData())
-                              .accept(cqEntry.res(), cqEntry.flags(), proactor);
-        }
-        return ready;
+        return ioUring.completionQueue().processCompletions(pendingCompletions, proactor);
     }
 
     public void processSubmissions(Deque<ExchangeEntry<?>> queue) {
-        int available = UringNative.peekSQEntries(ringBase,
-                                                  submissionBuffer,
-                                                  Math.min(queue.size(), submissionEntries));
+        while (true) {
+            var entry = queue.poll();
 
-        for (long i = 0, address = submissionBuffer; i < available; i++, address += ENTRY_SIZE) {
-            sqEntry.reposition(RawMemory.getLong(address));
-            queue.removeFirst().apply(sqEntry.clear());
+            if (entry == null) {
+                break;
+            }
+
+            var sqe = ioUring.submissionQueue().nextSQE();
+
+            if (sqe == 0) {
+                break;
+            }
+
+            sqEntry.reposition(sqe);
+            entry.apply(sqEntry.clear());
         }
 
         UringNative.submitAndWait(ringBase, 0);
+        //ioUring.submitAndWait(0);
     }
 
     public static Result<UringApi> uringApi(int requestedEntries, Set<UringSetupFlags> openFlags) {

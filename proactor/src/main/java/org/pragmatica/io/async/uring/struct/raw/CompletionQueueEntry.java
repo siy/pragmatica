@@ -20,8 +20,6 @@ package org.pragmatica.io.async.uring.struct.raw;
 import org.pragmatica.io.async.uring.struct.AbstractExternalRawStructure;
 import org.pragmatica.io.async.uring.struct.shape.CompletionQueueEntryOffsets;
 
-import java.util.StringJoiner;
-
 public class CompletionQueueEntry extends AbstractExternalRawStructure<CompletionQueueEntry> {
     private CompletionQueueEntry(long address) {
         super(address, CompletionQueueEntryOffsets.SIZE);
@@ -45,10 +43,6 @@ public class CompletionQueueEntry extends AbstractExternalRawStructure<Completio
 
     @Override
     public String toString() {
-        return new StringJoiner(", ", "CompletionQueueEntry(", ")")
-            .add("res: " + res())
-            .add("flags: " + flags())
-            .add("data: " + userData())
-            .toString();
+        return "CompletionQueueEntry()";
     }
 }

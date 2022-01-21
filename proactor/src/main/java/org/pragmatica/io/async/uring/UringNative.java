@@ -21,6 +21,7 @@ import org.pragmatica.io.async.net.AddressFamily;
 import org.pragmatica.io.async.net.SocketFlag;
 import org.pragmatica.io.async.net.SocketOption;
 import org.pragmatica.io.async.net.SocketType;
+import org.pragmatica.io.async.uring.struct.raw.IoUring;
 import org.pragmatica.io.async.uring.struct.raw.RawSocketAddressIn;
 import org.pragmatica.io.async.uring.struct.raw.RawSocketAddressIn6;
 import org.pragmatica.io.async.uring.utils.LibraryLoader;
@@ -30,7 +31,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Native interface to Linux IO URING
  */
-final class UringNative {
+public final class UringNative {
     private static final Logger LOG = LoggerFactory.getLogger(UringNative.class);
 
     private UringNative() {
@@ -50,27 +51,17 @@ final class UringNative {
 
     // Start/Stop
     public static native int init(int numEntries, long baseAddress, int flags);
-
     public static native void close(long baseAddress);
 
     // Completion
-    // note: it also performs advanceCQ
-    public static native int peekCQ(long baseAddress, long completionsAddress, long count);
-
-    // Used only in tests
-    public static native void advanceCQ(long baseAddress, long count);
-
-    public static native int readyCQ(long baseAddress);
-
-    // Submissions
-    public static native long spaceLeft(long baseAddress);
-
-    // Used only in tests
-    public static native long nextSQEntry(long baseAddress);
-
-    public static native int peekSQEntries(long baseAddress, long submissionsAddress, long count);
-
+    // note: it also advances CQ
+//    public static native int peekCQ(long baseAddress, long completionsAddress, long count);
+//    public static native int peekSQEntries(long baseAddress, long submissionsAddress, long count);
+//    public static native long peekSQEntry(long baseAddress);
     public static native long submitAndWait(long baseAddress, int waitNr);
+
+    // Syscall
+    public static native long enter(long baseAddress, long toSubmit, long minComplete, int flags);
 
     // Socket API
 

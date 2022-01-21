@@ -75,6 +75,14 @@ JNIEXPORT jint JNICALL Java_org_pragmatica_io_async_uring_UringNative_peekSQEntr
 
 /*
  * Class:     org_pragmatica_io_async_uring_UringNative
+ * Method:    enter
+ * Signature: (JJJJ)I
+ */
+JNIEXPORT jint JNICALL Java_org_pragmatica_io_async_uring_UringNative_enter
+  (JNIEnv *, jclass, jlong, jlong, jlong, jint);
+
+/*
+ * Class:     org_pragmatica_io_async_uring_UringNative
  * Method:    submitAndWait
  * Signature: (JI)J
  */

@@ -57,8 +57,20 @@ public abstract class AbstractRawStructure<T extends RawStructure<T>> implements
     }
 
     @SuppressWarnings("unchecked")
+    protected T putByteVolatile(final RawProperty property, final byte value) {
+        RawMemory.putByteVolatile(address + property.offset(), value);
+        return (T) this;
+    }
+
+    @SuppressWarnings("unchecked")
     protected T putShort(final RawProperty property, final short value) {
         RawMemory.putShort(address + property.offset(), value);
+        return (T) this;
+    }
+
+    @SuppressWarnings("unchecked")
+    protected T putShortVolatile(final RawProperty property, final short value) {
+        RawMemory.putShortVolatile(address + property.offset(), value);
         return (T) this;
     }
 
@@ -69,8 +81,20 @@ public abstract class AbstractRawStructure<T extends RawStructure<T>> implements
     }
 
     @SuppressWarnings("unchecked")
+    protected T putIntVolatile(final RawProperty property, final int value) {
+        RawMemory.putIntVolatile(address + property.offset(), value);
+        return (T) this;
+    }
+
+    @SuppressWarnings("unchecked")
     protected T putLong(final RawProperty property, final long value) {
         RawMemory.putLong(address + property.offset(), value);
+        return (T) this;
+    }
+
+    @SuppressWarnings("unchecked")
+    protected T putLongVolatile(final RawProperty property, final long value) {
+        RawMemory.putLongVolatile(address + property.offset(), value);
         return (T) this;
     }
 
@@ -96,16 +120,32 @@ public abstract class AbstractRawStructure<T extends RawStructure<T>> implements
         return RawMemory.getByte(address + property.offset());
     }
 
+    protected byte getByteVolatile(final RawProperty property) {
+        return RawMemory.getByteVolatile(address + property.offset());
+    }
+
     protected short getShort(final RawProperty property) {
         return RawMemory.getShort(address + property.offset());
+    }
+
+    protected short getShortVolatile(final RawProperty property) {
+        return RawMemory.getShortVolatile(address + property.offset());
     }
 
     protected int getInt(final RawProperty property) {
         return RawMemory.getInt(address + property.offset());
     }
 
+    protected int getIntVolatile(final RawProperty property) {
+        return RawMemory.getIntVolatile(address + property.offset());
+    }
+
     protected long getLong(final RawProperty property) {
         return RawMemory.getLong(address + property.offset());
+    }
+
+    protected long getLongVolatile(final RawProperty property) {
+        return RawMemory.getLongVolatile(address + property.offset());
     }
 
     protected short getShortInNetOrder(final RawProperty property) {

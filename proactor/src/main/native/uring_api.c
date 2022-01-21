@@ -24,38 +24,14 @@ JNIEXPORT void JNICALL Java_org_pragmatica_io_async_uring_UringNative_close(JNIE
 JNIEXPORT jint JNICALL Java_org_pragmatica_io_async_uring_UringNative_peekCQ(JNIEnv *env, jclass clazz, jlong base_address, jlong completions_address, jlong count) {
     int ready = io_uring_peek_batch_cqe(RING_PTR, CQE_BATCH_PTR, COUNT);
 
-    if (ready) {
-        io_uring_cq_advance(RING_PTR, ready);
-    }
-
     return (jint) ready;
 }
 
-JNIEXPORT void JNICALL Java_org_pragmatica_io_async_uring_UringNative_advanceCQ(JNIEnv *env, jclass clazz, jlong base_address, jlong count) {
-    io_uring_cq_advance(RING_PTR, COUNT);
-}
-
-JNIEXPORT jint JNICALL Java_org_pragmatica_io_async_uring_UringNative_readyCQ(JNIEnv *env, jclass clazz, jlong base_address) {
-    return (jint) io_uring_cq_ready(RING_PTR);
-}
-
-JNIEXPORT jlong JNICALL Java_org_pragmatica_io_async_uring_UringNative_spaceLeft(JNIEnv *env, jclass clazz, jlong base_address) {
-    return (jlong) io_uring_sq_space_left(RING_PTR);
-}
-
-JNIEXPORT jlong JNICALL Java_org_pragmatica_io_async_uring_UringNative_nextSQEntry(JNIEnv *env, jclass clazz, jlong base_address) {
-    if (io_uring_sq_space_left(RING_PTR) < 1) {
-        io_uring_submit_and_wait(RING_PTR, 1);
-    }
-
+JNIEXPORT jlong JNICALL Java_org_pragmatica_io_async_uring_UringNative_peekSQEntry(JNIEnv *env, jclass clazz, jlong base_address) {
     return (jlong) io_uring_get_sqe(RING_PTR);
 }
 
 JNIEXPORT jint JNICALL Java_org_pragmatica_io_async_uring_UringNative_peekSQEntries(JNIEnv *env, jclass clazz, jlong base_address, jlong submissions_address, jlong space) {
-    if (io_uring_sq_space_left(RING_PTR) < 1) {
-        io_uring_submit_and_wait(RING_PTR, 1);
-    }
-
     int count = 0;
     struct io_uring_sqe** buffer = (struct io_uring_sqe **) submissions_address;
 
@@ -74,6 +50,13 @@ JNIEXPORT jint JNICALL Java_org_pragmatica_io_async_uring_UringNative_peekSQEntr
 
 JNIEXPORT jlong JNICALL Java_org_pragmatica_io_async_uring_UringNative_submitAndWait(JNIEnv *env, jclass clazz, jlong base_address, jint count) {
     return (jlong) io_uring_submit_and_wait(RING_PTR, COUNT);
+}
+
+int __sys_io_uring_enter(int fd, unsigned to_submit, unsigned min_complete,
+			 unsigned flags, sigset_t *sig);
+
+JNIEXPORT jint JNICALL Java_org_pragmatica_io_async_uring_UringNative_enter(JNIEnv *env, jclass clazz, jlong base_address, jlong to_submit, jlong min_complete, jint flags) {
+    return (jint) __sys_io_uring_enter(RING_PTR->ring_fd, (unsigned) to_submit, (unsigned) min_complete, (unsigned) flags, NULL);
 }
 
 //-----------------------------------------------------
