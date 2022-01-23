@@ -27,67 +27,11 @@ JNIEXPORT void JNICALL Java_org_pragmatica_io_async_uring_UringNative_close
 
 /*
  * Class:     org_pragmatica_io_async_uring_UringNative
- * Method:    peekCQ
- * Signature: (JJJ)I
- */
-JNIEXPORT jint JNICALL Java_org_pragmatica_io_async_uring_UringNative_peekCQ
-  (JNIEnv *, jclass, jlong, jlong, jlong);
-
-/*
- * Class:     org_pragmatica_io_async_uring_UringNative
- * Method:    advanceCQ
- * Signature: (JJ)V
- */
-JNIEXPORT void JNICALL Java_org_pragmatica_io_async_uring_UringNative_advanceCQ
-  (JNIEnv *, jclass, jlong, jlong);
-
-/*
- * Class:     org_pragmatica_io_async_uring_UringNative
- * Method:    readyCQ
- * Signature: (J)I
- */
-JNIEXPORT jint JNICALL Java_org_pragmatica_io_async_uring_UringNative_readyCQ
-  (JNIEnv *, jclass, jlong);
-
-/*
- * Class:     org_pragmatica_io_async_uring_UringNative
- * Method:    spaceLeft
- * Signature: (J)J
- */
-JNIEXPORT jlong JNICALL Java_org_pragmatica_io_async_uring_UringNative_spaceLeft
-  (JNIEnv *, jclass, jlong);
-
-/*
- * Class:     org_pragmatica_io_async_uring_UringNative
- * Method:    nextSQEntry
- * Signature: (J)J
- */
-JNIEXPORT jlong JNICALL Java_org_pragmatica_io_async_uring_UringNative_nextSQEntry
-  (JNIEnv *, jclass, jlong);
-
-/*
- * Class:     org_pragmatica_io_async_uring_UringNative
- * Method:    peekSQEntries
- * Signature: (JJJ)I
- */
-JNIEXPORT jint JNICALL Java_org_pragmatica_io_async_uring_UringNative_peekSQEntries
-  (JNIEnv *, jclass, jlong, jlong, jlong);
-
-/*
- * Class:     org_pragmatica_io_async_uring_UringNative
  * Method:    enter
  * Signature: (JJJJ)I
  */
 JNIEXPORT jint JNICALL Java_org_pragmatica_io_async_uring_UringNative_enter
   (JNIEnv *, jclass, jlong, jlong, jlong, jint);
-
-/*
- * Class:     org_pragmatica_io_async_uring_UringNative
- * Method:    submitAndWait
- * Signature: (JI)J
- */
-JNIEXPORT jlong JNICALL Java_org_pragmatica_io_async_uring_UringNative_submitAndWait
-  (JNIEnv *, jclass, jlong, jint);
 
 /*
  * Class:     org_pragmatica_io_async_uring_UringNative
