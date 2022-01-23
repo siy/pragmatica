@@ -20,7 +20,6 @@ package org.pragmatica.io.async.uring.struct.raw;
 import org.pragmatica.io.async.Proactor;
 import org.pragmatica.io.async.uring.CompletionHandler;
 import org.pragmatica.io.async.uring.UringEnterFlags;
-import org.pragmatica.io.async.uring.UringNative;
 import org.pragmatica.io.async.uring.struct.AbstractExternalRawStructure;
 import org.pragmatica.io.async.uring.struct.shape.IoUringCQOffsets;
 import org.pragmatica.io.async.uring.utils.ObjectHeap;
@@ -50,7 +49,7 @@ public class IoUringCQ extends AbstractExternalRawStructure<IoUringCQ> {
     private void adjustAddresses() {
         kheadAddr = getLong(khead);
         ktailAddr = getLong(ktail);
-        mask = RawMemory.getLong(getLong(kring_mask)) & 0x0000_FFFF_FFFF_FFFFL;
+        mask = RawMemory.getLong(getLong(kring_mask)) & 0x0000_0000_FFFF_FFFFL;
         cqesAddress = getLong(cqes);
     }
 
@@ -60,54 +59,9 @@ public class IoUringCQ extends AbstractExternalRawStructure<IoUringCQ> {
         adjustAddresses();
     }
 
-    /*
-    static inline unsigned io_uring_cq_ready(const struct io_uring *ring)
-    {
-        return io_uring_smp_load_acquire(ring->cq.ktail) - *ring->cq.khead;
-    }
-
-         */
     public int ready() {
         return (int) (RawMemory.getLongVolatile(ktailAddr) - RawMemory.getLong(kheadAddr));
     }
-
-    /*
-unsigned io_uring_peek_batch_cqe(struct io_uring *ring,
-				 struct io_uring_cqe **cqes, unsigned count)
-{
-	unsigned ready;
-	bool overflow_checked = false;
-
-again:
-	ready = io_uring_cq_ready(ring);
-	if (ready) {
-		unsigned head = *ring->cq.khead;
-		unsigned mask = *ring->cq.kring_mask;
-		unsigned last;
-		int i = 0;
-
-		count = count > ready ? ready : count;
-		last = head + count;
-		for (;head != last; head++, i++)
-			cqes[i] = &ring->cq.cqes[head & mask];
-
-		return count;
-	}
-
-	if (overflow_checked)
-		goto done;
-
-	if (cq_ring_needs_flush(ring)) {
-		____sys_io_uring_enter(ring->ring_fd, 0, 0,
-				       IORING_ENTER_GETEVENTS, NULL);
-		overflow_checked = true;
-		goto again;
-	}
-
-done:
-	return 0;
-}
-     */
 
     public int processCompletions(ObjectHeap<CompletionHandler> pendingCompletions, Proactor proactor) {
         var ready = ready();
@@ -124,8 +78,7 @@ done:
             var last = head + ready;
 
             for(; head != last; head++) {
-                var address = cqesAddress + ((head & mask) << 4);
-                cqEntry.reposition(address);
+                cqEntry.reposition(cqesAddress + ((head & mask) << 4));
                 pendingCompletions.releaseUnsafe((int) cqEntry.userData())
                                   .accept(cqEntry.res(), cqEntry.flags(), proactor);
             }
@@ -135,12 +88,6 @@ done:
 
         return ready;
     }
-
-
-    /*
-	struct io_uring_cq *cq = &ring->cq;
-    io_uring_smp_store_release(cq->khead, *cq->khead + nr);
-     */
 
     public void advanceCQ(int count) {
         RawMemory.putLongVolatile(kheadAddr, RawMemory.getLong(kheadAddr) + count);

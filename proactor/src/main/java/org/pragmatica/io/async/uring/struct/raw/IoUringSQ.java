@@ -61,7 +61,7 @@ public class IoUringSQ extends AbstractExternalRawStructure<IoUringSQ> {
     private void adjustAddresses() {
         kheadAddr = getLong(khead);
         entriesCount = RawMemory.getLong(getLong(kring_entries)) & 0x0000_0000_FFFF_FFFFL;
-        mask = RawMemory.getLong(getLong(kring_mask)) & 0x0000_FFFF_FFFF_FFFFL;
+        mask = RawMemory.getLong(getLong(kring_mask)) & 0x0000_0000_FFFF_FFFFL;
         sqesAddress = getLong(sqes);
         kflagsAddress = getLong(kflags);
         ktailAddress = getLong(ktail);
@@ -87,25 +87,7 @@ public class IoUringSQ extends AbstractExternalRawStructure<IoUringSQ> {
         return sqe;
     }
 
-    int flush() {
-        var ktail = RawMemory.getLong(ktailAddress);
-        var toSubmit = getInt(sqe_tail) - getInt(sqe_head);
-
-        if (toSubmit != 0) {
-            do {
-                var ptr = arrayAddress + ((ktail & mask) << 3);
-                var head = getInt(sqe_head);
-                RawMemory.putLong(ptr, head & mask);
-                ktail++;
-                putInt(sqe_head, head + 1);
-            } while (--toSubmit > 0);
-
-            RawMemory.putLongVolatile(ktailAddress, ktail);
-        }
-        return (int) (ktail - RawMemory.getLong(kheadAddr));
-    }
-
-    boolean needsEnter(int[] flags) {
+    public boolean needsEnter(int[] flags) {
         if ((ioUring.flags() & UringSetupFlags.SQPOLL.mask()) == 0) {
             return true;
         }
@@ -118,87 +100,20 @@ public class IoUringSQ extends AbstractExternalRawStructure<IoUringSQ> {
         return false;
     }
 
-    /*
-static inline bool sq_ring_needs_enter(struct io_uring *ring, unsigned *flags)
-{
-	if (!(ring->flags & IORING_SETUP_SQPOLL))
-		return true;
+    public int flush() {
+        var ktail = RawMemory.getLong(ktailAddress);
+        var toSubmit = getInt(sqe_tail) - getInt(sqe_head);
 
-	if (uring_unlikely(IO_URING_READ_ONCE(*ring->sq.kflags) &
-			   IORING_SQ_NEED_WAKEUP)) {
-		*flags |= IORING_ENTER_SQ_WAKEUP;
-		return true;
-	}
+        if (toSubmit != 0) {
+            do {
+                var head = getInt(sqe_head);
+                RawMemory.putInt(arrayAddress + ((ktail & mask) << 2), (int) (head & mask));
+                ktail++;
+                putInt(sqe_head, head + 1);
+            } while (--toSubmit > 0);
 
-	return false;
-}
-
-
-int __io_uring_flush_sq(struct io_uring *ring)
-{
-	struct io_uring_sq *sq = &ring->sq;
-	const unsigned mask = *sq->kring_mask;
-	unsigned ktail = *sq->ktail;
-	unsigned to_submit = sq->sqe_tail - sq->sqe_head;
-
-	if (!to_submit)
-		goto out;
-
-	 // Fill in sqes that we have queued up, adding them to the kernel ring
-	do {
-        sq->array[ktail & mask] = sq->sqe_head & mask;
-        ktail++;
-        sq->sqe_head++;
-    } while (--to_submit);
-
-     // Ensure that the kernel sees the SQE updates before it sees the tail update.
-    io_uring_smp_store_release(sq->ktail, ktail);
-    out:
-
-         // This _may_ look problematic, as we're not supposed to be reading
-         // SQ->head without acquire semantics. When we're in SQPOLL mode, the
-         // kernel submitter could be updating this right now. For non-SQPOLL,
-         // task itself does it, and there's no potential race. But even for
-         // SQPOLL, the load is going to be potentially out-of-date the very
-         // instant it's done, regardless or whether or not it's done
-         // atomically. Worst case, we're going to be over-estimating what
-         // we can submit. The point is, we need to be able to deal with this
-         // situation regardless of any perceived atomicity.
-
-        return ktail - *sq->khead;
-}
-
-    struct io_uring_sq {
-        unsigned *khead;
-        unsigned *ktail;
-        unsigned *kring_mask;
-        unsigned *kring_entries;
-        unsigned *kflags;
-        unsigned *kdropped;
-        unsigned *array;
-        struct io_uring_sqe *sqes;
-
-        unsigned sqe_head;
-        unsigned sqe_tail;
-
-        size_t ring_sz;
-        void *ring_ptr;
-
-        unsigned pad[4];
-    };
-
-    struct io_uring_sqe *io_uring_get_sqe(struct io_uring *ring)
-    {
-        struct io_uring_sq *sq = &ring->sq;
-        unsigned int head = io_uring_smp_load_acquire(sq->khead);
-        unsigned int next = sq->sqe_tail + 1;
-        struct io_uring_sqe *sqe = NULL;
-
-        if (next - head <= *sq->kring_entries) {
-            sqe = &sq->sqes[sq->sqe_tail & *sq->kring_mask];
-            sq->sqe_tail = next;
+            RawMemory.putLongVolatile(ktailAddress, ktail);
         }
-        return sqe;
+        return (int) (ktail - RawMemory.getLong(kheadAddr));
     }
-         */
 }

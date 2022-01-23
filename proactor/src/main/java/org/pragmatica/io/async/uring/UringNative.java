@@ -53,13 +53,6 @@ public final class UringNative {
     public static native int init(int numEntries, long baseAddress, int flags);
     public static native void close(long baseAddress);
 
-    // Completion
-    // note: it also advances CQ
-//    public static native int peekCQ(long baseAddress, long completionsAddress, long count);
-//    public static native int peekSQEntries(long baseAddress, long submissionsAddress, long count);
-//    public static native long peekSQEntry(long baseAddress);
-    public static native long submitAndWait(long baseAddress, int waitNr);
-
     // Syscall
     public static native long enter(long baseAddress, long toSubmit, long minComplete, int flags);
 

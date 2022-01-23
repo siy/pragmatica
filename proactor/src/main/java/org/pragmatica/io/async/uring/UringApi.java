@@ -94,8 +94,7 @@ public class UringApi implements AutoCloseable {
             entry.apply(sqEntry.clear());
         }
 
-        UringNative.submitAndWait(ringBase, 0);
-        //ioUring.submitAndWait(0);
+        ioUring.submitAndWait(0);
     }
 
     public static Result<UringApi> uringApi(int requestedEntries, Set<UringSetupFlags> openFlags) {
