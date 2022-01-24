@@ -30,7 +30,7 @@ import org.pragmatica.io.async.uring.utils.ObjectHeap;
 import org.pragmatica.io.async.util.raw.RawMemory;
 import org.pragmatica.lang.Result;
 
-import java.util.Deque;
+import java.util.Queue;
 import java.util.Set;
 
 import static org.pragmatica.io.async.SystemError.ENOTSOCK;
@@ -46,7 +46,6 @@ public class UringApi implements AutoCloseable {
 
     private final long ringBase;
     private final int submissionEntries;
-    private final long submissionBuffer;
     private final SubmitQueueEntry sqEntry;
     private final IoUring ioUring;
 
@@ -55,7 +54,6 @@ public class UringApi implements AutoCloseable {
     private UringApi(int numEntries, long ringBase) {
         submissionEntries = numEntries;
         this.ringBase = ringBase;
-        submissionBuffer = RawMemory.allocate(submissionEntries * ENTRY_SIZE);
         sqEntry = SubmitQueueEntry.at(0);
         ioUring = IoUring.at(ringBase);
     }
@@ -67,7 +65,6 @@ public class UringApi implements AutoCloseable {
         }
 
         UringNative.close(ringBase);
-        RawMemory.dispose(submissionBuffer);
         RawMemory.dispose(ringBase);
         closed = true;
     }
@@ -76,7 +73,7 @@ public class UringApi implements AutoCloseable {
         return ioUring.completionQueue().processCompletions(pendingCompletions, proactor);
     }
 
-    public void processSubmissions(Deque<ExchangeEntry<?>> queue) {
+    public void processSubmissions(Queue<ExchangeEntry<?>> queue) {
         while (true) {
             var entry = queue.poll();
 
@@ -98,9 +95,9 @@ public class UringApi implements AutoCloseable {
     }
 
     public static Result<UringApi> uringApi(int requestedEntries, Set<UringSetupFlags> openFlags) {
-        long ringBase = RawMemory.allocate(UringNative.SIZE);
-        int numEntries = calculateNumEntries(requestedEntries);
-        int rc = UringNative.init(numEntries, ringBase, Bitmask.combine(openFlags));
+        var ringBase = RawMemory.allocate(UringNative.SIZE);
+        var numEntries = calculateNumEntries(requestedEntries);
+        var rc = UringNative.init(numEntries, ringBase, Bitmask.combine(openFlags));
 
         if (rc != 0) {
             RawMemory.dispose(ringBase);

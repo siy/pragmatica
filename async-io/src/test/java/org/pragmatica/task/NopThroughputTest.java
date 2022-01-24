@@ -38,7 +38,7 @@ public class NopThroughputTest {
 
         Promise.<Unit>promise((__, ___, executor) -> executor.spread(proactor -> runNop(proactor, list, shutdown, latch)));
 
-        Thread.sleep(1000);
+        Thread.sleep(30_000);
 
         shutdown.set(true);
 

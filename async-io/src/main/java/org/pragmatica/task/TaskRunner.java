@@ -79,7 +79,7 @@ final class TaskRunner {
                 while (proactor.processIO() > 0) {
                     idleRunCount++;
 
-                    if (idleRunCount == 64) {
+                    if (idleRunCount == 4096) {
                         break;
                     }
 
@@ -93,7 +93,6 @@ final class TaskRunner {
                 while (head != null) {
                     try {
                         head.task.accept(proactor);
-
                     } catch (Throwable e) {
                         LOG.error("Unexpected task exception", e);
                     }
