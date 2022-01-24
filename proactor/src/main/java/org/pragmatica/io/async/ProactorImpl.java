@@ -31,21 +31,20 @@ import org.pragmatica.io.async.uring.Bitmask;
 import org.pragmatica.io.async.uring.CompletionHandler;
 import org.pragmatica.io.async.uring.UringApi;
 import org.pragmatica.io.async.uring.UringSetupFlags;
-import org.pragmatica.io.async.uring.exchange.ExchangeEntry;
-import org.pragmatica.io.async.uring.exchange.ExchangeEntryFactory;
+import org.pragmatica.io.async.uring.exchange.*;
 import org.pragmatica.io.async.uring.struct.offheap.OffHeapCString;
-import org.pragmatica.io.async.uring.struct.offheap.OffHeapIoVector;
 import org.pragmatica.io.async.uring.struct.offheap.OffHeapSocketAddress;
+import org.pragmatica.io.async.uring.struct.raw.SubmitQueueEntryFlags;
 import org.pragmatica.io.async.uring.utils.ObjectHeap;
 import org.pragmatica.io.async.util.OffHeapBuffer;
 import org.pragmatica.lang.*;
 
 import java.nio.file.Path;
 import java.time.Duration;
-import java.util.ArrayDeque;
-import java.util.Queue;
 import java.util.Set;
 import java.util.function.BiConsumer;
+
+import static org.pragmatica.io.async.uring.struct.offheap.OffHeapIoVector.withBuffers;
 
 /**
  * Asynchronous Input/Output Proactor Implementation.
@@ -59,7 +58,6 @@ class ProactorImpl implements Proactor {
 
     private final UringApi uringApi;
     private final ObjectHeap<CompletionHandler> pendingCompletions;
-    private final Queue<ExchangeEntry<?>> submissions = new ArrayDeque<>();
     private final ExchangeEntryFactory factory = new ExchangeEntryFactory();
 
     private ProactorImpl(UringApi uringApi) {
@@ -87,7 +85,7 @@ class ProactorImpl implements Proactor {
 
     @Override
     public int processIO() {
-        uringApi.processSubmissions(submissions);
+        uringApi.processSubmissions();
 
         if (pendingCompletions.count() > 0) {
             return uringApi.processCompletions(pendingCompletions, this);
@@ -96,31 +94,47 @@ class ProactorImpl implements Proactor {
         return 0;
     }
 
+    private final NopExchangeEntry nop = new NopExchangeEntry(null);
+    private final DelayExchangeEntry delay = new DelayExchangeEntry(null);
+    private final CloseExchangeEntry close = new CloseExchangeEntry(null);
+    private final TimeoutExchangeEntry timeout = new TimeoutExchangeEntry(null);
+    private final ReadExchangeEntry read = new ReadExchangeEntry(null);
+    private final WriteExchangeEntry write = new WriteExchangeEntry(null);
+    private final SpliceExchangeEntry splice = new SpliceExchangeEntry(null);
+    private final OpenExchangeEntry open = new OpenExchangeEntry(null);
+    private final SocketExchangeEntry socket = new SocketExchangeEntry(null);
+    private final StatExchangeEntry stat = new StatExchangeEntry(null);
+    private final ReadVectorExchangeEntry readVector = new ReadVectorExchangeEntry(null);
+    private final WriteVectorExchangeEntry writeVector = new WriteVectorExchangeEntry(null);
+    private final ConnectExchangeEntry connect = new ConnectExchangeEntry(null);
+    @SuppressWarnings("rawtypes")
+    private final ListenExchangeEntry listen = new ListenExchangeEntry<>(null);
+    @SuppressWarnings("rawtypes")
+    private final AcceptExchangeEntry accept = new AcceptExchangeEntry<>(null);
+
+
     @Override
     public void nop(BiConsumer<Result<Unit>, Proactor> completion) {
-        submissions.add(factory.forNop(completion)
-                               .register(pendingCompletions));
+        uringApi.submit(nop.prepare(completion).register(pendingCompletions));
     }
 
     @Override
     public void delay(BiConsumer<Result<Duration>, Proactor> completion, Timeout timeout) {
-        submissions.add(factory.forDelay(completion, timeout)
-                               .register(pendingCompletions));
+        uringApi.submit(delay.prepare(completion, timeout).register(pendingCompletions));
     }
 
     @Override
     public void close(BiConsumer<Result<Unit>, Proactor> completion, FileDescriptor fd, Option<Timeout> timeout) {
-        submissions.add(factory.forClose(completion, fd, timeout)
-                               .register(pendingCompletions));
-
+        uringApi.submit(close.prepare(completion, fd.descriptor(), calculateFlags(timeout))
+                             .register(pendingCompletions));
         timeout.whenPresent(this::appendTimeout);
     }
 
     @Override
     public void read(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fd, OffHeapBuffer buffer,
                      OffsetT offset, Option<Timeout> timeout) {
-        submissions.add(factory.forRead(completion, fd, buffer, offset, timeout)
-                               .register(pendingCompletions));
+        uringApi.submit(read.prepare(completion, fd.descriptor(), buffer, offset.value(), calculateFlags(timeout))
+                            .register(pendingCompletions));
 
         timeout.whenPresent(this::appendTimeout);
     }
@@ -128,16 +142,16 @@ class ProactorImpl implements Proactor {
     @Override
     public void write(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fd, OffHeapBuffer buffer,
                       OffsetT offset, Option<Timeout> timeout) {
-        submissions.add(factory.forWrite(completion, fd, buffer, offset, timeout)
-                               .register(pendingCompletions));
+        uringApi.submit(write.prepare(completion, fd.descriptor(), buffer, offset.value(), calculateFlags(timeout))
+                             .register(pendingCompletions));
 
         timeout.whenPresent(this::appendTimeout);
     }
 
     @Override
     public void splice(BiConsumer<Result<SizeT>, Proactor> completion, SpliceDescriptor descriptor, Option<Timeout> timeout) {
-        submissions.add(factory.forSplice(completion, descriptor, timeout)
-                               .register(pendingCompletions));
+        uringApi.submit(splice.prepare(completion, descriptor, calculateFlags(timeout))
+                              .register(pendingCompletions));
 
         timeout.whenPresent(this::appendTimeout);
     }
@@ -145,8 +159,8 @@ class ProactorImpl implements Proactor {
     @Override
     public void open(BiConsumer<Result<FileDescriptor>, Proactor> completion, Path path, Set<OpenFlags> flags,
                      Set<FilePermission> mode, Option<Timeout> timeout) {
-        submissions.add(factory.forOpen(completion, path, flags, mode, timeout)
-                               .register(pendingCompletions));
+        uringApi.submit(open.prepare(completion, path, Bitmask.combine(flags), Bitmask.combine(mode), calculateFlags(timeout))
+                            .register(pendingCompletions));
 
         timeout.whenPresent(this::appendTimeout);
     }
@@ -154,23 +168,25 @@ class ProactorImpl implements Proactor {
     @Override
     public void socket(BiConsumer<Result<FileDescriptor>, Proactor> completion, AddressFamily addressFamily,
                        SocketType socketType, Set<SocketFlag> openFlags, Set<SocketOption> options) {
-        submissions.add(factory.forSocket(completion, addressFamily, socketType, openFlags, options)
-                               .register(pendingCompletions));
+        uringApi.submit(socket.prepare(completion, addressFamily, socketType, openFlags, options)
+                              .register(pendingCompletions));
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public <T extends InetAddress> void listen(BiConsumer<Result<ListenContext<T>>, Proactor> completion,
                                                SocketAddress<T> socketAddress, SocketType socketType,
                                                Set<SocketFlag> openFlags, SizeT queueDepth, Set<SocketOption> options) {
-        submissions.add(factory.forListen(completion, socketAddress, socketType, openFlags, queueDepth, options)
-                               .register(pendingCompletions));
+        uringApi.submit(listen.prepare(completion, socketAddress, socketType, openFlags, queueDepth, options)
+                              .register(pendingCompletions));
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public <T extends InetAddress> void accept(BiConsumer<Result<ConnectionContext<T>>, Proactor> completion,
                                                FileDescriptor socket, Set<SocketFlag> flags, T addressType) {
-        submissions.add(factory.forAccept(completion, socket, flags, addressType instanceof InetAddress.Inet6Address)
-                               .register(pendingCompletions));
+        uringApi.submit(accept.prepare(completion, socket.descriptor(), Bitmask.combine(flags), addressType instanceof InetAddress.Inet6Address)
+                              .register(pendingCompletions));
     }
 
     @Override
@@ -183,7 +199,7 @@ class ProactorImpl implements Proactor {
             return;
         }
 
-        submissions.add(factory.forConnect(completion, socket, clientAddress, timeout)
+        uringApi.submit(connect.prepare(completion, socket, clientAddress, calculateFlags(timeout))
                                .register(pendingCompletions));
 
         timeout.whenPresent(this::appendTimeout);
@@ -193,12 +209,12 @@ class ProactorImpl implements Proactor {
     public void stat(BiConsumer<Result<FileStat>, Proactor> completion,
                      Path path, Set<StatFlag> flags, Set<StatMask> mask, Option<Timeout> timeout) {
         //Reset EMPTY_PATH and force use the path.
-        submissions.add(factory.forStat(completion,
-                                        AT_FDCWD,
-                                        Bitmask.combine(flags) & ~StatFlag.EMPTY_PATH.mask(),
-                                        Bitmask.combine(mask),
-                                        OffHeapCString.cstring(path.toString()))
-                               .register(pendingCompletions));
+        uringApi.submit(stat.prepare(completion,
+                                     AT_FDCWD,
+                                     Bitmask.combine(flags) & ~StatFlag.EMPTY_PATH.mask(),
+                                     Bitmask.combine(mask),
+                                     OffHeapCString.cstring(path.toString()))
+                            .register(pendingCompletions));
         timeout.whenPresent(this::appendTimeout);
     }
 
@@ -206,20 +222,20 @@ class ProactorImpl implements Proactor {
     public void stat(BiConsumer<Result<FileStat>, Proactor> completion, FileDescriptor fd, Set<StatFlag> flags,
                      Set<StatMask> mask, Option<Timeout> timeout) {
         //Set EMPTY_PATH and force use of file descriptor.
-        submissions.add(factory.forStat(completion,
-                                        fd.descriptor(),
-                                        Bitmask.combine(flags) | StatFlag.EMPTY_PATH.mask(),
-                                        Bitmask.combine(mask),
-                                        OffHeapCString.cstring(""))
-                               .register(pendingCompletions));
+        uringApi.submit(stat.prepare(completion,
+                                     fd.descriptor(),
+                                     Bitmask.combine(flags) | StatFlag.EMPTY_PATH.mask(),
+                                     Bitmask.combine(mask),
+                                     OffHeapCString.cstring(""))
+                            .register(pendingCompletions));
         timeout.whenPresent(this::appendTimeout);
     }
 
     @Override
     public void read(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fileDescriptor, OffsetT offset,
                      Option<Timeout> timeout, OffHeapBuffer... buffers) {
-        submissions.add(factory.forReadVector(completion, fileDescriptor, offset, timeout, OffHeapIoVector.withBuffers(buffers))
-                               .register(pendingCompletions));
+        uringApi.submit(readVector.prepare(completion, fileDescriptor.descriptor(), offset.value(), calculateFlags(timeout), withBuffers(buffers))
+                                  .register(pendingCompletions));
 
         timeout.whenPresent(this::appendTimeout);
     }
@@ -227,14 +243,17 @@ class ProactorImpl implements Proactor {
     @Override
     public void write(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fileDescriptor, OffsetT offset,
                       Option<Timeout> timeout, OffHeapBuffer... buffers) {
-        submissions.add(factory.forWriteVector(completion, fileDescriptor, offset, timeout, OffHeapIoVector.withBuffers(buffers))
-                               .register(pendingCompletions));
+        uringApi.submit(writeVector.prepare(completion, fileDescriptor.descriptor(), offset.value(), calculateFlags(timeout), withBuffers(buffers))
+                                   .register(pendingCompletions));
 
         timeout.whenPresent(this::appendTimeout);
     }
 
-    private void appendTimeout(Timeout timeout) {
-        submissions.add(factory.forTimeout(timeout)
-                               .register(pendingCompletions));
+    private void appendTimeout(Timeout value) {
+        uringApi.submit(timeout.prepare(value).register(pendingCompletions));
+    }
+
+    private byte calculateFlags(Option<Timeout> timeout) {
+        return timeout.equals(Option.empty()) ? 0 : SubmitQueueEntryFlags.IOSQE_IO_LINK;
     }
 }

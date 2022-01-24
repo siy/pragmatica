@@ -34,8 +34,8 @@ public class SpliceExchangeEntry extends AbstractExchangeEntry<SpliceExchangeEnt
     private SpliceDescriptor descriptor;
     private byte flags;
 
-    protected SpliceExchangeEntry(final PlainObjectPool<SpliceExchangeEntry> pool) {
-        super(IORING_OP_SPLICE, pool);
+    public SpliceExchangeEntry(final PlainObjectPool<SpliceExchangeEntry> pool) {
+        super(IORING_OP_SPLICE);
     }
 
     @Override

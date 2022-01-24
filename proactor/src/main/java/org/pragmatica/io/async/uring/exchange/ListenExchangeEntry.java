@@ -36,8 +36,8 @@ public class ListenExchangeEntry<T extends InetAddress> extends AbstractExchange
     private Set<SocketOption> options;
 
     @SuppressWarnings("rawtypes")
-    protected ListenExchangeEntry(PlainObjectPool<ListenExchangeEntry> pool) {
-        super(AsyncOperation.IORING_OP_NOP, pool);
+    public ListenExchangeEntry(PlainObjectPool<ListenExchangeEntry> pool) {
+        super(AsyncOperation.IORING_OP_NOP);
     }
 
     @Override

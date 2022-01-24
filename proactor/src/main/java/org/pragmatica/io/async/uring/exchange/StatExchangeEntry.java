@@ -38,8 +38,8 @@ public class StatExchangeEntry extends AbstractExchangeEntry<StatExchangeEntry, 
     private int statFlags;
     private int statMask;
 
-    protected StatExchangeEntry(PlainObjectPool<StatExchangeEntry> pool) {
-        super(IORING_OP_STATX, pool);
+    public StatExchangeEntry(PlainObjectPool<StatExchangeEntry> pool) {
+        super(IORING_OP_STATX);
     }
 
     @Override

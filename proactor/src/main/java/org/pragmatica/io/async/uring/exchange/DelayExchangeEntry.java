@@ -36,8 +36,8 @@ public class DelayExchangeEntry extends AbstractExchangeEntry<DelayExchangeEntry
     private final OffHeapTimeSpec timeSpec = OffHeapTimeSpec.uninitialized();
     private long startNanos;
 
-    protected DelayExchangeEntry(PlainObjectPool<DelayExchangeEntry> pool) {
-        super(IORING_OP_TIMEOUT, pool);
+    public DelayExchangeEntry(PlainObjectPool<DelayExchangeEntry> pool) {
+        super(IORING_OP_TIMEOUT);
     }
 
     @Override

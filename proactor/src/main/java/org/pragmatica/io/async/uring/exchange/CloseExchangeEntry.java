@@ -33,8 +33,8 @@ public class CloseExchangeEntry extends AbstractExchangeEntry<CloseExchangeEntry
     private int descriptor;
     private byte flags;
 
-    protected CloseExchangeEntry(final PlainObjectPool<CloseExchangeEntry> pool) {
-        super(IORING_OP_CLOSE, pool);
+    public CloseExchangeEntry(final PlainObjectPool<CloseExchangeEntry> pool) {
+        super(IORING_OP_CLOSE);
     }
 
     @Override

@@ -37,8 +37,8 @@ public class WriteVectorExchangeEntry extends AbstractExchangeEntry<WriteVectorE
     private int descriptor;
     private long offset;
 
-    protected WriteVectorExchangeEntry(PlainObjectPool<WriteVectorExchangeEntry> pool) {
-        super(IORING_OP_WRITEV, pool);
+    public WriteVectorExchangeEntry(PlainObjectPool<WriteVectorExchangeEntry> pool) {
+        super(IORING_OP_WRITEV);
     }
 
     @Override

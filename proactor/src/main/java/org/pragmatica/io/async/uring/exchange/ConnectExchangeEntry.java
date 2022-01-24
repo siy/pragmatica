@@ -35,8 +35,8 @@ public class ConnectExchangeEntry extends AbstractExchangeEntry<ConnectExchangeE
     private byte flags;
     private FileDescriptor descriptor;
 
-    protected ConnectExchangeEntry(PlainObjectPool<ConnectExchangeEntry> pool) {
-        super(IORING_OP_CONNECT, pool);
+    public ConnectExchangeEntry(PlainObjectPool<ConnectExchangeEntry> pool) {
+        super(IORING_OP_CONNECT);
     }
 
     @Override

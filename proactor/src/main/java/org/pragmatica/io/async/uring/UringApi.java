@@ -47,11 +47,14 @@ public class UringApi implements AutoCloseable {
     private final int submissionEntries;
     private final SubmitQueueEntry sqEntry;
     private final IoUring ioUring;
+    private final int threshold;
 
     private boolean closed = false;
+    private int count = 0;
 
     private UringApi(int numEntries, long ringBase) {
         submissionEntries = numEntries;
+        threshold = numEntries / 2;
         this.ringBase = ringBase;
         sqEntry = SubmitQueueEntry.at(0);
         ioUring = IoUring.at(ringBase);
@@ -72,23 +75,33 @@ public class UringApi implements AutoCloseable {
         return ioUring.completionQueue().processCompletions(pendingCompletions, proactor);
     }
 
-    public void processSubmissions(Queue<ExchangeEntry<?>> queue) {
-        boolean submit = false;
+    public void processSubmissions() {
+        if (count > 0) {
+            ioUring.submitAndWait(0);
+            count = 0;
+        }
+    }
 
-        while (!queue.isEmpty()) {
+    public void submit(ExchangeEntry<?> entry) {
+        while (true) {
             var sqe = ioUring.submissionQueue().nextSQE();
 
             if (sqe == 0) {
-                break;
+                ioUring.submitAndWait(1);
+                count = 0;
+                continue;
             }
 
+            count++;
+
             sqEntry.reposition(sqe);
-            queue.poll().apply(sqEntry.clear());
-            submit = true;
+            entry.apply(sqEntry.clear());
+            break;
         }
 
-        if (submit) {
+        if (count >= threshold) {
             ioUring.submitAndWait(0);
+            count = 0;
         }
     }
 
