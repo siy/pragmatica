@@ -42,7 +42,6 @@ import static org.pragmatica.lang.Result.success;
  */
 public class UringApi implements AutoCloseable {
     public static final int MIN_QUEUE_SIZE = 128;
-    private static final long ENTRY_SIZE = 8L;    // each entry is a 64-bit pointer
 
     private final long ringBase;
     private final int submissionEntries;
@@ -74,13 +73,9 @@ public class UringApi implements AutoCloseable {
     }
 
     public void processSubmissions(Queue<ExchangeEntry<?>> queue) {
-        while (true) {
-            var entry = queue.poll();
+        boolean submit = false;
 
-            if (entry == null) {
-                break;
-            }
-
+        while (!queue.isEmpty()) {
             var sqe = ioUring.submissionQueue().nextSQE();
 
             if (sqe == 0) {
@@ -88,10 +83,13 @@ public class UringApi implements AutoCloseable {
             }
 
             sqEntry.reposition(sqe);
-            entry.apply(sqEntry.clear());
+            queue.poll().apply(sqEntry.clear());
+            submit = true;
         }
 
-        ioUring.submitAndWait(0);
+        if (submit) {
+            ioUring.submitAndWait(0);
+        }
     }
 
     public static Result<UringApi> uringApi(int requestedEntries, Set<UringSetupFlags> openFlags) {

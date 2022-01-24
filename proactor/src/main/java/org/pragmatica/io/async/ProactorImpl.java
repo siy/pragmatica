@@ -42,7 +42,9 @@ import org.pragmatica.lang.*;
 
 import java.nio.file.Path;
 import java.time.Duration;
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.Queue;
+import java.util.Set;
 import java.util.function.BiConsumer;
 
 /**
@@ -85,9 +87,7 @@ class ProactorImpl implements Proactor {
 
     @Override
     public int processIO() {
-        if (!submissions.isEmpty()) {
-            uringApi.processSubmissions(submissions);
-        }
+        uringApi.processSubmissions(submissions);
 
         if (pendingCompletions.count() > 0) {
             return uringApi.processCompletions(pendingCompletions, this);
