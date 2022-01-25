@@ -1,4 +1,6 @@
-# IO_URING Builder
+# Pragmatica Builder Image
+
+Builder Image is a Docker image which enables using of other operating systems and/or architectures to develop and build Pragmatica.   
 
 ### Build Image
 

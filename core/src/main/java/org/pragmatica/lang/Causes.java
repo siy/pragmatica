@@ -29,6 +29,8 @@ import java.util.function.Predicate;
  */
 //TODO: add more variants
 public final class Causes {
+    public static final Cause IRRELEVANT = new SimpleCause("irrelevant");
+
     private Causes() {
     }
 

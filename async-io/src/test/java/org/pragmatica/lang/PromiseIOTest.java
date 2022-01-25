@@ -52,10 +52,6 @@ public class PromiseIOTest {
               .onFailure(PromiseIOTest::fail);
     }
 
-    private static void fail(Cause cause) {
-        Assertions.fail(cause.message());
-    }
-
     @Test
     void fileCanBeOpenReadAndClosed() {
         var fileName = Path.of("target/classes", Promise.class.getName().replace('.', '/') + ".class");
@@ -80,5 +76,9 @@ public class PromiseIOTest {
                   })
                   .flatMap(fd -> Promise.<Unit>promise((promise, proactor) -> proactor.close(promise::resolve, fd, Option.empty())).join())
                   .onFailure(PromiseIOTest::fail);
+    }
+
+    private static void fail(Cause cause) {
+        Assertions.fail(cause.message());
     }
 }

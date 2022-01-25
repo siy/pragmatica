@@ -14,85 +14,24 @@
 <a href="https://sergiy-yevtushenko.medium.com/"><img src="https://img.shields.io/badge/medium-%2312100E.svg?&style=for-the-badge&logo=medium&logoColor=white" height=25></a>
 <a href="https://dev.to/siy"><img src="https://img.shields.io/badge/DEV.TO-%230A0A0A.svg?&style=for-the-badge&logo=dev-dot-to&logoColor=white" height=25></a>
 
-# Pragmatic Functional Java Essentials
+# Pragmatica -  Pragmatic Functional Java Essentials & Modern Asynchronous I/0
 
-Minimal set of Java classes necessary to apply [Pragmatic Functional Java](https://github.com/siy/pragmatica/wiki)
-approaches in practice.
+_Pragmatica_ is a set of necessary libraries to write Java application in a modern style.
+At present it consists of the following components:
+ - Pragmatica Core - minimal set of classes for [Pragmatic Functional Java](https://github.com/siy/pragmatica/wiki) style.
+ - Proactor - implementation of the low level infrastructure for fast task scheduler and [io_uring](https://unixism.net/loti/index.html) - based asynchronous I/O.
+ - Async I/O - implementation of Promise-based asynchronous API.
 
-Current version requires _Java 17_ to build and run.
+Together these libraries provide all basic components necessary for completely asynchronous I/O operations, including network communication and file processing. 
 
-Instead of using this library as a dependency, it is highly suggested to just copy classes into your own codebase and
-adapt it to your needs.
+At present Pragmatica does not have higher level elements like support for SSL/TLS or HTTP protocol.
 
-## Performance Implications
+Only minimal set of I/O operations is supported at the moment. Support for remaining operations available via _io_uring_ API is planned for next releases. 
 
-In order to avoid performance penalty caused by using Pragmatic Functional Java approaches, all classes were designed
-with performance in mind. In particular, despite inherently conditional behavior (empty vs nothing Option, success vs
-failure Result), implementation does not use branching operator (`if` or `?` ). Java compiler and JIT do the rest -
-resulting performance virtually identical to traditional Java code with explicit `null` checks and exceptions.
+## Requirements
 
-It should be noted, that `Result` benchmark puts exception handling cases into rather convenient conditions, with very
-short call stack and only one type of exception is generated. Exception stack trace is not accessed either. All these
-conditions enabling much better optimization and don't trigger some resource-intensive processing (like printing stack
-trace) which usually happens (for example, for logging) in real applications.
+- _Pragmatica_ uses _Java 17_. There are no plans to support older versions of Java.
+- _Pragmatica Core_ has no specific requirements. 
+- _Pragmatica Proactor_ and _Pragmatica Async I/O_ components require Linux kernel version at least 5.6. Best results could be achieved on kernel versions 5.16 and up. Other operating systems are not supported and there are no plans for such a support.  
 
-Benchmarks measure execution of same code under different rate of missing (error) cases. Rate set to 0% is equal to
-`happy day scenraio` when there is no empty values (or errors/exceptions). With 100% rate all cases are empty/null
-(error/exception) and usually show plain overhead caused by used handling method.
-
-Test results were obtained on MacBook Pro M1. Results are reorganized to simplify direct comparison of different
-implementations for same use case.
-
-Test results for `Option`:
-
-```
-Benchmark                           Mode  Cnt   Score    Error  Units
-
-OptionPerformanceTest.nullable0    avgt    6  36.107 ±  0.456  us/op
-OptionPerformanceTest.option0      avgt    6  35.085 ±  0.409  us/op
-
-OptionPerformanceTest.nullable10   avgt    6  32.365 ±  0.064  us/op
-OptionPerformanceTest.option10     avgt    6  31.938 ±  0.323  us/op
-
-OptionPerformanceTest.nullable25   avgt    6  26.910 ±  0.828  us/op
-OptionPerformanceTest.option25     avgt    6  26.347 ±  0.113  us/op
-
-OptionPerformanceTest.nullable50   avgt    6  18.158 ±  0.119  us/op
-OptionPerformanceTest.option50     avgt    6  17.688 ±  0.086  us/op
-
-OptionPerformanceTest.nullable75   avgt    6   9.146 ±  0.198  us/op
-OptionPerformanceTest.option75     avgt    6   8.844 ±  0.181  us/op
-
-OptionPerformanceTest.nullable90   avgt    6   3.716 ±  0.022  us/op
-OptionPerformanceTest.option90     avgt    6   3.599 ±  0.055  us/op
-
-OptionPerformanceTest.nullable100  avgt    6   0.084 ±  0.001  us/op
-OptionPerformanceTest.option100    avgt    6   0.087 ±  0.008  us/op
-```
-
-Test results for `Result`:
-
-```
-Benchmark                           Mode  Cnt   Score    Error  Units
-
-ResultPerformanceTest.exception0    avgt    6  36.621 ±  0.045  us/op
-ResultPerformanceTest.result0       avgt    6  35.215 ±  0.208  us/op
-
-ResultPerformanceTest.exception10   avgt    6  32.651 ±  0.129  us/op
-ResultPerformanceTest.result10      avgt    6  31.983 ±  0.112  us/op
-
-ResultPerformanceTest.exception25   avgt    6  27.373 ±  0.240  us/op
-ResultPerformanceTest.result25      avgt    6  26.472 ±  0.130  us/op
-
-ResultPerformanceTest.exception50   avgt    6  18.239 ±  0.769  us/op
-ResultPerformanceTest.result50      avgt    6  17.671 ±  0.101  us/op
-
-ResultPerformanceTest.exception75   avgt    6   9.213 ±  0.597  us/op
-ResultPerformanceTest.result75      avgt    6   9.019 ±  0.090  us/op
-
-ResultPerformanceTest.exception90   avgt    6   3.705 ±  0.021  us/op
-ResultPerformanceTest.result90      avgt    6   3.618 ±  0.019  us/op
-
-ResultPerformanceTest.exception100  avgt    6   0.087 ±  0.001  us/op
-ResultPerformanceTest.result100     avgt    6   0.086 ±  0.001  us/op
-```
+Note that if you want/need to use other operating system to work on Pragmatica code or build binaries, you can use [Pragmatica Builder Image](./docker/README.md).
