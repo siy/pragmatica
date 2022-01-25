@@ -34,7 +34,7 @@ public class NopThroughputTest {
     void testPeakThroughput() throws InterruptedException {
         var list = new ConcurrentLinkedQueue<SingleTask>();
         var shutdown = new AtomicBoolean(false);
-        var multiplicationFactor = 1;
+        var multiplicationFactor = 25;
 
         var latch = new CountDownLatch(TaskExecutor.DEFAULT_THREAD_COUNT * multiplicationFactor);
 
@@ -56,8 +56,8 @@ public class NopThroughputTest {
         var time = ((double) totalTime) / 1e9;
         var speed = ((double) totalCount) / time / 1e6;
 
-        System.out.printf("Total time: %.2fs\nTotal count: %d\nPerformance: %.2fM IOPS total, %.2fM IOPS per core\n",
-                          time, totalCount, speed, speed/(TaskExecutor.DEFAULT_THREAD_COUNT * multiplicationFactor));
+        System.out.printf("Total time: %.2fs\nTotal ops count: %d\nPerformance: %.2fM IOPS total, %.2fM IOPS per core\n",
+                          time, totalCount, speed, speed/(TaskExecutor.DEFAULT_THREAD_COUNT));
     }
 
     private void runNop(Proactor proactor, ConcurrentLinkedQueue<SingleTask> list, AtomicBoolean shutdown, CountDownLatch latch) {
