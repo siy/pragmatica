@@ -21,7 +21,6 @@ import org.pragmatica.io.async.net.AddressFamily;
 import org.pragmatica.io.async.net.SocketFlag;
 import org.pragmatica.io.async.net.SocketOption;
 import org.pragmatica.io.async.net.SocketType;
-import org.pragmatica.io.async.uring.struct.raw.IoUring;
 import org.pragmatica.io.async.uring.struct.raw.RawSocketAddressIn;
 import org.pragmatica.io.async.uring.struct.raw.RawSocketAddressIn6;
 import org.pragmatica.io.async.uring.utils.LibraryLoader;
@@ -31,7 +30,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Native interface to Linux IO URING
  */
-public final class UringNative {
+final class UringNative {
     private static final Logger LOG = LoggerFactory.getLogger(UringNative.class);
 
     private UringNative() {

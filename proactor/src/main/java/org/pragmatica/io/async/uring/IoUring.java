@@ -15,11 +15,8 @@
  *
  */
 
-package org.pragmatica.io.async.uring.struct.raw;
+package org.pragmatica.io.async.uring;
 
-import org.pragmatica.io.async.uring.UringEnterFlags;
-import org.pragmatica.io.async.uring.UringNative;
-import org.pragmatica.io.async.uring.UringSetupFlags;
 import org.pragmatica.io.async.uring.struct.AbstractExternalRawStructure;
 import org.pragmatica.io.async.uring.struct.shape.IoUringOffsets;
 
@@ -67,55 +64,22 @@ public class IoUring extends AbstractExternalRawStructure<IoUring> {
         return getInt(flags);
     }
 
-    public int ringFd() {
-        return getInt(ring_fd);
-    }
-
-    public int features() {
-        return getInt(features);
-    }
-
     public long enter(long toSubmit, long minComplete, int flags) {
         return UringNative.enter(address(), toSubmit, minComplete, flags);
     }
 
-    private int submit(int submitted, int waitNr) {
-        var flags = new int[] {0};
+    public int submitAndWait(int waitNr) {
+        int submitted = submissionQueue.flush();
+        var flags1 = new int[] {0};
 
-        if (submissionQueue.needsEnter(flags) || waitNr != 0) {
-            if (waitNr != 0 || (flags() & UringSetupFlags.IOPOLL.mask()) != 0) {
-                flags[0] |= UringEnterFlags.IORING_ENTER_GETEVENTS.mask();
+        if (submissionQueue.needsEnter(flags1) || waitNr != 0) {
+            if (waitNr != 0 || (flags() & UringSetupFlags.IO_POLL.mask()) != 0) {
+                flags1[0] |= UringEnterFlags.GET_EVENTS.mask();
             }
 
-            return (int) enter(submitted, waitNr, flags[0]);
+            return (int) enter(submitted, waitNr, flags1[0]);
         }
 
         return submitted;
     }
-
-    public int submitAndWait(int waitNr) {
-        return submit(submissionQueue.flush(), waitNr);
-    }
-
-    /*
-static int __io_uring_submit(struct io_uring *ring, unsigned submitted,
-			     unsigned wait_nr)
-{
-	unsigned flags;
-	int ret;
-
-	flags = 0;
-	if (sq_ring_needs_enter(ring, &flags) || wait_nr) {
-		if (wait_nr || (ring->flags & IORING_SETUP_IOPOLL))
-			flags |= IORING_ENTER_GETEVENTS;
-
-		ret = ____sys_io_uring_enter(ring->ring_fd, submitted, wait_nr,
-					     flags, NULL);
-	} else
-		ret = submitted;
-
-	return ret;
-}
-
-     */
 }

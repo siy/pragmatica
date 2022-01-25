@@ -23,10 +23,10 @@ import java.util.EnumSet;
  * Flags for {@link UringNative#init(int, long, int)} method.
  */
 public enum UringSetupFlags implements Bitmask {
-    IOPOLL(1 << 0),    /* io_context is polled */
-    SQPOLL(1 << 1),    /* SQ poll thread */
+    IO_POLL(1 << 0),    /* io_context is polled */
+    SQ_POLL(1 << 1),    /* SQ poll thread */
     SQ_AFF(1 << 2),    /* sq_thread_cpu is valid */
-    CQSIZE(1 << 3),    /* app defines CQ size */
+    CQ_SIZE(1 << 3),    /* app defines CQ size */
     CLAMP(1 << 4),     /* clamp SQ/CQ ring sizes */
     ATTACH_WQ(1 << 5); /* attach to existing wq */
 

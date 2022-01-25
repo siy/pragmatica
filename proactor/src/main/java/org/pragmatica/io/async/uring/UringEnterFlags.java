@@ -17,18 +17,15 @@
 
 package org.pragmatica.io.async.uring;
 
-import java.util.EnumSet;
-
 /**
  * Flags for {@link UringNative#enter(long, long, long, int)} method.
  */
 public enum UringEnterFlags implements Bitmask {
-    IORING_ENTER_GETEVENTS(1 << 0),
-    IORING_ENTER_SQ_WAKEUP(1 << 1),
-    IORING_ENTER_SQ_WAIT(1 << 2),
-    IORING_ENTER_EXT_ARG(1 << 3);
+    GET_EVENTS(1 << 0),
+    SQ_WAKEUP(1 << 1),
+    SQ_WAIT(1 << 2),
+    EXT_ARG(1 << 3);
 
-    private static final EnumSet<UringEnterFlags> GET_EVENTS = EnumSet.of(IORING_ENTER_GETEVENTS);
     private final int mask;
 
     UringEnterFlags(final int mask) {
@@ -38,9 +35,5 @@ public enum UringEnterFlags implements Bitmask {
     @Override
     public int mask() {
         return mask;
-    }
-
-    public static EnumSet<UringEnterFlags> getEvents() {
-        return GET_EVENTS;
     }
 }

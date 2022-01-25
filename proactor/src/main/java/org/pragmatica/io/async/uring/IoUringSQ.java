@@ -15,10 +15,8 @@
  *
  */
 
-package org.pragmatica.io.async.uring.struct.raw;
+package org.pragmatica.io.async.uring;
 
-import org.pragmatica.io.async.uring.UringEnterFlags;
-import org.pragmatica.io.async.uring.UringSetupFlags;
 import org.pragmatica.io.async.uring.struct.AbstractExternalRawStructure;
 import org.pragmatica.io.async.uring.struct.shape.IoUringSQOffsets;
 import org.pragmatica.io.async.util.raw.RawMemory;
@@ -88,12 +86,12 @@ public class IoUringSQ extends AbstractExternalRawStructure<IoUringSQ> {
     }
 
     public boolean needsEnter(int[] flags) {
-        if ((ioUring.flags() & UringSetupFlags.SQPOLL.mask()) == 0) {
+        if ((ioUring.flags() & UringSetupFlags.SQ_POLL.mask()) == 0) {
             return true;
         }
 
         if ((RawMemory.getLong(kflagsAddress) & IORING_SQ_NEED_WAKEUP) != 0) {
-            flags[0] |= UringEnterFlags.IORING_ENTER_SQ_WAKEUP.mask();
+            flags[0] |= UringEnterFlags.SQ_WAKEUP.mask();
             return true;
         }
 

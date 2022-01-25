@@ -7,7 +7,7 @@
 #include <asm-generic/socket.h>
 #include <netinet/in.h>
 #include <linux/stat.h>
-#include "include/org_pragmatica_io_async_uring_UringNative.h"
+#include <jni.h>
 
 #define RING_PTR        ((struct io_uring *) base_address)
 

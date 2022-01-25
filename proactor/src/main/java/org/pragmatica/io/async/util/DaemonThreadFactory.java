@@ -21,8 +21,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Implementation of {@link ThreadFactory} which creates threads in <code>daemon</code> mode, i.e. threads which while running do not prevent
- * application to stop.
+ * Implementation of {@link ThreadFactory} which creates threads in <code>daemon</code> mode, i.e. threads which do not prevent application to stop.
  */
 public record DaemonThreadFactory(AtomicInteger counter, String pattern) implements ThreadFactory {
     public static DaemonThreadFactory threadFactory(String pattern) {

@@ -24,13 +24,11 @@ import org.pragmatica.io.async.file.FileDescriptor;
 import org.pragmatica.io.async.net.*;
 import org.pragmatica.io.async.uring.exchange.ExchangeEntry;
 import org.pragmatica.io.async.uring.struct.offheap.OffHeapSocketAddress;
-import org.pragmatica.io.async.uring.struct.raw.IoUring;
 import org.pragmatica.io.async.uring.struct.raw.SubmitQueueEntry;
 import org.pragmatica.io.async.uring.utils.ObjectHeap;
 import org.pragmatica.io.async.util.raw.RawMemory;
 import org.pragmatica.lang.Result;
 
-import java.util.Queue;
 import java.util.Set;
 
 import static org.pragmatica.io.async.SystemError.ENOTSOCK;
@@ -45,19 +43,32 @@ public class UringApi implements AutoCloseable {
 
     private final long ringBase;
     private final int submissionEntries;
+    private final int threshold;
     private final SubmitQueueEntry sqEntry;
     private final IoUring ioUring;
-    private final int threshold;
 
     private boolean closed = false;
     private int count = 0;
 
     private UringApi(int numEntries, long ringBase) {
         submissionEntries = numEntries;
-        threshold = numEntries / 2;
+        threshold = numEntries - numEntries / 4;
         this.ringBase = ringBase;
         sqEntry = SubmitQueueEntry.at(0);
         ioUring = IoUring.at(ringBase);
+    }
+
+    public static Result<UringApi> uringApi(int requestedEntries, Set<UringSetupFlags> openFlags) {
+        var ringBase = RawMemory.allocate(UringNative.SIZE);
+        var numEntries = calculateNumEntries(requestedEntries);
+        var rc = UringNative.init(numEntries, ringBase, Bitmask.combine(openFlags));
+
+        if (rc != 0) {
+            RawMemory.dispose(ringBase);
+            return SystemError.fromCode(rc).result();
+        }
+
+        return success(new UringApi(numEntries, ringBase));
     }
 
     @Override
@@ -87,7 +98,7 @@ public class UringApi implements AutoCloseable {
             var sqe = ioUring.submissionQueue().nextSQE();
 
             if (sqe == 0) {
-                ioUring.submitAndWait(1);
+                ioUring.submitAndWait(0);
                 count = 0;
                 continue;
             }
@@ -103,19 +114,6 @@ public class UringApi implements AutoCloseable {
             ioUring.submitAndWait(0);
             count = 0;
         }
-    }
-
-    public static Result<UringApi> uringApi(int requestedEntries, Set<UringSetupFlags> openFlags) {
-        var ringBase = RawMemory.allocate(UringNative.SIZE);
-        var numEntries = calculateNumEntries(requestedEntries);
-        var rc = UringNative.init(numEntries, ringBase, Bitmask.combine(openFlags));
-
-        if (rc != 0) {
-            RawMemory.dispose(ringBase);
-            return SystemError.fromCode(rc).result();
-        }
-
-        return success(new UringApi(numEntries, ringBase));
     }
 
     private static int calculateNumEntries(int size) {

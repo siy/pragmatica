@@ -15,12 +15,11 @@
  *
  */
 
-package org.pragmatica.io.async.uring.struct.raw;
+package org.pragmatica.io.async.uring;
 
 import org.pragmatica.io.async.Proactor;
-import org.pragmatica.io.async.uring.CompletionHandler;
-import org.pragmatica.io.async.uring.UringEnterFlags;
 import org.pragmatica.io.async.uring.struct.AbstractExternalRawStructure;
+import org.pragmatica.io.async.uring.struct.raw.CompletionQueueEntry;
 import org.pragmatica.io.async.uring.struct.shape.IoUringCQOffsets;
 import org.pragmatica.io.async.uring.utils.ObjectHeap;
 import org.pragmatica.io.async.util.raw.RawMemory;
@@ -68,7 +67,7 @@ public class IoUringCQ extends AbstractExternalRawStructure<IoUringCQ> {
 
         if (ready == 0) {
             if (ioUring.submissionQueue().needsFlush()) {
-                ioUring.enter(0, 0, UringEnterFlags.IORING_ENTER_GETEVENTS.mask());
+                ioUring.enter(0, 0, UringEnterFlags.GET_EVENTS.mask());
                 ready = ready();
             }
         }
