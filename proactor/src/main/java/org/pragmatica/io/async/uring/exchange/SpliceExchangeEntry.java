@@ -22,7 +22,7 @@ import org.pragmatica.io.async.SystemError;
 import org.pragmatica.io.async.common.SizeT;
 import org.pragmatica.io.async.file.SpliceDescriptor;
 import org.pragmatica.io.async.uring.Bitmask;
-import org.pragmatica.io.async.uring.struct.raw.SubmitQueueEntry;
+import org.pragmatica.io.async.uring.struct.raw.SQEntry;
 import org.pragmatica.io.async.uring.utils.PlainObjectPool;
 import org.pragmatica.lang.Result;
 
@@ -44,7 +44,7 @@ public class SpliceExchangeEntry extends AbstractExchangeEntry<SpliceExchangeEnt
     }
 
     @Override
-    public SubmitQueueEntry apply(final SubmitQueueEntry entry) {
+    public SQEntry apply(final SQEntry entry) {
         return super.apply(entry)
                     .flags(flags)
                     .fd(descriptor.toDescriptor().descriptor())

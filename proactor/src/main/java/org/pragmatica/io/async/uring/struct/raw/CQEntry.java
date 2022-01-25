@@ -20,13 +20,16 @@ package org.pragmatica.io.async.uring.struct.raw;
 import org.pragmatica.io.async.uring.struct.AbstractExternalRawStructure;
 import org.pragmatica.io.async.uring.struct.shape.CompletionQueueEntryOffsets;
 
-public class CompletionQueueEntry extends AbstractExternalRawStructure<CompletionQueueEntry> {
-    private CompletionQueueEntry(long address) {
+/**
+ * Completion Queue Entry
+ */
+public class CQEntry extends AbstractExternalRawStructure<CQEntry> {
+    private CQEntry(long address) {
         super(address, CompletionQueueEntryOffsets.SIZE);
     }
 
-    public static CompletionQueueEntry at(long address) {
-        return new CompletionQueueEntry(address);
+    public static CQEntry at(long address) {
+        return new CQEntry(address);
     }
 
     public long userData() {
@@ -39,10 +42,5 @@ public class CompletionQueueEntry extends AbstractExternalRawStructure<Completio
 
     public int flags() {
         return getInt(CompletionQueueEntryOffsets.flags);
-    }
-
-    @Override
-    public String toString() {
-        return "CompletionQueueEntry()";
     }
 }

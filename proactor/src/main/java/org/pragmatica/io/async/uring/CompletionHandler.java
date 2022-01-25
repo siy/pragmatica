@@ -19,6 +19,9 @@ package org.pragmatica.io.async.uring;
 
 import org.pragmatica.io.async.Proactor;
 
+/**
+ * Low level completion handler
+ */
 public interface CompletionHandler {
     void accept(int result, int flags, final Proactor proactor);
 }

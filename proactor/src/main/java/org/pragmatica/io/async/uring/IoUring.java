@@ -65,7 +65,7 @@ public class IoUring extends AbstractExternalRawStructure<IoUring> {
     }
 
     public long enter(long toSubmit, long minComplete, int flags) {
-        return UringNative.enter(address(), toSubmit, minComplete, flags);
+        return UringApi.enter(address(), toSubmit, minComplete, flags);
     }
 
     public int submitAndWait(int waitNr) {

@@ -18,7 +18,7 @@
 package org.pragmatica.io.async.uring.exchange;
 
 import org.pragmatica.io.async.uring.CompletionHandler;
-import org.pragmatica.io.async.uring.struct.raw.SubmitQueueEntry;
+import org.pragmatica.io.async.uring.struct.raw.SQEntry;
 import org.pragmatica.io.async.uring.utils.ObjectHeap;
 
 public interface ExchangeEntry<T extends ExchangeEntry<T>> extends CompletionHandler {
@@ -27,7 +27,7 @@ public interface ExchangeEntry<T extends ExchangeEntry<T>> extends CompletionHan
      */
     void close();
 
-    SubmitQueueEntry apply(SubmitQueueEntry entry);
+    SQEntry apply(SQEntry entry);
 
     T register(ObjectHeap<CompletionHandler> heap);
 }

@@ -21,7 +21,7 @@ import org.pragmatica.io.async.Proactor;
 import org.pragmatica.io.async.SystemError;
 import org.pragmatica.io.async.file.FileDescriptor;
 import org.pragmatica.io.async.uring.struct.offheap.OffHeapSocketAddress;
-import org.pragmatica.io.async.uring.struct.raw.SubmitQueueEntry;
+import org.pragmatica.io.async.uring.struct.raw.SQEntry;
 import org.pragmatica.io.async.uring.utils.PlainObjectPool;
 import org.pragmatica.lang.Result;
 
@@ -51,7 +51,7 @@ public class ConnectExchangeEntry extends AbstractExchangeEntry<ConnectExchangeE
     }
 
     @Override
-    public SubmitQueueEntry apply(SubmitQueueEntry entry) {
+    public SQEntry apply(SQEntry entry) {
         return super.apply(entry)
                     .fd(descriptor.descriptor())
                     .flags(flags)

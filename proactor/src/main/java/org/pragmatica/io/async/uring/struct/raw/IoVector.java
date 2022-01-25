@@ -20,6 +20,9 @@ package org.pragmatica.io.async.uring.struct.raw;
 import org.pragmatica.io.async.uring.struct.AbstractExternalRawStructure;
 import org.pragmatica.io.async.uring.struct.shape.IoVectorOffsets;
 
+/**
+ * I/O Vector
+ */
 public class IoVector extends AbstractExternalRawStructure<IoVector> {
     private IoVector(long address) {
         super(address, IoVectorOffsets.SIZE);

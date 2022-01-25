@@ -20,7 +20,7 @@ package org.pragmatica.io.async.uring;
 import java.util.EnumSet;
 
 /**
- * Flags for {@link UringNative#init(int, long, int)} method.
+ * Flags for {@link UringApi#init(int, long, int)} method.
  */
 public enum UringSetupFlags implements Bitmask {
     IO_POLL(1 << 0),    /* io_context is polled */

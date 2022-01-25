@@ -21,7 +21,7 @@ import org.pragmatica.io.async.Proactor;
 import org.pragmatica.io.async.SystemError;
 import org.pragmatica.io.async.Timeout;
 import org.pragmatica.io.async.uring.struct.offheap.OffHeapTimeSpec;
-import org.pragmatica.io.async.uring.struct.raw.SubmitQueueEntry;
+import org.pragmatica.io.async.uring.struct.raw.SQEntry;
 import org.pragmatica.io.async.uring.utils.PlainObjectPool;
 import org.pragmatica.lang.Result;
 
@@ -66,7 +66,7 @@ public class DelayExchangeEntry extends AbstractExchangeEntry<DelayExchangeEntry
     }
 
     @Override
-    public SubmitQueueEntry apply(SubmitQueueEntry entry) {
+    public SQEntry apply(SQEntry entry) {
         return super.apply(entry)
                     .addr(timeSpec.address())
                     .fd(-1)

@@ -22,7 +22,7 @@ import org.pragmatica.io.async.SystemError;
 import org.pragmatica.io.async.file.stat.FileStat;
 import org.pragmatica.io.async.uring.struct.offheap.OffHeapCString;
 import org.pragmatica.io.async.uring.struct.offheap.OffHeapFileStat;
-import org.pragmatica.io.async.uring.struct.raw.SubmitQueueEntry;
+import org.pragmatica.io.async.uring.struct.raw.SQEntry;
 import org.pragmatica.io.async.uring.utils.PlainObjectPool;
 import org.pragmatica.lang.Result;
 
@@ -63,7 +63,7 @@ public class StatExchangeEntry extends AbstractExchangeEntry<StatExchangeEntry, 
     }
 
     @Override
-    public SubmitQueueEntry apply(SubmitQueueEntry entry) {
+    public SQEntry apply(SQEntry entry) {
         return super.apply(entry)
                     .fd(descriptor)
                     .addr(rawPath.address())

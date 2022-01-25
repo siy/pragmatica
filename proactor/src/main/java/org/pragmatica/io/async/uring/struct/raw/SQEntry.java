@@ -20,128 +20,123 @@ package org.pragmatica.io.async.uring.struct.raw;
 import org.pragmatica.io.async.uring.struct.AbstractExternalRawStructure;
 import org.pragmatica.io.async.uring.struct.shape.SubmitQueueEntryOffsets;
 
-public class SubmitQueueEntry extends AbstractExternalRawStructure<SubmitQueueEntry> {
+/**
+ * Submission Queue Entry
+ */
+public class SQEntry extends AbstractExternalRawStructure<SQEntry> {
     public static final int IORING_FSYNC_DATASYNC = 1;      /* sqe->fsync_flags */
     public static final int IORING_TIMEOUT_ABS = 1;         /* sqe->timeout_flags */
     public static final int SPLICE_F_FD_IN_FIXED = 1 << 31; /* sqe->splice_flags, extends splice(2) flags */
 
-    //  SubmissionFlags
-    public static final int IOSQE_FIXED_FILE = 1;       /* issue after inflight IO */
-    public static final int IOSQE_IO_DRAIN = 2;
-    public static final int IOSQE_IO_LINK = 4;          /* links next sqe */
-    public static final int IOSQE_IO_HARDLINK = 8;      /* like LINK, but stronger */
-    public static final int IOSQE_ASYNC = 16;           /* always go async */
-    public static final int IOSQE_BUFFER_SELECT = 32;   /* select buffer from sqe->buf_group */
-
-    private SubmitQueueEntry(final long address) {
+    private SQEntry(final long address) {
         super(address, SubmitQueueEntryOffsets.SIZE);
     }
 
-    public static SubmitQueueEntry at(final long address) {
-        return new SubmitQueueEntry(address);
+    public static SQEntry at(final long address) {
+        return new SQEntry(address);
     }
 
-    public SubmitQueueEntry opcode(final byte data) {
+    public SQEntry opcode(final byte data) {
         return putByte(SubmitQueueEntryOffsets.opcode, data);
     }
 
-    public SubmitQueueEntry flags(final byte data) {
+    public SQEntry flags(final byte data) {
         return putByte(SubmitQueueEntryOffsets.flags, data);
     }
 
-    public SubmitQueueEntry ioprio(final short data) {
+    public SQEntry ioprio(final short data) {
         return putShort(SubmitQueueEntryOffsets.ioprio, data);
     }
 
-    public SubmitQueueEntry pollEvents(final short data) {
+    public SQEntry pollEvents(final short data) {
         return putShort(SubmitQueueEntryOffsets.poll_events, data);
     }
 
-    public SubmitQueueEntry bufIndex(final short data) {
+    public SQEntry bufIndex(final short data) {
         return putShort(SubmitQueueEntryOffsets.buf_index, data);
     }
 
-    public SubmitQueueEntry bufGroup(final short data) {
+    public SQEntry bufGroup(final short data) {
         return putShort(SubmitQueueEntryOffsets.buf_group, data);
     }
 
-    public SubmitQueueEntry personality(final short data) {
+    public SQEntry personality(final short data) {
         return putShort(SubmitQueueEntryOffsets.personality, data);
     }
 
-    public SubmitQueueEntry fd(final int data) {
+    public SQEntry fd(final int data) {
         return putInt(SubmitQueueEntryOffsets.fd, data);
     }
 
-    public SubmitQueueEntry len(final int data) {
+    public SQEntry len(final int data) {
         return putInt(SubmitQueueEntryOffsets.len, data);
     }
 
-    public SubmitQueueEntry rwFlags(final int data) {
+    public SQEntry rwFlags(final int data) {
         return putInt(SubmitQueueEntryOffsets.rw_flags, data);
     }
 
-    public SubmitQueueEntry fsyncFlags(final int data) {
+    public SQEntry fsyncFlags(final int data) {
         return putInt(SubmitQueueEntryOffsets.fsync_flags, data);
     }
 
-    public SubmitQueueEntry syncRangeFlags(final int data) {
+    public SQEntry syncRangeFlags(final int data) {
         return putInt(SubmitQueueEntryOffsets.sync_range_flags, data);
     }
 
-    public SubmitQueueEntry msgFlags(final int data) {
+    public SQEntry msgFlags(final int data) {
         return putInt(SubmitQueueEntryOffsets.msg_flags, data);
     }
 
-    public SubmitQueueEntry timeoutFlags(final int data) {
+    public SQEntry timeoutFlags(final int data) {
         return putInt(SubmitQueueEntryOffsets.timeout_flags, data);
     }
 
-    public SubmitQueueEntry acceptFlags(final int data) {
+    public SQEntry acceptFlags(final int data) {
         return putInt(SubmitQueueEntryOffsets.accept_flags, data);
     }
 
-    public SubmitQueueEntry cancelFlags(final int data) {
+    public SQEntry cancelFlags(final int data) {
         return putInt(SubmitQueueEntryOffsets.cancel_flags, data);
     }
 
-    public SubmitQueueEntry openFlags(final int data) {
+    public SQEntry openFlags(final int data) {
         return putInt(SubmitQueueEntryOffsets.open_flags, data);
     }
 
-    public SubmitQueueEntry statxFlags(final int data) {
+    public SQEntry statxFlags(final int data) {
         return putInt(SubmitQueueEntryOffsets.statx_flags, data);
     }
 
-    public SubmitQueueEntry fadviseAdvice(final int data) {
+    public SQEntry fadviseAdvice(final int data) {
         return putInt(SubmitQueueEntryOffsets.fadvise_advice, data);
     }
 
-    public SubmitQueueEntry spliceFlags(final int data) {
+    public SQEntry spliceFlags(final int data) {
         return putInt(SubmitQueueEntryOffsets.splice_flags, data);
     }
 
-    public SubmitQueueEntry spliceFdIn(final int data) {
+    public SQEntry spliceFdIn(final int data) {
         return putInt(SubmitQueueEntryOffsets.splice_fd_in, data);
     }
 
-    public SubmitQueueEntry off(final long data) {
+    public SQEntry off(final long data) {
         return putLong(SubmitQueueEntryOffsets.off, data);
     }
 
-    public SubmitQueueEntry addr2(final long data) {
+    public SQEntry addr2(final long data) {
         return putLong(SubmitQueueEntryOffsets.addr2, data);
     }
 
-    public SubmitQueueEntry addr(final long data) {
+    public SQEntry addr(final long data) {
         return putLong(SubmitQueueEntryOffsets.addr, data);
     }
 
-    public SubmitQueueEntry spliceOffIn(final long data) {
+    public SQEntry spliceOffIn(final long data) {
         return putLong(SubmitQueueEntryOffsets.splice_off_in, data);
     }
 
-    public SubmitQueueEntry userData(final long data) {
+    public SQEntry userData(final long data) {
         return putLong(SubmitQueueEntryOffsets.user_data, data);
     }
 }

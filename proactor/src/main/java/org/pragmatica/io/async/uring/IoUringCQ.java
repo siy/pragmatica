@@ -19,15 +19,18 @@ package org.pragmatica.io.async.uring;
 
 import org.pragmatica.io.async.Proactor;
 import org.pragmatica.io.async.uring.struct.AbstractExternalRawStructure;
-import org.pragmatica.io.async.uring.struct.raw.CompletionQueueEntry;
+import org.pragmatica.io.async.uring.struct.raw.CQEntry;
 import org.pragmatica.io.async.uring.struct.shape.IoUringCQOffsets;
 import org.pragmatica.io.async.uring.utils.ObjectHeap;
 import org.pragmatica.io.async.util.raw.RawMemory;
 
 import static org.pragmatica.io.async.uring.struct.shape.IoUringCQOffsets.*;
 
+/**
+ * I/O Uring Completion Queue
+ */
 public class IoUringCQ extends AbstractExternalRawStructure<IoUringCQ> {
-    private final CompletionQueueEntry cqEntry = CompletionQueueEntry.at(0);
+    private final CQEntry cqEntry = CQEntry.at(0);
     private final IoUring ioUring;
 
     private long kheadAddr;

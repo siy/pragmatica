@@ -31,7 +31,7 @@ import org.pragmatica.io.async.uring.Bitmask;
 import org.pragmatica.io.async.uring.struct.offheap.OffHeapCString;
 import org.pragmatica.io.async.uring.struct.offheap.OffHeapIoVector;
 import org.pragmatica.io.async.uring.struct.offheap.OffHeapSocketAddress;
-import org.pragmatica.io.async.uring.struct.raw.SubmitQueueEntryFlags;
+import org.pragmatica.io.async.uring.struct.raw.SQEntryFlags;
 import org.pragmatica.io.async.uring.utils.PlainObjectPool;
 import org.pragmatica.io.async.util.OffHeapBuffer;
 import org.pragmatica.lang.Option;
@@ -86,7 +86,7 @@ public class ExchangeEntryFactory {
     }
 
     private byte calculateFlags(Option<Timeout> timeout) {
-        return timeout.equals(Option.empty()) ? 0 : SubmitQueueEntryFlags.IOSQE_IO_LINK;
+        return timeout.equals(Option.empty()) ? 0 : (byte) SQEntryFlags.IO_LINK.mask();
     }
 
     public ReadExchangeEntry forRead(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fd, OffHeapBuffer buffer,

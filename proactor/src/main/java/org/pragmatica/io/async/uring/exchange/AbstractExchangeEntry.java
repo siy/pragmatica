@@ -21,7 +21,7 @@ import org.pragmatica.io.async.Proactor;
 import org.pragmatica.io.async.common.SizeT;
 import org.pragmatica.io.async.uring.AsyncOperation;
 import org.pragmatica.io.async.uring.CompletionHandler;
-import org.pragmatica.io.async.uring.struct.raw.SubmitQueueEntry;
+import org.pragmatica.io.async.uring.struct.raw.SQEntry;
 import org.pragmatica.io.async.uring.utils.ObjectHeap;
 import org.pragmatica.io.async.uring.utils.PlainObjectPool;
 import org.pragmatica.lang.Result;
@@ -82,7 +82,7 @@ public abstract class AbstractExchangeEntry<T extends AbstractExchangeEntry<T, R
     }
 
     @Override
-    public SubmitQueueEntry apply(SubmitQueueEntry entry) {
+    public SQEntry apply(SQEntry entry) {
         return entry.userData(key)
                     .opcode(operation.opcode());
     }

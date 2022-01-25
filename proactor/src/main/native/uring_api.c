@@ -13,15 +13,15 @@
 
 int __sys_io_uring_enter(int fd, unsigned to_submit, unsigned min_complete, unsigned flags, sigset_t *sig);
 
-JNIEXPORT jint JNICALL Java_org_pragmatica_io_async_uring_UringNative_init(JNIEnv *env, jclass clazz, jint num_entries, jlong base_address, jint flags) {
+JNIEXPORT jint JNICALL Java_org_pragmatica_io_async_uring_UringApi_init(JNIEnv *env, jclass clazz, jint num_entries, jlong base_address, jint flags) {
     return (jint) io_uring_queue_init((unsigned) num_entries, RING_PTR, (unsigned) flags);
 }
 
-JNIEXPORT void JNICALL Java_org_pragmatica_io_async_uring_UringNative_close(JNIEnv *env, jclass clazz, jlong base_address) {
+JNIEXPORT void JNICALL Java_org_pragmatica_io_async_uring_UringApi_close(JNIEnv *env, jclass clazz, jlong base_address) {
     io_uring_queue_exit(RING_PTR);
 }
 
-JNIEXPORT jint JNICALL Java_org_pragmatica_io_async_uring_UringNative_enter(JNIEnv *env, jclass clazz, jlong base_address, jlong to_submit, jlong min_complete, jint flags) {
+JNIEXPORT jint JNICALL Java_org_pragmatica_io_async_uring_UringApi_enter(JNIEnv *env, jclass clazz, jlong base_address, jlong to_submit, jlong min_complete, jint flags) {
     return (jint) __sys_io_uring_enter(RING_PTR->ring_fd, (unsigned) to_submit, (unsigned) min_complete, (unsigned) flags, NULL);
 }
 
@@ -43,7 +43,7 @@ static int set_binary_option(int sock, int option) {
     return setsockopt(sock, SOL_SOCKET, option, &val, sizeof(val));
 }
 
-JNIEXPORT jint JNICALL Java_org_pragmatica_io_async_uring_UringNative_socket(JNIEnv *env, jclass clazz, jint domain, jint socket_type, jint socket_options) {
+JNIEXPORT jint JNICALL Java_org_pragmatica_io_async_uring_UringApi_socket(JNIEnv *env, jclass clazz, jint domain, jint socket_type, jint socket_options) {
     int sock = socket((int) domain, (int) socket_type, 0);
 
     if (sock < 0) {
@@ -75,7 +75,7 @@ JNIEXPORT jint JNICALL Java_org_pragmatica_io_async_uring_UringNative_socket(JNI
     return (jint) sock;
 }
 
-JNIEXPORT jint JNICALL Java_org_pragmatica_io_async_uring_UringNative_prepareForListen(JNIEnv *env, jclass clazz, jint sock, jlong address, jint len, jint queue_depth) {
+JNIEXPORT jint JNICALL Java_org_pragmatica_io_async_uring_UringApi_prepareForListen(JNIEnv *env, jclass clazz, jint sock, jlong address, jint len, jint queue_depth) {
     if(bind((int) sock, (struct sockaddr *)address, len)) {
         return get_errno();
     }

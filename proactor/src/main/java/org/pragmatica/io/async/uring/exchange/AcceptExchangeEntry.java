@@ -22,7 +22,7 @@ import org.pragmatica.io.async.SystemError;
 import org.pragmatica.io.async.net.ConnectionContext;
 import org.pragmatica.io.async.net.InetAddress;
 import org.pragmatica.io.async.uring.struct.offheap.OffHeapSocketAddress;
-import org.pragmatica.io.async.uring.struct.raw.SubmitQueueEntry;
+import org.pragmatica.io.async.uring.struct.raw.SQEntry;
 import org.pragmatica.io.async.uring.utils.PlainObjectPool;
 import org.pragmatica.lang.Result;
 
@@ -57,7 +57,7 @@ public class AcceptExchangeEntry<T extends InetAddress> extends AbstractExchange
     }
 
     @Override
-    public SubmitQueueEntry apply(SubmitQueueEntry entry) {
+    public SQEntry apply(SQEntry entry) {
         return super.apply(entry)
                     .fd(descriptor)
                     .addr(clientAddress.sockAddrPtr())

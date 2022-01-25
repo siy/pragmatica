@@ -19,6 +19,9 @@ package org.pragmatica.io.async.uring;
 
 import java.util.Set;
 
+/**
+ * Common interface for enums which represent a set of independent bits.
+ */
 public interface Bitmask {
     int mask();
 
