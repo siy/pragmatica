@@ -34,24 +34,30 @@ public class NopThroughputTest {
     void testPeakThroughput() throws InterruptedException {
         var list = new ConcurrentLinkedQueue<SingleTask>();
         var shutdown = new AtomicBoolean(false);
-        var latch = new CountDownLatch(TaskExecutor.DEFAULT_THREAD_COUNT);
+        var multiplicationFactor = 1;
 
-        Promise.<Unit>promise((__, ___, executor) -> executor.spread(proactor -> runNop(proactor, list, shutdown, latch)));
+        var latch = new CountDownLatch(TaskExecutor.DEFAULT_THREAD_COUNT * multiplicationFactor);
+
+        Promise.<Unit>promise((__, ___, executor) -> {
+            for(var i = 0; i < multiplicationFactor; i++) {
+                executor.spread(proactor -> runNop(proactor, list, shutdown, latch));
+            }
+        });
 
         Thread.sleep(3_000);
-
         shutdown.set(true);
-
         latch.await();
 
-        var totalTime = list.stream().mapToLong(task -> task.stop().get() - task.start().get()).sum();
+        var minTime = list.stream().mapToLong(task -> task.start().get()).min().orElseThrow();
+        var maxTime = list.stream().mapToLong(task -> task.stop().get()).max().orElseThrow();
+        var totalTime = maxTime - minTime;
         var totalCount = list.stream().mapToLong(task -> task.count().get()).sum();
 
-        var time = ((double) totalTime) / 10e9;
+        var time = ((double) totalTime) / 1e9;
         var speed = ((double) totalCount) / time / 1e6;
 
         System.out.printf("Total time: %.2fs\nTotal count: %d\nPerformance: %.2fM IOPS total, %.2fM IOPS per core\n",
-                          time, totalCount, speed, speed/TaskExecutor.DEFAULT_THREAD_COUNT);
+                          time, totalCount, speed, speed/(TaskExecutor.DEFAULT_THREAD_COUNT * multiplicationFactor));
     }
 
     private void runNop(Proactor proactor, ConcurrentLinkedQueue<SingleTask> list, AtomicBoolean shutdown, CountDownLatch latch) {

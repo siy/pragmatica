@@ -38,8 +38,8 @@ public class SocketExchangeEntry extends AbstractExchangeEntry<SocketExchangeEnt
     private Set<SocketFlag> openFlags;
     private Set<SocketOption> options;
 
-    public SocketExchangeEntry(PlainObjectPool<SocketExchangeEntry> pool) {
-        super(IORING_OP_NOP);
+    protected SocketExchangeEntry(PlainObjectPool<SocketExchangeEntry> pool) {
+        super(IORING_OP_NOP, pool);
     }
 
     @Override

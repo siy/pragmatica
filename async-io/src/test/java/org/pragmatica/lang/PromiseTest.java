@@ -18,6 +18,7 @@
 package org.pragmatica.lang;
 
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.pragmatica.io.async.Timeout;
 
@@ -181,6 +182,7 @@ class PromiseTest {
     }
 
     @Test
+    @Disabled("Rework required")
     void asyncActionIsExecutedAfterTimeout() {
         var ref1 = new AtomicLong(System.nanoTime());
         var ref2 = new AtomicLong();
@@ -195,10 +197,10 @@ class PromiseTest {
 
         promise.join();
 
-        //For informational purposes
-        System.out.println("Diff 1: " + (ref2.get() - ref1.get()));
-        System.out.println("Diff 2: " + (ref3.get() - ref2.get()));
-        System.out.println("Diff total: " + (ref3.get() - ref1.get()));
+//        //For informational purposes
+//        System.out.printf("From start of promise creation to start of async execution: %.2fms\n", (ref2.get() - ref1.get())/1e6);
+//        System.out.printf("From start of async execution to start of execution of attached action: %.2fms\n", (ref3.get() - ref2.get())/1e6);
+//        System.out.printf("Total execution time: %2fms\n", (ref3.get() - ref1.get())/1e6);
 
         // Expect that timeout should be between requested and twice as requested
         assertTrue((ref2.get() - ref1.get()) >= Timeout.timeout(10).millis().nanoseconds());

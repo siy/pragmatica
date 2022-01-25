@@ -29,8 +29,8 @@ import static org.pragmatica.io.async.uring.AsyncOperation.IORING_OP_LINK_TIMEOU
 public class TimeoutExchangeEntry extends AbstractExchangeEntry<TimeoutExchangeEntry, Unit> {
     private final OffHeapTimeSpec timeSpec = OffHeapTimeSpec.uninitialized();
 
-    public TimeoutExchangeEntry(PlainObjectPool<TimeoutExchangeEntry> pool) {
-        super(IORING_OP_LINK_TIMEOUT);
+    protected TimeoutExchangeEntry(PlainObjectPool<TimeoutExchangeEntry> pool) {
+        super(IORING_OP_LINK_TIMEOUT, pool);
     }
 
     @Override

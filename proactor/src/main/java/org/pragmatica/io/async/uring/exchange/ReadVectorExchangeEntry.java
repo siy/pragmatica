@@ -37,8 +37,8 @@ public class ReadVectorExchangeEntry extends AbstractExchangeEntry<ReadVectorExc
     private int descriptor;
     private long offset;
 
-    public ReadVectorExchangeEntry(PlainObjectPool<ReadVectorExchangeEntry> pool) {
-        super(IORING_OP_READV);
+    protected ReadVectorExchangeEntry(PlainObjectPool<ReadVectorExchangeEntry> pool) {
+        super(IORING_OP_READV, pool);
     }
 
     @Override

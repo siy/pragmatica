@@ -45,18 +45,27 @@ public abstract class AbstractExchangeEntry<T extends AbstractExchangeEntry<T, R
         }
     }
 
+    private final PlainObjectPool pool;
     private final AsyncOperation operation;
     public T next;
     private int key;
     protected BiConsumer<Result<R>, Proactor> completion;
 
-    protected AbstractExchangeEntry(AsyncOperation operation) {
+    protected AbstractExchangeEntry(AsyncOperation operation, PlainObjectPool pool) {
         this.operation = operation;
+        this.pool = pool;
+    }
+
+    @SuppressWarnings("unchecked")
+    public void release() {
+        completion = null;
+        pool.release(this);
     }
 
     @Override
     public final void accept(int result, int flags, Proactor proactor) {
         doAccept(result, flags, proactor);
+        release();
     }
 
     protected abstract void doAccept(int result, int flags, Proactor proactor);

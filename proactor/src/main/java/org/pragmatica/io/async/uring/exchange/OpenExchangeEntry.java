@@ -39,8 +39,8 @@ public class OpenExchangeEntry extends AbstractExchangeEntry<OpenExchangeEntry, 
     private int openFlags;
     private int mode;
 
-    public OpenExchangeEntry(PlainObjectPool<OpenExchangeEntry> pool) {
-        super(IORING_OP_OPENAT);
+    protected OpenExchangeEntry(PlainObjectPool<OpenExchangeEntry> pool) {
+        super(IORING_OP_OPENAT, pool);
     }
 
     @Override

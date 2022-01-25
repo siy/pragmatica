@@ -37,8 +37,8 @@ public class AcceptExchangeEntry<T extends InetAddress> extends AbstractExchange
     private int acceptFlags;
 
     @SuppressWarnings("rawtypes")
-    public AcceptExchangeEntry(PlainObjectPool<AcceptExchangeEntry> pool) {
-        super(IORING_OP_ACCEPT);
+    protected AcceptExchangeEntry(PlainObjectPool<AcceptExchangeEntry> pool) {
+        super(IORING_OP_ACCEPT, pool);
     }
 
     @Override

@@ -37,8 +37,8 @@ public class ReadExchangeEntry extends AbstractExchangeEntry<ReadExchangeEntry, 
     private OffHeapBuffer buffer;
     private long offset;
 
-    public ReadExchangeEntry(PlainObjectPool<ReadExchangeEntry> pool) {
-        super(IORING_OP_READ);
+    protected ReadExchangeEntry(PlainObjectPool<ReadExchangeEntry> pool) {
+        super(IORING_OP_READ, pool);
     }
 
     @Override

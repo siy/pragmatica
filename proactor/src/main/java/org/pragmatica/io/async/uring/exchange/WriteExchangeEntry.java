@@ -35,8 +35,8 @@ public class WriteExchangeEntry extends AbstractExchangeEntry<WriteExchangeEntry
     private OffHeapBuffer buffer;
     private long offset;
 
-    public WriteExchangeEntry(PlainObjectPool<WriteExchangeEntry> pool) {
-        super(IORING_OP_WRITE);
+    protected WriteExchangeEntry(PlainObjectPool<WriteExchangeEntry> pool) {
+        super(IORING_OP_WRITE, pool);
     }
 
     @Override
