@@ -43,11 +43,11 @@ public final class Files {
      *
      * @return Promise instance which will be resolved once last chunk will be passed to consumer or in case of error.
      */
-    public static Promise<Unit> forEachBlock(SizeT blockSize,
-                                             Path path,
-                                             Set<OpenFlags> openFlags,
-                                             Option<Timeout> timeout,
-                                             Consumer<OffHeapBuffer> consumer) {
+    public static Promise<Unit> blocks(SizeT blockSize,
+                                       Path path,
+                                       Set<OpenFlags> openFlags,
+                                       Option<Timeout> timeout,
+                                       Consumer<OffHeapBuffer> consumer) {
 
         return PromiseIO.open(path, openFlags, FilePermission.none(), timeout)
                         .flatMap(fd -> new FileReaderProtocol(fd, blockSize, consumer, timeout)
@@ -56,7 +56,7 @@ public final class Files {
     }
 
     /**
-     * Same as {@link #forEachBlock(SizeT, Path, Set, Option, Consumer)} except file is opened in read-only mode.
+     * Same as {@link #blocks(SizeT, Path, Set, Option, Consumer)} except file is opened in read-only mode.
      *
      * @param blockSize Chunk size
      * @param path      Path to file
@@ -65,12 +65,12 @@ public final class Files {
      *
      * @return Promise instance which will be resolved once last chunk will be passed to consumer or in case of error.
      */
-    public static Promise<Unit> forEachBlock(SizeT blockSize, Path path, Option<Timeout> timeout, Consumer<OffHeapBuffer> consumer) {
-        return forEachBlock(blockSize, path, OpenFlags.readOnly(), timeout, consumer);
+    public static Promise<Unit> blocks(SizeT blockSize, Path path, Option<Timeout> timeout, Consumer<OffHeapBuffer> consumer) {
+        return blocks(blockSize, path, OpenFlags.readOnly(), timeout, consumer);
     }
 
     /**
-     * Same as {@link #forEachBlock(SizeT, Path, Set, Option, Consumer)} except file is opened in read-only mode
+     * Same as {@link #blocks(SizeT, Path, Set, Option, Consumer)} except file is opened in read-only mode
      * and no timeouts are applied to internal operations.
      *
      * @param blockSize Chunk size
@@ -79,8 +79,8 @@ public final class Files {
      *
      * @return Promise instance which will be resolved once last chunk will be passed to consumer or in case of error.
      */
-    public static Promise<Unit> forEachBlock(SizeT blockSize, Path path, Consumer<OffHeapBuffer> consumer) {
-        return forEachBlock(blockSize, path, OpenFlags.readOnly(), Option.empty(), consumer);
+    public static Promise<Unit> blocks(SizeT blockSize, Path path, Consumer<OffHeapBuffer> consumer) {
+        return blocks(blockSize, path, OpenFlags.readOnly(), Option.empty(), consumer);
     }
 
     private static final class FileReaderProtocol {
