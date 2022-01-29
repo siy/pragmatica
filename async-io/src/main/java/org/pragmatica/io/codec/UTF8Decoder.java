@@ -19,6 +19,8 @@ package org.pragmatica.io.codec;
 
 import org.pragmatica.io.async.util.OffHeapBuffer;
 
+import java.util.function.Consumer;
+
 /**
  * UTF-8 Decoder based on the great work by Chris Wellons <wellons@nullprogram.com>
  * <p>
@@ -35,7 +37,7 @@ import org.pragmatica.io.async.util.OffHeapBuffer;
  * * the REJECT state (-1). The state and code point must be zero on the
  * * first call of a new code point.
  * *
- * * The state value is always in the range -1 to 7.
+ * * The state bufferSize is always in the range -1 to 7.
  * *
  * * This is free and unencumbered software released into the public domain.
  * </pre>
@@ -192,63 +194,45 @@ public class UTF8Decoder {
         return state = next;
     }
 
-    public boolean decodePlain(byte[] input, StringBuilder builder) {
-        for (byte b : input) {
-            var result = decode(b);
+    void decode(int input, Consumer<Character> output) {
+        int next = table[state][input & 0xFF];
+        int ptr = state == UTF8_ACCEPT ? 1 : 0;
+        codep = (codep << 6) | (input & masks[ptr][next & 7]);
 
-            if (result == UTF8_ACCEPT) {
-                if (codep <= 0x0FFFFL) {
-                    builder.append((char) codep);
-                } else {
-                    builder.append((char) (0xD7C0L + ((codep >> 10) & 0x0FFFFL)));
-                    builder.append((char) (0xDC00 + (codep & 0x3FFL)));
-                }
-                codep = 0;
+        state = next;
+
+        if (state == UTF8_ACCEPT) {
+            if (codep <= 0x0FFFFL) {
+                output.accept((char) codep);
+            } else {
+                output.accept((char) (0xD7C0L + ((codep >> 10) & 0x0FFFFL)));
+                output.accept((char) (0xDC00 + (codep & 0x3FFL)));
             }
+            codep = 0;
+        } else if (state == UTF8_REJECT) {
+            state = UTF8_ACCEPT;
+            codep = 0;
 
-            if (result == UTF8_REJECT) {
-                codep = 0;
-                return false;
+            output.accept((char) 0xFFFD);  //UTF-16 REPLACEMENT CHARACTER
+
+            if (prevState != UTF8_ACCEPT) {
+                prevState = UTF8_ACCEPT;
+                return;
             }
         }
-        return true;
+
+        prevState = state;
     }
 
-    public boolean decodePlain(OffHeapBuffer buffer, StringBuilder builder) {
-        return decodePlain(buffer.export(), builder);
-    }
-
-    public boolean decodeWithRecovery(byte[] input, StringBuilder builder) {
+    public void decodeWithRecovery(byte[] input, Consumer<Character> output) {
         for (int i = 0; i < input.length; i++) {
             int b = input[i];
-            var result = decode(b);
 
-            if (result == UTF8_ACCEPT) {
-                if (codep <= 0x0FFFFL) {
-                    builder.append((char) codep);
-                } else {
-                    builder.append((char) (0xD7C0L + ((codep >> 10) & 0x0FFFFL)));
-                    builder.append((char) (0xDC00 + (codep & 0x3FFL)));
-                }
-                codep = 0;
-            } else if (result == UTF8_REJECT) {
-                state = UTF8_ACCEPT;
-                codep = 0;
-
-                builder.append((char) 0xFFFD);  //UTF-16 REPLACEMENT CHARACTER
-                if (prevState != UTF8_ACCEPT) {
-                    prevState = UTF8_ACCEPT;
-                    i--;
-                    continue;
-                }
-            }
-
-            prevState = state;
+            decode(b, output);
         }
-        return true;
     }
 
-    public boolean decodeWithRecovery(OffHeapBuffer buffer, StringBuilder builder) {
-        return decodeWithRecovery(buffer.export(), builder);
+    public void decodeWithRecovery(OffHeapBuffer buffer, Consumer<Character> output) {
+        decodeWithRecovery(buffer.export(), output);
     }
 }

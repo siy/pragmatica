@@ -18,6 +18,7 @@
 package org.pragmatica.io.file;
 
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.pragmatica.io.async.common.SizeT;
 import org.pragmatica.io.async.util.OffHeapBuffer;
@@ -31,6 +32,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.pragmatica.io.file.Files.blocks;
+import static org.pragmatica.io.file.Files.lines;
 import static org.pragmatica.lang.Promise.all;
 
 class FilesTest {
@@ -42,8 +44,8 @@ class FilesTest {
         var size1 = new AtomicLong(0);
         var size2 = new AtomicLong(0);
 
-        all(blocks(SizeT.sizeT(512), fileName, buffer -> size1.addAndGet(buffer.used())),
-            blocks(SizeT.sizeT(_1M), fileName, buffer1 -> size2.addAndGet(buffer1.used())))
+        all(blocks(fileName, SizeT.sizeT(512), buffer -> size1.addAndGet(buffer.used())),
+            blocks(fileName, SizeT.sizeT(_1M), buffer1 -> size2.addAndGet(buffer1.used())))
             .map((_1, _2) -> {
                 assertEquals(size1.get(), size2.get());
                 return Unit.unit();
@@ -57,17 +59,33 @@ class FilesTest {
         var fileName = Path.of("src/test/resources/utf8/chinese-wiki.html");
         var reference = new AtomicReference<String>(null);
 
-        var promise = blocks(SizeT.sizeT(1024 * 1024), fileName, buffer1 -> reference.set(decode(buffer1)));
+        var promise = blocks(fileName, SizeT.sizeT(1024 * 1024), buffer1 -> reference.set(decode(buffer1)));
 
         promise.join().onFailureDo(Assertions::fail);
         assertNotNull(reference.get());
+
+        System.out.println(reference.get().substring(0, 1024));
+    }
+
+    @Test
+    @Disabled
+    void readFileLineByLine() {
+        var fileName = Path.of("src/test/resources/utf8/japanese-wiki.html");
+
+        var lineCount = new AtomicLong(0);
+
+        var promise = lines(fileName, line -> lineCount.incrementAndGet());
+        promise.join().onFailureDo(Assertions::fail);
+
+        System.out.println(lineCount.get());
+        assertEquals(1025, lineCount.get());
     }
 
     private String decode(OffHeapBuffer buffer1) {
         var builder = new StringBuilder(_1M);
         var decoder = new UTF8Decoder();
 
-        decoder.decodeWithRecovery(buffer1, builder);
+        decoder.decodeWithRecovery(buffer1, builder::append);
 
         return builder.toString();
     }

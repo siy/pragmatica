@@ -38,7 +38,7 @@ public interface Promise<T> {
      * Resolve current instance. This action can be performed only once, all subsequent attempts will be ignored and state of the promise will remain
      * unchanged.
      *
-     * @param value The value to resolve the Promise instance.
+     * @param value The bufferSize to resolve the Promise instance.
      *
      * @return Current instance
      */
@@ -170,7 +170,7 @@ public interface Promise<T> {
     /**
      * Attach a side effect action which will be executed upon resolution of the current instance with {@link Result} containing {@link
      * Result.Success}. If instance is resolved with {@link Result} containing {@link Result.Failure}, then action will not be invoked. If promise is
-     * already resolved by the time of invocation of this method and value is a {@link Result.Success}, then provided action will be executed
+     * already resolved by the time of invocation of this method and bufferSize is a {@link Result.Success}, then provided action will be executed
      * immediately.
      *
      * @param action the action to execute
@@ -184,7 +184,7 @@ public interface Promise<T> {
     /**
      * Attach a side effect action which will be executed upon resolution of the current instance with {@link Result} containing {@link
      * Result.Success}. If instance is resolved with {@link Result} containing {@link Result.Failure}, then action will not be invoked. If promise is
-     * already resolved by the time of invocation of this method and value is a {@link Result.Success}, then provided action will be executed
+     * already resolved by the time of invocation of this method and bufferSize is a {@link Result.Success}, then provided action will be executed
      * immediately. Note that unlike {@link Promise#onSuccess(Consumer)}, the action passed to this method does not receive parameter.
      *
      * @param action the action to execute
@@ -198,7 +198,7 @@ public interface Promise<T> {
     /**
      * Attach a side effect action which will be executed upon resolution of the current instance with {@link Result} containing {@link
      * Result.Failure}. If instance is resolved with {@link Result} containing {@link Result.Success}, then action will not be invoked. If promise is
-     * already resolved by the time of invocation of this method and value is a {@link Result.Failure}, then provided action will be executed
+     * already resolved by the time of invocation of this method and bufferSize is a {@link Result.Failure}, then provided action will be executed
      * immediately.
      *
      * @param action the action to execute
@@ -212,7 +212,7 @@ public interface Promise<T> {
     /**
      * Attach a side effect action which will be executed upon resolution of the current instance with {@link Result} containing {@link
      * Result.Failure}. If instance is resolved with {@link Result} containing {@link Result.Success}, then action will not be invoked. If promise is
-     * already resolved by the time of invocation of this method and value is a {@link Result.Failure}, then provided action will be executed
+     * already resolved by the time of invocation of this method and bufferSize is a {@link Result.Failure}, then provided action will be executed
      * immediately. Note that unlike {@link Promise#onFailure(Consumer)}, the action passed to this method does not receive parameter.
      *
      * @param action the action to execute
@@ -227,7 +227,7 @@ public interface Promise<T> {
      * Resolve current instance with the {@link Result} containing {@link Result.Success}. If current instance is already resolved, then this method
      * invocation has no effect.
      *
-     * @param value the value to resolve.
+     * @param value the bufferSize to resolve.
      *
      * @return Current instance
      */
@@ -300,7 +300,7 @@ public interface Promise<T> {
     /**
      * Create a resolved instance.
      *
-     * @param value The value which will be stored in the created instance
+     * @param value The bufferSize which will be stored in the created instance
      *
      * @return Created instance
      */
