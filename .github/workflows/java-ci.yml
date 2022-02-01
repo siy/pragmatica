@@ -13,5 +13,8 @@ jobs:
         with:
           java-version: '17'
           distribution: 'zulu'
+      - name: Setup GCC
+        uses: egor-tensin/setup-gcc@v1
+
       - name: Build with Maven
         run: mvn --batch-mode --update-snapshots verify
