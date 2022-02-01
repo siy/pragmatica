@@ -23,6 +23,7 @@ import org.junit.jupiter.api.Test;
 import org.pragmatica.io.async.common.SizeT;
 import org.pragmatica.io.async.util.OffHeapBuffer;
 import org.pragmatica.io.codec.UTF8Decoder;
+import org.pragmatica.lang.Promise;
 import org.pragmatica.lang.Unit;
 
 import java.nio.file.Path;
@@ -70,15 +71,21 @@ class FilesTest {
     @Test
     @Disabled
     void readFileLineByLine() {
-        var fileName = Path.of("src/test/resources/utf8/japanese-wiki.html");
+        var fileName1 = Path.of("src/test/resources/utf8/japanese-wiki.html");
+        var lineCount1 = new AtomicLong(0);
+        var fileName2 = Path.of("src/test/resources/utf8/chinese-wiki.html");
+        var lineCount2 = new AtomicLong(0);
 
-        var lineCount = new AtomicLong(0);
+        var promise1 = lines(fileName1, line -> lineCount1.incrementAndGet());
+        var promise2 = lines(fileName2, line -> lineCount2.incrementAndGet());
 
-        var promise = lines(fileName, line -> lineCount.incrementAndGet());
-        promise.join().onFailureDo(Assertions::fail);
+        Promise.all(promise1, promise2)
+               .map(Unit::unit)
+               .join()
+               .onFailureDo(Assertions::fail);
 
-        System.out.println(lineCount.get());
-        assertEquals(1025, lineCount.get());
+        assertEquals(461, lineCount1.get());
+        assertEquals(515, lineCount2.get());
     }
 
     private String decode(OffHeapBuffer buffer1) {

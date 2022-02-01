@@ -176,6 +176,9 @@ public final class Files {
             utf8Decoder.decodeWithRecovery(offHeapBuffer, this::characterInput);
 
             if (offHeapBuffer.used() != bufferSize) {
+                stripCarriageReturn();
+
+                // Empty line or single trailing \r will be ignored
                 if (stringBuilder.length() > 0) {
                     consumer.accept(stringBuilder.toString());
                 }
@@ -184,13 +187,17 @@ public final class Files {
 
         private void characterInput(Character character) {
             if (character == '\n') {
-                if (stringBuilder.charAt(stringBuilder.length() - 1) == '\r') {
-                    stringBuilder.setLength(stringBuilder.length() - 1);
-                }
+                stripCarriageReturn();
                 consumer.accept(stringBuilder.toString());
                 stringBuilder.setLength(0);
             } else {
                 stringBuilder.append(character);
+            }
+        }
+
+        private void stripCarriageReturn() {
+            if (stringBuilder.length() > 0 && stringBuilder.charAt(stringBuilder.length() - 1) == '\r') {
+                stringBuilder.setLength(stringBuilder.length() - 1);
             }
         }
     }
