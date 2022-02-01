@@ -35,42 +35,112 @@ import org.pragmatica.io.async.util.OffHeapBuffer;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Set;
-import java.util.function.Consumer;
 
 import static org.pragmatica.lang.Option.empty;
 
+/**
+ * "Promisified" Proactor I/O API.
+ */
 public interface PromiseIO {
+    /**
+     * Basic NOP (no-operation). Although the operation does nothing, internally it goes full round-trip to kernel and back.
+     *
+     * @return a {@link Promise} instance, which is resolved once operations is finished.
+     */
     static Promise<Unit> nop() {
         return Promise.promise((promise, proactor) -> proactor.nop(promise::resolve));
     }
 
+    /**
+     * Simple delay. The returned {@link Promise} is resolved when specified timeout expires. The {@link Duration} value contains actual delay.
+     *
+     * @return a {@link Promise} instance, which is resolved once operations is finished.
+     */
     static Promise<Duration> delay(Timeout timeout) {
         return Promise.promise((promise, proactor) -> proactor.delay(promise::resolve, timeout));
     }
 
+    /**
+     * Perform a copy operation between two file descriptors (see {@link SpliceDescriptor} for more details).
+     *
+     * @param descriptor Splice operation descriptor.
+     * @param timeout    Operation timeout.
+     *
+     * @return a {@link Promise} instance, which is resolved once operations is finished.
+     */
     static Promise<SizeT> splice(SpliceDescriptor descriptor, Option<Timeout> timeout) {
         return Promise.promise((promise, proactor) -> proactor.splice(promise::resolve, descriptor, timeout));
     }
 
+    /**
+     * Same as {@link #splice(SpliceDescriptor, Option)}, but no operation timeout is used.
+     *
+     * @param descriptor Splice operation descriptor.
+     *
+     * @return a {@link Promise} instance, which is resolved once operations is finished.
+     */
     static Promise<SizeT> splice(SpliceDescriptor descriptor) {
         return splice(descriptor, empty());
     }
 
+    /**
+     * Read data from specified file descriptor into provided buffer. The number of bytes to read is defined by buffer size. Upon successful
+     * completion, {@link OffHeapBuffer#used()} value is set to actual number of bytes read. Number of read bytes also used to resolve returned
+     * promise.
+     *
+     * @param fd      File descriptor or socket
+     * @param buffer  Buffer to store read data
+     * @param offset  Offset in the source file if file descriptor points to file. Use {@link OffsetT#ZERO} if file descriptor belongs to socket or
+     *                pipe
+     * @param timeout Operation timeout
+     *
+     * @return a {@link Promise} instance, which is resolved with number of bytes read once operations is finished successfully.
+     */
     static Promise<SizeT> read(FileDescriptor fd, OffHeapBuffer buffer, OffsetT offset, Option<Timeout> timeout) {
         return Promise.promise((promise, proactor) -> proactor.read(promise::resolve, fd, buffer, offset, timeout));
     }
 
+    /**
+     * Same as {@link #read(FileDescriptor, OffHeapBuffer, OffsetT, Option)}, but no timeout specified.
+     *
+     * @param fd     File descriptor or socket
+     * @param buffer Buffer to store read data
+     * @param offset Offset in the source file if file descriptor points to file. Use {@link OffsetT#ZERO} if file descriptor belongs to socket or
+     *               pipe
+     *
+     * @return a {@link Promise} instance, which is resolved with number of bytes read once operations is finished successfully.
+     */
     static Promise<SizeT> read(FileDescriptor fd, OffHeapBuffer buffer, OffsetT offset) {
         return read(fd, buffer, offset, empty());
     }
 
+    /**
+     * Same as {@link #read(FileDescriptor, OffHeapBuffer, OffsetT, Option)}, but no offset needs to be provided. Convenient for use with sockets or
+     * pipes.
+     *
+     * @param fd      File descriptor or socket
+     * @param buffer  Buffer to store read data
+     * @param timeout Operation timeout
+     *
+     * @return a {@link Promise} instance, which is resolved with number of bytes read once operations is finished successfully.
+     */
     static Promise<SizeT> read(FileDescriptor fd, OffHeapBuffer buffer, Option<Timeout> timeout) {
         return read(fd, buffer, OffsetT.ZERO, timeout);
     }
 
+    /**
+     * Same as {@link #read(FileDescriptor, OffHeapBuffer, Option)}, but no timeout is specified.
+     *
+     * @param fd      File descriptor or socket
+     * @param buffer  Buffer to store read data
+     *
+     * @return a {@link Promise} instance, which is resolved with number of bytes read once operations is finished successfully.
+     */
     static Promise<SizeT> read(FileDescriptor fd, OffHeapBuffer buffer) {
         return read(fd, buffer, OffsetT.ZERO, empty());
     }
+
+    //TODO: finish documentation
 
     static Promise<SizeT> write(FileDescriptor fd, OffHeapBuffer buffer, OffsetT offset, Option<Timeout> timeout) {
         return Promise.promise((promise, proactor) -> proactor.write(promise::resolve, fd, buffer, offset, timeout));

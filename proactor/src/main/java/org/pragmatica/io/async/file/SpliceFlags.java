@@ -19,10 +19,15 @@ package org.pragmatica.io.async.file;
 
 import org.pragmatica.io.async.uring.Bitmask;
 
+import java.util.EnumSet;
+import java.util.Set;
+
 public enum SpliceFlags implements Bitmask {
     MOVE(1),        /* SPLICE_F_MOVE    : Move pages instead of copying.  */
     NONBLOCK(2),    /* SPLICE_F_NONBLOCK: Don't block on the pipe splicing */
     MORE(4);        /* SPLICE_F_MORE    : Expect more data.  */
+
+    private static final Set<SpliceFlags> NONE = EnumSet.noneOf(SpliceFlags.class);
 
     private final int mask;
 
@@ -33,5 +38,9 @@ public enum SpliceFlags implements Bitmask {
     @Override
     public int mask() {
         return mask;
+    }
+
+    public static Set<SpliceFlags> none() {
+        return NONE;
     }
 }

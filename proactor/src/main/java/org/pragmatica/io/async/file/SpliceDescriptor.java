@@ -26,6 +26,35 @@ import java.util.EnumSet;
  * Container for all necessary details of the SPLICE operation.
  * <p>
  * This operation performs copying from one file descriptor to another completely at kernel space without involving any user space code or memory.
+ * <p>
+ * The descriptor contains following information:
+ * <table>
+ *     <tr> <th>Name</th> <th>Description</th> </tr>
+ *     <tr>
+ *         <td>fromDescriptor</td>
+ *         <td>Source file descriptor or socket</td>
+ *     </tr>
+ *     <tr>
+ *         <td>toDescriptor</td>
+ *         <td>Destination file descriptor or socket</td>
+ *     </tr>
+ *     <tr>
+ *         <td>fromOffset</td>
+ *         <td>Offset in the source file if corresponding file descriptor belongs to file. Otherwise should be set to {@link OffsetT#ZERO}.</td>
+ *     </tr>
+ *     <tr>
+ *         <td>toOffset</td>
+ *         <td>Offset in the destination file if corresponding file descriptor belongs to file. Otherwise should be set to {@link OffsetT#ZERO}.</td>
+ *     </tr>
+ *     <tr>
+ *         <td>bytesToCopy</td>
+ *         <td>Number of bytes to copy. Note that only values below than 2<sup>32</sup> (unsigned int) are supported.</td>
+ *     </tr>
+ *     <tr>
+ *         <td>flags</td>
+ *         <td>Splice operation flags (see {@link SpliceFlags} for details)</td>
+ *     </tr>
+ * </table>
  */
 public record SpliceDescriptor(FileDescriptor fromDescriptor, FileDescriptor toDescriptor, OffsetT fromOffset, OffsetT toOffset,
                                SizeT bytesToCopy, EnumSet<SpliceFlags> flags) {
