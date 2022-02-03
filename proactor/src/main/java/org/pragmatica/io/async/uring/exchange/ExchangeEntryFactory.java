@@ -28,10 +28,12 @@ import org.pragmatica.io.async.file.SpliceDescriptor;
 import org.pragmatica.io.async.file.stat.FileStat;
 import org.pragmatica.io.async.net.*;
 import org.pragmatica.io.async.uring.Bitmask;
+import org.pragmatica.io.async.uring.CompletionHandler;
 import org.pragmatica.io.async.uring.struct.offheap.OffHeapCString;
 import org.pragmatica.io.async.uring.struct.offheap.OffHeapIoVector;
 import org.pragmatica.io.async.uring.struct.offheap.OffHeapSocketAddress;
 import org.pragmatica.io.async.uring.struct.raw.SQEntryFlags;
+import org.pragmatica.io.async.uring.utils.ObjectHeap;
 import org.pragmatica.io.async.uring.utils.PlainObjectPool;
 import org.pragmatica.io.async.util.OffHeapBuffer;
 import org.pragmatica.lang.Option;
@@ -46,24 +48,42 @@ import java.util.function.BiConsumer;
 import static org.pragmatica.io.async.uring.utils.PlainObjectPool.objectPool;
 
 public class ExchangeEntryFactory {
-    private final PlainObjectPool<NopExchangeEntry> nopPool = objectPool(NopExchangeEntry::new);
-    private final PlainObjectPool<DelayExchangeEntry> delayPool = objectPool(DelayExchangeEntry::new);
-    private final PlainObjectPool<CloseExchangeEntry> closePool = objectPool(CloseExchangeEntry::new);
-    private final PlainObjectPool<TimeoutExchangeEntry> timeoutPool = objectPool(TimeoutExchangeEntry::new);
-    private final PlainObjectPool<ReadExchangeEntry> readPool = objectPool(ReadExchangeEntry::new);
-    private final PlainObjectPool<WriteExchangeEntry> writePool = objectPool(WriteExchangeEntry::new);
-    private final PlainObjectPool<SpliceExchangeEntry> splicePool = objectPool(SpliceExchangeEntry::new);
-    private final PlainObjectPool<OpenExchangeEntry> openPool = objectPool(OpenExchangeEntry::new);
-    private final PlainObjectPool<SocketExchangeEntry> socketPool = objectPool(SocketExchangeEntry::new);
-    private final PlainObjectPool<StatExchangeEntry> statPool = objectPool(StatExchangeEntry::new);
-    private final PlainObjectPool<ReadVectorExchangeEntry> readVectorPool = objectPool(ReadVectorExchangeEntry::new);
-    private final PlainObjectPool<WriteVectorExchangeEntry> writeVectorPool = objectPool(WriteVectorExchangeEntry::new);
-    private final PlainObjectPool<ConnectExchangeEntry> connectPool = objectPool(ConnectExchangeEntry::new);
+    private final PlainObjectPool<NopExchangeEntry> nopPool;
+    private final PlainObjectPool<DelayExchangeEntry> delayPool;
+    private final PlainObjectPool<CloseExchangeEntry> closePool;
+    private final PlainObjectPool<TimeoutExchangeEntry> timeoutPool;
+    private final PlainObjectPool<ReadExchangeEntry> readPool;
+    private final PlainObjectPool<WriteExchangeEntry> writePool;
+    private final PlainObjectPool<SpliceExchangeEntry> splicePool;
+    private final PlainObjectPool<OpenExchangeEntry> openPool;
+    private final PlainObjectPool<SocketExchangeEntry> socketPool;
+    private final PlainObjectPool<StatExchangeEntry> statPool;
+    private final PlainObjectPool<ReadVectorExchangeEntry> readVectorPool;
+    private final PlainObjectPool<WriteVectorExchangeEntry> writeVectorPool;
+    private final PlainObjectPool<ConnectExchangeEntry> connectPool;
 
-    @SuppressWarnings({"rawtypes", "unchecked"})
-    private final PlainObjectPool<ListenExchangeEntry> listenPool = objectPool(ListenExchangeEntry::new);
-    @SuppressWarnings({"rawtypes", "unchecked"})
-    private final PlainObjectPool<AcceptExchangeEntry> acceptPool = objectPool(AcceptExchangeEntry::new);
+    @SuppressWarnings({"rawtypes"})
+    private final PlainObjectPool<ListenExchangeEntry> listenPool;
+    @SuppressWarnings({"rawtypes"})
+    private final PlainObjectPool<AcceptExchangeEntry> acceptPool;
+
+    public ExchangeEntryFactory(ObjectHeap<CompletionHandler> exchangeRegistry) {
+        nopPool = objectPool(NopExchangeEntry::new, exchangeRegistry);
+        delayPool = objectPool(DelayExchangeEntry::new, exchangeRegistry);
+        closePool = objectPool(CloseExchangeEntry::new, exchangeRegistry);
+        timeoutPool = objectPool(TimeoutExchangeEntry::new, exchangeRegistry);
+        readPool = objectPool(ReadExchangeEntry::new, exchangeRegistry);
+        writePool = objectPool(WriteExchangeEntry::new, exchangeRegistry);
+        splicePool = objectPool(SpliceExchangeEntry::new, exchangeRegistry);
+        openPool = objectPool(OpenExchangeEntry::new, exchangeRegistry);
+        socketPool = objectPool(SocketExchangeEntry::new, exchangeRegistry);
+        statPool = objectPool(StatExchangeEntry::new, exchangeRegistry);
+        readVectorPool = objectPool(ReadVectorExchangeEntry::new, exchangeRegistry);
+        writeVectorPool = objectPool(WriteVectorExchangeEntry::new, exchangeRegistry);
+        connectPool = objectPool(ConnectExchangeEntry::new, exchangeRegistry);
+        listenPool = objectPool(ListenExchangeEntry::new, exchangeRegistry);
+        acceptPool = objectPool(AcceptExchangeEntry::new, exchangeRegistry);
+    }
 
     public NopExchangeEntry forNop(BiConsumer<Result<Unit>, Proactor> completion) {
         return nopPool.alloc()

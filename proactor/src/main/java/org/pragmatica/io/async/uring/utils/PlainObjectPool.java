@@ -17,6 +17,7 @@
 
 package org.pragmatica.io.async.uring.utils;
 
+import org.pragmatica.io.async.uring.CompletionHandler;
 import org.pragmatica.io.async.uring.exchange.AbstractExchangeEntry;
 import org.pragmatica.lang.Functions.FN1;
 
@@ -24,20 +25,24 @@ import org.pragmatica.lang.Functions.FN1;
 public class PlainObjectPool<T extends AbstractExchangeEntry> {
     private T head;
     private final FN1<T, PlainObjectPool<T>> factory;
+    private final ObjectHeap<CompletionHandler> registry;
 
-    private PlainObjectPool(final FN1<T, PlainObjectPool<T>> factory) {
+    private PlainObjectPool(final FN1<T, PlainObjectPool<T>> factory,
+                            final ObjectHeap<CompletionHandler> registry) {
         this.factory = factory;
+        this.registry = registry;
     }
 
-    public static <T extends AbstractExchangeEntry> PlainObjectPool<T> objectPool(final FN1<T, PlainObjectPool<T>> factory) {
-        return new PlainObjectPool<>(factory);
+    public static <T extends AbstractExchangeEntry> PlainObjectPool<T> objectPool(final FN1<T, PlainObjectPool<T>> factory,
+                                                                                  final ObjectHeap<CompletionHandler> registry) {
+        return new PlainObjectPool<>(factory, registry);
     }
 
     public T alloc() {
         var result = head;
 
         if (head == null) {
-            return factory.apply(this);
+            return (T) factory.apply(this).register(registry);
         }
 
         head = (T) head.next;
@@ -54,6 +59,7 @@ public class PlainObjectPool<T extends AbstractExchangeEntry> {
             var element = head;
             head = (T) element.next;
             element.next = null;
+            registry.releaseUnsafe(element.key());
         }
     }
 }

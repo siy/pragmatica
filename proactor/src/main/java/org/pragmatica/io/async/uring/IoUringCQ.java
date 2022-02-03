@@ -68,20 +68,13 @@ public class IoUringCQ extends AbstractExternalRawStructure<IoUringCQ> {
     public int processCompletions(ObjectHeap<CompletionHandler> pendingCompletions, Proactor proactor) {
         var ready = ready();
 
-        if (ready == 0) {
-            if (ioUring.submissionQueue().needsFlush()) {
-                ioUring.enter(0, 0, UringEnterFlags.GET_EVENTS.mask());
-                ready = ready();
-            }
-        }
-
         if (ready > 0) {
             var head = RawMemory.getLong(kheadAddr);
             var last = head + ready;
 
             for(; head != last; head++) {
                 cqEntry.reposition(cqesAddress + ((head & mask) << 4));
-                pendingCompletions.releaseUnsafe((int) cqEntry.userData())
+                pendingCompletions.elementUnsafe((int) cqEntry.userData())
                                   .accept(cqEntry.res(), cqEntry.flags(), proactor);
             }
 

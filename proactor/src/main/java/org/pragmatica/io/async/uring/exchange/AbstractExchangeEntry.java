@@ -74,6 +74,10 @@ public abstract class AbstractExchangeEntry<T extends AbstractExchangeEntry<T, R
     public void close() {
     }
 
+    public int key() {
+        return key;
+    }
+
     @Override
     @SuppressWarnings("unchecked")
     public T register(ObjectHeap<CompletionHandler> heap) {

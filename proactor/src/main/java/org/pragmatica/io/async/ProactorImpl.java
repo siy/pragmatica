@@ -56,12 +56,13 @@ class ProactorImpl implements Proactor {
     private static final int AT_FDCWD = -100; // Special value used to indicate the openat/statx functions should use the current working directory.
 
     private final UringApi uringApi;
-    private final ObjectHeap<CompletionHandler> pendingCompletions;
-    private final ExchangeEntryFactory factory = new ExchangeEntryFactory();
+    private final ObjectHeap<CompletionHandler> exchangeRegistry;
+    private final ExchangeEntryFactory factory;
 
     private ProactorImpl(UringApi uringApi) {
         this.uringApi = uringApi;
-        pendingCompletions = ObjectHeap.objectHeap(uringApi.numEntries());
+        this.exchangeRegistry = ObjectHeap.objectHeap(uringApi.numEntries());
+        this.factory = new ExchangeEntryFactory(exchangeRegistry);
     }
 
     public static Proactor proactor(int queueSize) {
@@ -85,89 +86,69 @@ class ProactorImpl implements Proactor {
     @Override
     public int processIO() {
         uringApi.processSubmissions();
-
-        if (pendingCompletions.count() > 0) {
-            return uringApi.processCompletions(pendingCompletions, this);
-        }
-
-        return 0;
+        return uringApi.inFlight() > 0 ? uringApi.processCompletions(exchangeRegistry, this) : 0;
     }
 
     @Override
     public void nop(BiConsumer<Result<Unit>, Proactor> completion) {
-        uringApi.submit(factory.forNop(completion)
-                               .register(pendingCompletions));
+        uringApi.submit(factory.forNop(completion));
     }
 
     @Override
     public void delay(BiConsumer<Result<Duration>, Proactor> completion, Timeout timeout) {
-        uringApi.submit(factory.forDelay(completion, timeout)
-                               .register(pendingCompletions));
+        uringApi.submit(factory.forDelay(completion, timeout));
     }
 
     @Override
     public void close(BiConsumer<Result<Unit>, Proactor> completion, FileDescriptor fd, Option<Timeout> timeout) {
-        uringApi.submit(factory.forClose(completion, fd, timeout)
-                               .register(pendingCompletions));
-
+        uringApi.submit(factory.forClose(completion, fd, timeout));
         timeout.whenPresent(this::appendTimeout);
     }
 
     @Override
     public void read(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fd, OffHeapBuffer buffer,
                      OffsetT offset, Option<Timeout> timeout) {
-        uringApi.submit(factory.forRead(completion, fd, buffer, offset, timeout)
-                               .register(pendingCompletions));
-
+        uringApi.submit(factory.forRead(completion, fd, buffer, offset, timeout));
         timeout.whenPresent(this::appendTimeout);
     }
 
     @Override
     public void write(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fd, OffHeapBuffer buffer,
                       OffsetT offset, Option<Timeout> timeout) {
-        uringApi.submit(factory.forWrite(completion, fd, buffer, offset, timeout)
-                               .register(pendingCompletions));
-
+        uringApi.submit(factory.forWrite(completion, fd, buffer, offset, timeout));
         timeout.whenPresent(this::appendTimeout);
     }
 
     @Override
     public void splice(BiConsumer<Result<SizeT>, Proactor> completion, SpliceDescriptor descriptor, Option<Timeout> timeout) {
-        uringApi.submit(factory.forSplice(completion, descriptor, timeout)
-                               .register(pendingCompletions));
-
+        uringApi.submit(factory.forSplice(completion, descriptor, timeout));
         timeout.whenPresent(this::appendTimeout);
     }
 
     @Override
     public void open(BiConsumer<Result<FileDescriptor>, Proactor> completion, Path path, Set<OpenFlags> flags,
                      Set<FilePermission> mode, Option<Timeout> timeout) {
-        uringApi.submit(factory.forOpen(completion, path, flags, mode, timeout)
-                               .register(pendingCompletions));
-
+        uringApi.submit(factory.forOpen(completion, path, flags, mode, timeout));
         timeout.whenPresent(this::appendTimeout);
     }
 
     @Override
     public void socket(BiConsumer<Result<FileDescriptor>, Proactor> completion, AddressFamily addressFamily,
                        SocketType socketType, Set<SocketFlag> openFlags, Set<SocketOption> options) {
-        uringApi.submit(factory.forSocket(completion, addressFamily, socketType, openFlags, options)
-                               .register(pendingCompletions));
+        uringApi.submit(factory.forSocket(completion, addressFamily, socketType, openFlags, options));
     }
 
     @Override
     public <T extends InetAddress> void listen(BiConsumer<Result<ListenContext<T>>, Proactor> completion,
                                                SocketAddress<T> socketAddress, SocketType socketType,
                                                Set<SocketFlag> openFlags, SizeT queueDepth, Set<SocketOption> options) {
-        uringApi.submit(factory.forListen(completion, socketAddress, socketType, openFlags, queueDepth, options)
-                               .register(pendingCompletions));
+        uringApi.submit(factory.forListen(completion, socketAddress, socketType, openFlags, queueDepth, options));
     }
 
     @Override
     public <T extends InetAddress> void accept(BiConsumer<Result<ConnectionContext<T>>, Proactor> completion,
                                                FileDescriptor socket, Set<SocketFlag> flags, T addressType) {
-        uringApi.submit(factory.forAccept(completion, socket, flags, addressType instanceof InetAddress.Inet6Address)
-                               .register(pendingCompletions));
+        uringApi.submit(factory.forAccept(completion, socket, flags, addressType instanceof InetAddress.Inet6Address));
     }
 
     @Override
@@ -180,9 +161,7 @@ class ProactorImpl implements Proactor {
             return;
         }
 
-        uringApi.submit(factory.forConnect(completion, socket, clientAddress, timeout)
-                               .register(pendingCompletions));
-
+        uringApi.submit(factory.forConnect(completion, socket, clientAddress, timeout));
         timeout.whenPresent(this::appendTimeout);
     }
 
@@ -194,9 +173,7 @@ class ProactorImpl implements Proactor {
                                         AT_FDCWD,
                                         Bitmask.combine(flags) & ~StatFlag.EMPTY_PATH.mask(),
                                         Bitmask.combine(mask),
-                                        OffHeapCString.cstring(path.toString()))
-                               .register(pendingCompletions));
-
+                                        OffHeapCString.cstring(path.toString())));
         timeout.whenPresent(this::appendTimeout);
     }
 
@@ -208,9 +185,7 @@ class ProactorImpl implements Proactor {
                                         fd.descriptor(),
                                         Bitmask.combine(flags) | StatFlag.EMPTY_PATH.mask(),
                                         Bitmask.combine(mask),
-                                        OffHeapCString.cstring(""))
-                               .register(pendingCompletions));
-
+                                        OffHeapCString.cstring("")));
         timeout.whenPresent(this::appendTimeout);
     }
 
@@ -218,7 +193,7 @@ class ProactorImpl implements Proactor {
     public void read(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fileDescriptor, OffsetT offset,
                      Option<Timeout> timeout, OffHeapBuffer... buffers) {
         uringApi.submit(factory.forReadVector(completion, fileDescriptor, offset, timeout, withBuffers(buffers))
-                               .register(pendingCompletions));
+                               .register(exchangeRegistry));
 
         timeout.whenPresent(this::appendTimeout);
     }
@@ -226,14 +201,11 @@ class ProactorImpl implements Proactor {
     @Override
     public void write(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fileDescriptor, OffsetT offset,
                       Option<Timeout> timeout, OffHeapBuffer... buffers) {
-        uringApi.submit(factory.forWriteVector(completion, fileDescriptor, offset, timeout, withBuffers(buffers))
-                               .register(pendingCompletions));
-
+        uringApi.submit(factory.forWriteVector(completion, fileDescriptor, offset, timeout, withBuffers(buffers)));
         timeout.whenPresent(this::appendTimeout);
     }
 
     private void appendTimeout(Timeout timeout) {
-        uringApi.submit(factory.forTimeout(timeout)
-                               .register(pendingCompletions));
+        uringApi.submit(factory.forTimeout(timeout));
     }
 }

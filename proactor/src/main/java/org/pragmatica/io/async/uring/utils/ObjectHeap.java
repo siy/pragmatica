@@ -20,13 +20,9 @@ package org.pragmatica.io.async.uring.utils;
 import java.util.Arrays;
 
 /**
- * Temporary storage for objects. Main use case - storing object corresponding to in-flight requests and obtaining integer index which can be passed
- * instead of the whole object to external entity. Upon request completion object then is released from the heap by using corresponding integer
- * index.
+ * Temporary storage for objects which maps instances to integer keys.
  */
 public class ObjectHeap<T> {
-    private static final int INITIAL_SIZE = 256;
-
     private Object[] elements;
     private int[] indexes;
     private int firstFree = -1;
@@ -36,10 +32,6 @@ public class ObjectHeap<T> {
     private ObjectHeap(int initialCapacity) {
         elements = new Object[initialCapacity];
         indexes = new int[initialCapacity];
-    }
-
-    public static <T> ObjectHeap<T> objectHeap() {
-        return objectHeap(INITIAL_SIZE);
     }
 
     public static <T> ObjectHeap<T> objectHeap(int initialCapacity) {
@@ -54,6 +46,11 @@ public class ObjectHeap<T> {
         elements[key] = null;
         count--;
         return result;
+    }
+
+    @SuppressWarnings("unchecked")
+    public T elementUnsafe(int key) {
+        return (T) elements[key];
     }
 
     public int allocKey(T value) {
@@ -87,9 +84,5 @@ public class ObjectHeap<T> {
         firstFree = indexes[result];
         count++;
         return result;
-    }
-
-    public int count() {
-        return count;
     }
 }

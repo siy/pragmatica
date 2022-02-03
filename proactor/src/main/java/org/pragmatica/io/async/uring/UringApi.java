@@ -58,6 +58,7 @@ public class UringApi implements AutoCloseable {
 
     private boolean closed = false;
     private int count = 0;
+    private int inFlight = 0;
 
     static {
         try {
@@ -140,7 +141,14 @@ public class UringApi implements AutoCloseable {
     }
 
     public int processCompletions(ObjectHeap<CompletionHandler> pendingCompletions, Proactor proactor) {
-        return ioUring.completionQueue().processCompletions(pendingCompletions, proactor);
+        int completions = ioUring.completionQueue().processCompletions(pendingCompletions, proactor);
+        inFlight -= completions;
+
+        return completions;
+    }
+
+    public int inFlight() {
+        return inFlight;
     }
 
     public void processSubmissions() {
@@ -164,6 +172,7 @@ public class UringApi implements AutoCloseable {
 
             sqEntry.reposition(sqe);
             entry.apply(sqEntry.clear());
+            inFlight++;
             break;
         }
 
