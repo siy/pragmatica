@@ -89,7 +89,7 @@ public enum FilePermission implements Bitmask {
     }
 
     public static EnumSet<FilePermission> fromShort(final short value) {
-        final EnumSet<FilePermission> result = EnumSet.noneOf(FilePermission.class);
+        final var result = EnumSet.noneOf(FilePermission.class);
 
         for (var permission : values()) {
             if ((value & permission.mask()) != 0) {

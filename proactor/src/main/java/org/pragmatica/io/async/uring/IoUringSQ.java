@@ -28,7 +28,7 @@ import static org.pragmatica.io.async.uring.struct.shape.IoUringSQOffsets.*;
  * I/O Uring Submission Queue
  */
 public class IoUringSQ extends AbstractExternalRawStructure<IoUringSQ> {
-    private static final long IORING_SQ_NEED_WAKEUP = (1L << 0); /* needs io_uring_enter wakeup */
+    private static final long IORING_SQ_NEED_WAKEUP = (1L); /* needs io_uring_enter wakeup */
     private static final long IORING_SQ_CQ_OVERFLOW = (1L << 1); /* CQ ring is overflown */
 
     private final IoUring ioUring;

@@ -33,7 +33,7 @@ public interface ConnectionProtocolContext<T extends InetAddress> {
                                                                                           ConnectionContext<T> connectionContext) {
         record connectionProtocolContext<T extends InetAddress>(ListenContext<T> listenContext,
                                             ConnectionContext<T> connectionContext)
-        implements ConnectionProtocolContext<T> {};
+        implements ConnectionProtocolContext<T> {}
 
         return new connectionProtocolContext<>(listenContext, connectionContext);
     }

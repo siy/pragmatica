@@ -23,7 +23,7 @@ import java.util.EnumSet;
  * Flags for {@link UringApi#init(int, long, int)} method.
  */
 public enum UringSetupFlags implements Bitmask {
-    IO_POLL(1 << 0),    /* io_context is polled */
+    IO_POLL(1),    /* io_context is polled */
     SQ_POLL(1 << 1),    /* SQ poll thread */
     SQ_AFF(1 << 2),    /* sq_thread_cpu is valid */
     CQ_SIZE(1 << 3),    /* app defines CQ size */

@@ -38,7 +38,7 @@ public enum SocketOption implements Bitmask {
 
     @Override
     public int mask() {
-        return 0;
+        return mask;
     }
 
     public static EnumSet<SocketOption> none() {

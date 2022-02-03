@@ -80,7 +80,7 @@ final class PromiseImpl<T> implements Promise<T> {
 
         var result = new PromiseImpl<U>(null);
 
-        push(new CompletionAction<T>(value -> result.resolve(value.map(mapper)), result));
+        push(new CompletionAction<>(value -> result.resolve(value.map(mapper)), result));
 
         return result;
     }
@@ -94,9 +94,9 @@ final class PromiseImpl<T> implements Promise<T> {
 
         var result = new PromiseImpl<U>(null);
 
-        push(new CompletionAction<T>(value -> value.fold(f -> new PromiseImpl<>((Result<U>) value), mapper)
-                                                   .onResult(result::resolve),
-                                     result));
+        push(new CompletionAction<>(value -> value.fold(f -> new PromiseImpl<>((Result<U>) value), mapper)
+                                                  .onResult(result::resolve),
+                                    result));
 
         return result;
     }
@@ -106,7 +106,7 @@ final class PromiseImpl<T> implements Promise<T> {
         if (value != null) {
             action.accept(value);
         } else {
-            push(new CompletionAction<T>(action, null));
+            push(new CompletionAction<>(action, null));
         }
 
         return this;
@@ -173,6 +173,7 @@ final class PromiseImpl<T> implements Promise<T> {
         return "Promise(" + (value == null ? "<>" : value.toString()) + ')';
     }
 
+    @SuppressWarnings("unchecked")
     private void runActions(Result<T> value) {
         CompletionAction<T> processed = NOP;
         CompletionAction<T> head;
@@ -232,15 +233,13 @@ final class PromiseImpl<T> implements Promise<T> {
         return this;
     }
 
-    private PromiseImpl<T> push(CompletionAction<T> newHead) {
+    private void push(CompletionAction<T> newHead) {
         CompletionAction<T> oldHead;
 
         do {
             oldHead = head;
             newHead.next = oldHead;
         } while (!HEAD.compareAndSet(this, oldHead, newHead));
-
-        return this;
     }
 
     private CompletionAction<T> swapHead() {

@@ -21,7 +21,7 @@ package org.pragmatica.io.async.uring;
  * Flags for {@link UringApi#enter(long, long, long, int)} method.
  */
 public enum UringEnterFlags implements Bitmask {
-    GET_EVENTS(1 << 0),
+    GET_EVENTS(1),
     SQ_WAKEUP(1 << 1),
     SQ_WAIT(1 << 2),
     EXT_ARG(1 << 3);

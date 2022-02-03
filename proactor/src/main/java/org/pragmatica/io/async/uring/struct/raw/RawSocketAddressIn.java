@@ -79,6 +79,7 @@ public final class RawSocketAddressIn
                      .map(SocketAddress::socketAddress);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public RawSocketAddressIn shape() {
         return this;

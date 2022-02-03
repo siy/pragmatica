@@ -99,7 +99,7 @@ public sealed interface Option<T> permits Some, None {
     }
 
     /**
-     * Convenience method which allows to perform specific actions for empty and present instances at once.
+     * Convenience method which allows performing specific actions for empty and present instances at once.
      *
      * @param emptyValConsumer    Action to perform in case of empty instance
      * @param nonEmptyValConsumer Action to perform on present instance value
@@ -328,7 +328,7 @@ public sealed interface Option<T> permits Some, None {
     }
 
     /**
-     * Transform option into option of tuple with single value. The result is empty if input option is empty. Otherwise resulting instance contains
+     * Transform option into option of tuple with single value. The result is empty if input option is empty. Otherwise, resulting instance contains
      * tuple with input option value.
      *
      * @return {@link Mapper1} prepared for further transformation.
@@ -338,7 +338,7 @@ public sealed interface Option<T> permits Some, None {
     }
 
     /**
-     * Transform options into option of tuple of two values. The result is empty if any input option is empty. Otherwise resulting instance contains
+     * Transform options into option of tuple of two values. The result is empty if any input option is empty. Otherwise, resulting instance contains
      * tuple with values from input options.
      *
      * @return {@link Mapper2} prepared for further transformation.
@@ -348,7 +348,7 @@ public sealed interface Option<T> permits Some, None {
     }
 
     /**
-     * Transform options into option of tuple of three values. The result is empty if any input option is empty. Otherwise resulting instance contains
+     * Transform options into option of tuple of three values. The result is empty if any input option is empty. Otherwise, resulting instance contains
      * tuple with values from input options.
      *
      * @return {@link Mapper3} prepared for further transformation.
@@ -358,7 +358,7 @@ public sealed interface Option<T> permits Some, None {
     }
 
     /**
-     * Transform options into option of tuple of four values. The result is empty if any input option is empty. Otherwise resulting instance contains
+     * Transform options into option of tuple of four values. The result is empty if any input option is empty. Otherwise, resulting instance contains
      * tuple with values from input options.
      *
      * @return {@link Mapper4} prepared for further transformation.
@@ -374,7 +374,7 @@ public sealed interface Option<T> permits Some, None {
     }
 
     /**
-     * Transform options into option of tuple of five values. The result is empty if any input option is empty. Otherwise resulting instance contains
+     * Transform options into option of tuple of five values. The result is empty if any input option is empty. Otherwise, resulting instance contains
      * tuple with values from input options.
      *
      * @return {@link Mapper5} prepared for further transformation.
@@ -391,7 +391,7 @@ public sealed interface Option<T> permits Some, None {
     }
 
     /**
-     * Transform options into option of tuple of six values. The result is empty if any input option is empty. Otherwise resulting instance contains
+     * Transform options into option of tuple of six values. The result is empty if any input option is empty. Otherwise, resulting instance contains
      * tuple with values from input options.
      *
      * @return {@link Mapper6} prepared for further transformation.
@@ -410,7 +410,7 @@ public sealed interface Option<T> permits Some, None {
     }
 
     /**
-     * Transform options into option of tuple of seven values. The result is empty if any input option is empty. Otherwise resulting instance contains
+     * Transform options into option of tuple of seven values. The result is empty if any input option is empty. Otherwise, resulting instance contains
      * tuple with values from input options.
      *
      * @return {@link Mapper7} prepared for further transformation.
@@ -430,7 +430,7 @@ public sealed interface Option<T> permits Some, None {
     }
 
     /**
-     * Transform options into option of tuple of eight values. The result is empty if any input option is empty. Otherwise resulting instance contains
+     * Transform options into option of tuple of eight values. The result is empty if any input option is empty. Otherwise, resulting instance contains
      * tuple with values from input options.
      *
      * @return {@link Mapper8} prepared for further transformation.
@@ -451,7 +451,7 @@ public sealed interface Option<T> permits Some, None {
     }
 
     /**
-     * Transform options into option of tuple of nine values. The result is empty if any input option is empty. Otherwise resulting instance contains
+     * Transform options into option of tuple of nine values. The result is empty if any input option is empty. Otherwise, resulting instance contains
      * tuple with values from input options.
      *
      * @return {@link Mapper9} prepared for further transformation.

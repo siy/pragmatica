@@ -30,7 +30,7 @@ public class IoUring extends AbstractExternalRawStructure<IoUring> {
         super(address, IoUringOffsets.SIZE);
 
         submissionQueue = IoUringSQ.at(sqAddress(), this);
-        completionQueue = IoUringCQ.at(cqAddress(), this);
+        completionQueue = IoUringCQ.at(cqAddress());
     }
 
     public static IoUring at(long address) {

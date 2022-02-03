@@ -24,11 +24,12 @@ import java.util.EnumSet;
 /**
  * File open flags.
  */
+//TODO: document all flags
 public enum OpenFlags implements Bitmask {
-    READ_ONLY(00_000_000),
-    WRITE_ONLY(00_000_001),
-    READ_WRITE(00_000_002),
-    CREATE(00_000_100),
+    READ_ONLY(00_000_000),      // Open file for Read
+    WRITE_ONLY(00_000_001),     // Open file for Write
+    READ_WRITE(00_000_002),     // Open file for Read/Write
+    CREATE(00_000_100),         // Create file if it does not exist
     EXCL(00_000_200),
     NOCTTY(00_000_400),
     TRUNCATE(00_001_000),

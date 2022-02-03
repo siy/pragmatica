@@ -31,21 +31,19 @@ import static org.pragmatica.io.async.uring.struct.shape.IoUringCQOffsets.*;
  */
 public class IoUringCQ extends AbstractExternalRawStructure<IoUringCQ> {
     private final CQEntry cqEntry = CQEntry.at(0);
-    private final IoUring ioUring;
 
     private long kheadAddr;
     private long ktailAddr;
     private long mask;
     private long cqesAddress;
 
-    private IoUringCQ(long address, IoUring ioUring) {
+    private IoUringCQ(long address) {
         super(address, IoUringCQOffsets.SIZE);
-        this.ioUring = ioUring;
         adjustAddresses();
     }
 
-    public static IoUringCQ at(long address, IoUring ioUring) {
-        return new IoUringCQ(address, ioUring);
+    public static IoUringCQ at(long address) {
+        return new IoUringCQ(address);
     }
 
     private void adjustAddresses() {

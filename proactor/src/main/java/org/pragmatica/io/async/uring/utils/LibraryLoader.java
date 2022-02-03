@@ -77,7 +77,7 @@ public final class LibraryLoader {
 
         // Prepare temporary file
         if (temporaryDir == null) {
-            temporaryDir = createTempDirectory(NATIVE_FOLDER_PATH_PREFIX);
+            temporaryDir = createTempDirectory();
             temporaryDir.deleteOnExit();
         }
 
@@ -115,9 +115,9 @@ public final class LibraryLoader {
         }
     }
 
-    private static File createTempDirectory(String prefix) throws IOException {
+    private static File createTempDirectory() throws IOException {
         var tempDir = System.getProperty("java.io.tmpdir");
-        var generatedDir = new File(tempDir, prefix + System.nanoTime());
+        var generatedDir = new File(tempDir, LibraryLoader.NATIVE_FOLDER_PATH_PREFIX + System.nanoTime());
 
         if (!generatedDir.mkdir()) {
             throw new IOException("Failed to create temp directory " + generatedDir.getName());

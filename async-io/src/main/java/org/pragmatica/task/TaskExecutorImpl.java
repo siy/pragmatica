@@ -54,7 +54,7 @@ final class TaskExecutorImpl implements TaskExecutor {
     }
 
     @Override
-    public final TaskExecutor submit(Consumer<Proactor> task) {
+    public TaskExecutor submit(Consumer<Proactor> task) {
         pushTask(task);
 
         return this;

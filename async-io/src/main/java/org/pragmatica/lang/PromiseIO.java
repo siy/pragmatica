@@ -94,7 +94,8 @@ public interface PromiseIO {
      *                pipe
      * @param timeout Operation timeout
      *
-     * @return a {@link Promise} instance, which is resolved with number of bytes read once operations is finished successfully.
+     * @return a {@link Promise} instance, which is resolved with number of bytes read once operations is finished successfully or resolved with error
+     *     description if operation failed.
      */
     static Promise<SizeT> read(FileDescriptor fd, OffHeapBuffer buffer, OffsetT offset, Option<Timeout> timeout) {
         return Promise.promise((promise, proactor) -> proactor.read(promise::resolve, fd, buffer, offset, timeout));
@@ -108,7 +109,8 @@ public interface PromiseIO {
      * @param offset Offset in the source file if file descriptor points to file. Use {@link OffsetT#ZERO} if file descriptor belongs to socket or
      *               pipe
      *
-     * @return a {@link Promise} instance, which is resolved with number of bytes read once operations is finished successfully.
+     * @return a {@link Promise} instance, which is resolved with number of bytes read once operations is finished successfully or resolved with error
+     *     description if operation failed.
      */
     static Promise<SizeT> read(FileDescriptor fd, OffHeapBuffer buffer, OffsetT offset) {
         return read(fd, buffer, offset, empty());
@@ -122,7 +124,8 @@ public interface PromiseIO {
      * @param buffer  Buffer to store read data
      * @param timeout Operation timeout
      *
-     * @return a {@link Promise} instance, which is resolved with number of bytes read once operations is finished successfully.
+     * @return a {@link Promise} instance, which is resolved with number of bytes read once operations is finished successfully or resolved with error
+     *     description if operation failed.
      */
     static Promise<SizeT> read(FileDescriptor fd, OffHeapBuffer buffer, Option<Timeout> timeout) {
         return read(fd, buffer, OffsetT.ZERO, timeout);
@@ -131,45 +134,124 @@ public interface PromiseIO {
     /**
      * Same as {@link #read(FileDescriptor, OffHeapBuffer, Option)}, but no timeout is specified.
      *
-     * @param fd      File descriptor or socket
-     * @param buffer  Buffer to store read data
+     * @param fd     File descriptor or socket
+     * @param buffer Buffer to store read data
      *
-     * @return a {@link Promise} instance, which is resolved with number of bytes read once operations is finished successfully.
+     * @return a {@link Promise} instance, which is resolved with number of bytes read once operations is finished successfully or resolved with error
+     *     description if operation failed.
      */
     static Promise<SizeT> read(FileDescriptor fd, OffHeapBuffer buffer) {
         return read(fd, buffer, OffsetT.ZERO, empty());
     }
 
-    //TODO: finish documentation
-
+    /**
+     * Write data to specified file descriptor from provided buffer. The number of bytes to write is defined by buffer {@link OffHeapBuffer#used()}
+     * value. Upon successful completion, number of bytes written also used to resolve returned promise.
+     *
+     * @param fd      File descriptor or socket
+     * @param buffer  Buffer to write
+     * @param offset  Offset in the destination file if file descriptor points to file. Use {@link OffsetT#ZERO} if file descriptor belongs to socket
+     *                or pipe
+     * @param timeout Operation timeout
+     *
+     * @return a {@link Promise} instance, which is resolved with number of written bytes once operations is finished successfully or resolved with
+     *     error description if operation failed.
+     */
     static Promise<SizeT> write(FileDescriptor fd, OffHeapBuffer buffer, OffsetT offset, Option<Timeout> timeout) {
         return Promise.promise((promise, proactor) -> proactor.write(promise::resolve, fd, buffer, offset, timeout));
     }
 
+    /**
+     * Same as {@link #write(FileDescriptor, OffHeapBuffer, OffsetT, Option)}, but no timeout is specified.
+     *
+     * @param fd     File descriptor or socket
+     * @param buffer Buffer to write
+     * @param offset Offset in the destination file if file descriptor points to file. Use {@link OffsetT#ZERO} if file descriptor belongs to socket
+     *               or pipe
+     *
+     * @return a {@link Promise} instance, which is resolved with number of written bytes once operations is finished successfully or resolved with
+     *     error description if operation failed.
+     */
     static Promise<SizeT> write(FileDescriptor fd, OffHeapBuffer buffer, OffsetT offset) {
         return write(fd, buffer, offset, empty());
     }
 
+    /**
+     * Same as {@link #write(FileDescriptor, OffHeapBuffer, OffsetT, Option)}, but no offset needs to be provided. Convenient for use with sockets or
+     * pipes.
+     *
+     * @param fd      File descriptor or socket
+     * @param buffer  Buffer to write
+     * @param timeout Operation timeout
+     *
+     * @return a {@link Promise} instance, which is resolved with number of written bytes once operations is finished successfully or resolved with
+     *     error description if operation failed.
+     */
     static Promise<SizeT> write(FileDescriptor fd, OffHeapBuffer buffer, Option<Timeout> timeout) {
         return write(fd, buffer, OffsetT.ZERO, timeout);
     }
 
+    /**
+     * Same as {@link #write(FileDescriptor, OffHeapBuffer, Option)}, but no timeout is specified.
+     *
+     * @param fd     File descriptor or socket
+     * @param buffer Buffer to write
+     *
+     * @return a {@link Promise} instance, which is resolved with number of written bytes once operations is finished successfully or resolved with
+     *     error description if operation failed.
+     */
     static Promise<SizeT> write(FileDescriptor fd, OffHeapBuffer buffer) {
         return write(fd, buffer, OffsetT.ZERO, empty());
     }
 
+    /**
+     * Close provided file descriptor.
+     *
+     * @param fd      File descriptor or socket.
+     * @param timeout Operation timeout.
+     *
+     * @return a {@link Promise} instance, which is resolved when operation is completed.
+     */
     static Promise<Unit> close(FileDescriptor fd, Option<Timeout> timeout) {
         return Promise.promise((promise, proactor) -> proactor.close(promise::resolve, fd, timeout));
     }
 
+    /**
+     * Same as {@link #close(FileDescriptor, Option)}, but no timeout is specified.
+     *
+     * @param fd File descriptor or socket.
+     *
+     * @return a {@link Promise} instance, which is resolved when operation is completed.
+     */
     static Promise<Unit> close(FileDescriptor fd) {
         return close(fd, empty());
     }
 
+    /**
+     * Open file at specified path using provided flags and file permission.
+     *
+     * @param path    File path
+     * @param flags   Set of open flags. See {@link OpenFlags} for more details.
+     * @param mode    Open mode (file permissions). See {@link FilePermission} for more details.
+     * @param timeout Operation timeout.
+     *
+     * @return a {@link Promise} instance, which is resolved with the file descriptor if operation was successful or with error description if
+     *     operation failed.
+     */
     static Promise<FileDescriptor> open(Path path, Set<OpenFlags> flags, Set<FilePermission> mode, Option<Timeout> timeout) {
         return Promise.promise((promise, proactor) -> proactor.open(promise::resolve, path, flags, mode, timeout));
     }
 
+    /**
+     * Same as {@link #open(Path, Set, Set, Option)}, but no timeout is specified.
+     *
+     * @param path  File path
+     * @param flags Set of open flags. See {@link OpenFlags} for more details.
+     * @param mode  Open mode (file permissions). See {@link FilePermission} for more details.
+     *
+     * @return a {@link Promise} instance, which is resolved with the file descriptor if operation was successful or with error description if
+     *     operation failed.
+     */
     static Promise<FileDescriptor> open(Path path, Set<OpenFlags> flags, Set<FilePermission> mode) {
         return open(path, flags, mode, empty());
     }
