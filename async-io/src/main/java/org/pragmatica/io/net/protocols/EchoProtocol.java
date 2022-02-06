@@ -19,13 +19,17 @@ package org.pragmatica.io.net.protocols;
 
 import org.pragmatica.io.async.Proactor;
 import org.pragmatica.io.async.Timeout;
+import org.pragmatica.io.async.common.SizeT;
 import org.pragmatica.io.async.file.FileDescriptor;
 import org.pragmatica.io.async.net.InetAddress;
 import org.pragmatica.io.async.util.OffHeapBuffer;
 import org.pragmatica.io.net.ConnectionProtocol;
 import org.pragmatica.io.net.ConnectionProtocolContext;
 import org.pragmatica.io.net.ConnectionProtocolStarter;
+import org.pragmatica.lang.Cause;
 import org.pragmatica.lang.Option;
+import org.pragmatica.lang.Result;
+import org.pragmatica.lang.Unit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -71,22 +75,41 @@ public interface EchoProtocol<T extends InetAddress> extends ConnectionProtocol<
             return config.timeout();
         }
 
-        private void startRead(Proactor proactor) {
-            proactor.read((result, proactor1) -> result.onFailure(failure -> LOG.warn("Read error: {}", failure.message()))
-                                                       .onFailureDo(() -> cleanup(proactor1))
-                                                       .onSuccess(size -> startWrite(proactor1)),
-                          socket(), buffer, timeout());
+        private Unit startRead(Proactor proactor) {
+            proactor.read(this::readHandler, socket(), buffer, timeout());
+
+            return Unit.unit();
         }
 
-        private void startWrite(Proactor proactor) {
-            proactor.write((result, proactor1) -> result.onFailure(failure -> LOG.warn("Write error: {}", failure.message()))
-                                                        .onFailureDo(() -> cleanup(proactor1))
-                                                        .onSuccess(size -> startRead(proactor1)),
-                           socket(), buffer, timeout());
+        private Unit startWrite(Proactor proactor) {
+            proactor.write(this::writeHandler, socket(), buffer, timeout());
+
+            return Unit.unit();
         }
 
-        private void cleanup(Proactor proactor) {
-            proactor.close(result -> LOG.debug("Socket {} closed", socket()), socket());
+        private void readHandler(Result<SizeT> result, Proactor proactor) {
+            result.fold(failure -> handleFailure(failure, proactor), size -> startWrite(proactor));
         }
+
+        private void writeHandler(Result<SizeT> result, Proactor proactor) {
+            result.fold(failure -> handleFailure(failure, proactor), size -> startRead(proactor));
+        }
+
+        private Unit handleFailure(Cause failure, Proactor proactor) {
+            if (LOG.isInfoEnabled()) {
+                LOG.info("I/O error: {}", failure);
+            }
+
+            proactor.close(this::logClosing, socket());
+
+            return Unit.unit();
+        }
+
+        private void logClosing(Result<Unit> unused) {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Socket {} closed", socket());
+            }
+        }
+
     }
 }

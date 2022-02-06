@@ -197,6 +197,11 @@ public enum SystemError implements Cause {
         return message;
     }
 
+    @Override
+    public String toString() {
+        return "Error(" + code + ") " + message;
+    }
+
     public static <T> Result<T> result(int code, FN1<T, Integer> constructor) {
         return code >= 0
                ? Result.success(constructor.apply(code))
