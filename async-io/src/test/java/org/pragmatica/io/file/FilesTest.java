@@ -69,7 +69,6 @@ class FilesTest {
     }
 
     @Test
-    @Disabled
     void readFileLineByLine() {
         var fileName1 = Path.of("src/test/resources/utf8/japanese-wiki.html");
         var lineCount1 = new AtomicLong(0);
