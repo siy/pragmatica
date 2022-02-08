@@ -29,9 +29,8 @@ public interface AcceptProtocol<T extends InetAddress> {
      * <p>
      * WARNING: Provided {@link Proactor} instance is transient, it should not be stored nor used outside the method body.
      *
-     * @param listenContext listen context
-     * @param connection    connection context
-     * @param proactor      transient {@link Proactor} instance
+     * @param context  connection context
+     * @param proactor transient {@link Proactor} instance
      */
     void process(ConnectionProtocolContext<T> context, Proactor proactor);
 

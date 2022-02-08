@@ -27,7 +27,7 @@ import org.pragmatica.lang.Unit;
  * Incoming connection listener.
  */
 public interface Listener<T extends InetAddress> {
-    Promise<Unit> listen(AcceptProtocol<T> protocol);
+    Promise<Unit> listen();
 
     Promise<Unit> shutdown();
 

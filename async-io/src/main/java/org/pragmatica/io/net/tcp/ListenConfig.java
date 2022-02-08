@@ -19,10 +19,16 @@ package org.pragmatica.io.net.tcp;
 
 import org.pragmatica.io.async.common.SizeT;
 import org.pragmatica.io.async.net.*;
+import org.pragmatica.io.async.net.InetAddress.Inet4Address;
+import org.pragmatica.io.async.net.InetAddress.Inet6Address;
+import org.pragmatica.io.net.AcceptProtocol;
 
 import java.util.Set;
 
 public interface ListenConfig<T extends InetAddress> {
+    int DEFAULT_PORT = 8081;
+    int DEFAULT_BACKLOG_SIZE = 16;
+
     SocketAddress<T> address();
 
     Set<SocketFlag> listenerFlags();
@@ -33,32 +39,36 @@ public interface ListenConfig<T extends InetAddress> {
 
     SizeT backlogSize();
 
-    static ListenConfigBuilder<InetAddress.Inet4Address> listenConfig() {
-        return listenConfig(InetAddress.Inet4Address.INADDR_ANY);
+    AcceptProtocol<T> acceptProtocol();
+
+    static ListenConfigBuilder<Inet4Address> listenConfig(AcceptProtocol<Inet4Address> acceptProtocol) {
+        return listenConfig(Inet4Address.INADDR_ANY, acceptProtocol);
     }
 
-    static ListenConfigBuilder<InetAddress.Inet4Address> listenConfig(InetAddress.Inet4Address address) {
-        return new ListenConfigBuilder<>(address);
+    static ListenConfigBuilder<Inet4Address> listenConfig(Inet4Address address, AcceptProtocol<Inet4Address> acceptProtocol) {
+        return new ListenConfigBuilder<>(address, acceptProtocol);
     }
 
-    static ListenConfigBuilder<InetAddress.Inet6Address> listenConfig6() {
-        return listenConfig6(InetAddress.Inet6Address.INADDR_ANY);
+    static ListenConfigBuilder<Inet6Address> listenConfig6(AcceptProtocol<Inet6Address> acceptProtocol) {
+        return listenConfig6(Inet6Address.INADDR_ANY, acceptProtocol);
     }
 
-    static ListenConfigBuilder<InetAddress.Inet6Address> listenConfig6(InetAddress.Inet6Address address) {
-        return new ListenConfigBuilder<>(address);
+    static ListenConfigBuilder<Inet6Address> listenConfig6(Inet6Address address, AcceptProtocol<Inet6Address> acceptProtocol) {
+        return new ListenConfigBuilder<>(address, acceptProtocol);
     }
 
     class ListenConfigBuilder<T extends InetAddress> {
-        private InetPort port = InetPort.inetPort(8081);
+        private InetPort port = InetPort.inetPort(DEFAULT_PORT);
         private Set<SocketFlag> listenerFlags = SocketFlag.closeOnExec();
         private Set<SocketFlag> acceptorFlags = SocketFlag.closeOnExec();
         private Set<SocketOption> listenerOptions = SocketOption.reuseAll();
-        private SizeT backlogSize = SizeT.sizeT(16);
+        private SizeT backlogSize = SizeT.sizeT(DEFAULT_BACKLOG_SIZE);
+        private final AcceptProtocol<T> acceptProtocol;
         private final T address;
 
-        private ListenConfigBuilder(T address) {
+        private ListenConfigBuilder(T address, AcceptProtocol<T> acceptProtocol) {
             this.address = address;
+            this.acceptProtocol = acceptProtocol;
         }
 
         public ListenConfigBuilder<T> withPort(int port) {
@@ -92,11 +102,12 @@ public interface ListenConfig<T extends InetAddress> {
 
         public ListenConfig<T> build() {
             record listenConfig<R extends InetAddress>(SocketAddress<R> address, Set<SocketFlag> listenerFlags,
-                                                       Set<SocketFlag> acceptorFlags, Set<SocketOption> listenerOptions, SizeT backlogSize)
+                                                       Set<SocketFlag> acceptorFlags, Set<SocketOption> listenerOptions,
+                                                       SizeT backlogSize, AcceptProtocol<R> acceptProtocol)
                 implements ListenConfig<R> {}
 
             return new listenConfig<>(SocketAddress.genericAddress(port, address), listenerFlags, acceptorFlags,
-                                      listenerOptions, backlogSize);
+                                      listenerOptions, backlogSize, acceptProtocol);
         }
     }
 }

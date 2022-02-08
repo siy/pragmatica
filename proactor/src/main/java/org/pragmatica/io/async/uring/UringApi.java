@@ -110,7 +110,7 @@ public class UringApi implements AutoCloseable {
 
     private UringApi(int numEntries, long ringBase) {
         submissionEntries = numEntries;
-        threshold = numEntries - numEntries / 4;
+        threshold = numEntries - 2;
         this.ringBase = ringBase;
         sqEntry = SQEntry.at(0);
         ioUring = IoUring.at(ringBase);

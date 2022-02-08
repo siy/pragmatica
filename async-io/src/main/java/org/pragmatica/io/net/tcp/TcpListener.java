@@ -24,7 +24,6 @@ import org.pragmatica.io.async.net.InetAddress;
 import org.pragmatica.io.async.net.ListenContext;
 import org.pragmatica.io.async.net.SocketType;
 import org.pragmatica.io.async.util.DaemonThreadFactory;
-import org.pragmatica.io.net.AcceptProtocol;
 import org.pragmatica.io.net.Listener;
 import org.pragmatica.lang.Option;
 import org.pragmatica.lang.Promise;
@@ -57,12 +56,12 @@ public class TcpListener<T extends InetAddress> implements Listener<T> {
     }
 
     @Override
-    public Promise<Unit> listen(AcceptProtocol<T> protocol) {
+    public Promise<Unit> listen() {
         Runtime.getRuntime()
                .addShutdownHook(SHUTDOWN_HOOK_THREAD_FACTORY.newThread(this::shutdown));
 
         return serve.async((promise, proactor) ->
-                               proactor.listen(result -> doListen(result, protocol),
+                               proactor.listen(result -> doListen(result),
                                                config.address(), SocketType.STREAM, config.listenerFlags(),
                                                config.backlogSize(), config.listenerOptions()));
     }
@@ -76,36 +75,35 @@ public class TcpListener<T extends InetAddress> implements Listener<T> {
         return shutdown;
     }
 
-    private void doListen(Result<ListenContext<T>> result, AcceptProtocol<T> protocol) {
+    private void doListen(Result<ListenContext<T>> result) {
         result.onFailure(serve::failure)
               .onFailure(shutdown::failure)
               .onSuccess(context -> LOG.debug("Listening at {}", context))
-              .onSuccess(context -> doAccept(context, protocol));
+              .onSuccess(this::doAccept);
     }
 
-    private void doAccept(ListenContext<T> context, AcceptProtocol<T> protocol) {
+    private void doAccept(ListenContext<T> context) {
         if (!serverContext.compareAndSet(null, context)) {
             serve.failure(SystemError.EALREADY);
             return;
         }
 
-        serve.async((promise, proactor, executor) -> repeatAccept(proactor, context, protocol, executor));
+        serve.async((promise, proactor, executor) -> repeatAccept(proactor, context, executor));
     }
 
-    private void repeatAccept(Proactor proactor, ListenContext<T> context, AcceptProtocol<T> protocol, TaskExecutor executor) {
-        proactor.accept((result, proactor1) -> processAccept(context, protocol, result, proactor1, executor), context.socket(),
+    private void repeatAccept(Proactor proactor, ListenContext<T> context, TaskExecutor executor) {
+        proactor.accept((result, proactor1) -> processAccept(context, result, proactor1, executor), context.socket(),
                         config.acceptorFlags(), context.address().address());
     }
 
-    private void processAccept(ListenContext<T> context, AcceptProtocol<T> protocol, Result<ConnectionContext<T>> result,
+    private void processAccept(ListenContext<T> context, Result<ConnectionContext<T>> result,
                                Proactor proactor, TaskExecutor executor) {
         result.onFailure(failure -> LOG.warn("Accept error: {}", failure.message()))
               .onFailure(serve::failure)
-              .onSuccess(connectionContext -> handleSuccessfulAccept(context, protocol, proactor, executor, connectionContext));
+              .onSuccess(connectionContext -> handleSuccessfulAccept(context, proactor, executor, connectionContext));
     }
 
     private void handleSuccessfulAccept(ListenContext<T> context,
-                                        AcceptProtocol<T> protocol,
                                         Proactor proactor,
                                         TaskExecutor executor,
                                         ConnectionContext<T> connectionContext) {
@@ -116,7 +114,8 @@ public class TcpListener<T extends InetAddress> implements Listener<T> {
 
         var connectionProtocolContext = connectionProtocolContext(context, connectionContext);
 
-        executor.submit(proactor1 -> protocol.process(connectionProtocolContext, proactor1));
-        repeatAccept(proactor, context, protocol, executor);
+        executor.submit(proactor1 -> config.acceptProtocol().process(connectionProtocolContext, proactor1));
+        repeatAccept(proactor, context, executor);
     }
+
 }

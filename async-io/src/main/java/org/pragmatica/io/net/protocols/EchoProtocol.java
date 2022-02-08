@@ -37,7 +37,7 @@ import org.slf4j.LoggerFactory;
  * Simple TCP Echo protocol implementation. All it does is sending back received data.
  */
 public interface EchoProtocol<T extends InetAddress> extends ConnectionProtocol<T> {
-    static <T extends InetAddress> ConnectionProtocolStarter<T> starter(int bufferSize, Option<Timeout> timeout) {
+    static <T extends InetAddress> ConnectionProtocolStarter<T> echoProtocol(T addressTag, int bufferSize, Option<Timeout> timeout) {
         return new EchoProtocolConfig<>(bufferSize, timeout);
     }
 
@@ -64,7 +64,7 @@ public interface EchoProtocol<T extends InetAddress> extends ConnectionProtocol<
 
         @Override
         public void process(Proactor proactor) {
-            startRead(proactor);
+            proactor.read(this::readHandler, socket(), buffer, timeout());
         }
 
         private FileDescriptor socket() {
@@ -75,24 +75,18 @@ public interface EchoProtocol<T extends InetAddress> extends ConnectionProtocol<
             return config.timeout();
         }
 
-        private Unit startRead(Proactor proactor) {
-            proactor.read(this::readHandler, socket(), buffer, timeout());
-
-            return Unit.unit();
-        }
-
-        private Unit startWrite(Proactor proactor) {
-            proactor.write(this::writeHandler, socket(), buffer, timeout());
-
-            return Unit.unit();
-        }
-
         private void readHandler(Result<SizeT> result, Proactor proactor) {
-            result.fold(failure -> handleFailure(failure, proactor), size -> startWrite(proactor));
+            result.fold(failure -> handleFailure(failure, proactor), size -> {
+                proactor.write(this::writeHandler, socket(), buffer, timeout());
+                return Unit.unit();
+            });
         }
 
         private void writeHandler(Result<SizeT> result, Proactor proactor) {
-            result.fold(failure -> handleFailure(failure, proactor), size -> startRead(proactor));
+            result.fold(failure -> handleFailure(failure, proactor), size -> {
+                proactor.read(this::readHandler, socket(), buffer, timeout());
+                return Unit.unit();
+            });
         }
 
         private Unit handleFailure(Cause failure, Proactor proactor) {
