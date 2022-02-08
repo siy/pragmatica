@@ -9,11 +9,14 @@
     <version>0.1.0-SNAPSHOT</version>
     <modules>
         <module>core</module>
+        <module>proactor</module>
+        <module>async-io</module>
+        <module>examples</module>
     </modules>
 
     <packaging>pom</packaging>
 
-    <name>Pragmatic Functional Java Essentials</name>
+    <name>Pragmatic Functional Java Essentials (parent)</name>
     <description>Pragmatic Functional Java Essentials</description>
     <url>http://www.pragmatica.org</url>
 
@@ -36,6 +39,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <java.release>17</java.release>
+        <java.enable-preview>--enable-preview</java.enable-preview>
 
         <!-- Testing -->
         <junit.version>5.7.0</junit.version>
@@ -51,6 +55,37 @@
                 <artifactId>core</artifactId>
                 <version>${project.version}</version>
             </dependency>
+
+            <dependency>
+                <groupId>org.pragmatica</groupId>
+                <artifactId>proactor</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.pragmatica</groupId>
+                <artifactId>async-io</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-api</artifactId>
+                <version>1.7.32</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.tinylog</groupId>
+                <artifactId>slf4j-tinylog</artifactId>
+                <version>2.4.1</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.tinylog</groupId>
+                <artifactId>tinylog-impl</artifactId>
+                <version>2.4.1</version>
+            </dependency>
+
         </dependencies>
     </dependencyManagement>
 
@@ -130,11 +165,15 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
-                    <compilerArgs>--enable-preview</compilerArgs>
                     <showDeprecation>true</showDeprecation>
                     <showWarnings>true</showWarnings>
                     <source>${java.release}</source>
                     <target>${java.release}</target>
+                    <compilerArgs>
+                        <arg>${java.enable-preview}</arg>
+                        <arg>--add-exports</arg>
+                        <arg>java.base/jdk.internal.misc=ALL-UNNAMED</arg>
+                    </compilerArgs>
                 </configuration>
             </plugin>
 
