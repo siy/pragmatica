@@ -50,7 +50,7 @@ public class TcpClient<T extends InetAddress> implements Client {
 
     private <R> void doConnect(FileDescriptor socket, Promise<R> promise, Proactor proactor, ClientProtocol<R> protocol) {
         proactor.connect((result, proactor1) -> result.onFailure(promise::failure)
-                                                      .onSuccess(__ -> protocol.start(connection(socket, config.address()), proactor1)),
+                                                      .onSuccess(__ -> protocol.process(connection(socket, config.address()), proactor1)),
                          socket, config.address(), config.connectTimeout());
     }
 }

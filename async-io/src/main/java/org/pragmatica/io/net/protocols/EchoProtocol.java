@@ -45,7 +45,7 @@ public interface EchoProtocol<T extends InetAddress> extends ConnectionProtocol<
         @Override
         public void start(ConnectionProtocolContext<T> context, Proactor proactor) {
             new EchoProtocolImpl<T>(this, context)
-                .run(proactor);
+                .process(proactor);
         }
     }
 
@@ -63,7 +63,7 @@ public interface EchoProtocol<T extends InetAddress> extends ConnectionProtocol<
         }
 
         @Override
-        public void run(Proactor proactor) {
+        public void process(Proactor proactor) {
             startRead(proactor);
         }
 

@@ -32,14 +32,8 @@ public class EchoServer {
     private static final Logger LOG = LoggerFactory.getLogger(EchoServer.class);
 
     public static void main(String[] args) {
-        System.out.println("Echo Server");
-        LOG.info("Starting server");
-
         var config = listenConfig().withPort(12345).build();
         var listener = Listener.listener(config);
-
-        Runtime.getRuntime()
-               .addShutdownHook(listener.shutdownHook());
 
         LOG.info("Starting server {}", config);
         listener.listen(acceptProtocol(EchoProtocol.starter(4096, empty())))

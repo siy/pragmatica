@@ -37,6 +37,8 @@ import org.slf4j.LoggerFactory;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static org.pragmatica.io.net.ConnectionProtocolContext.connectionProtocolContext;
+
 public class TcpListener<T extends InetAddress> implements Listener<T> {
     private static final Logger LOG = LoggerFactory.getLogger(TcpListener.class);
     private static final ThreadFactory SHUTDOWN_HOOK_THREAD_FACTORY = DaemonThreadFactory.threadFactory("Shutdown Hook");
@@ -56,6 +58,9 @@ public class TcpListener<T extends InetAddress> implements Listener<T> {
 
     @Override
     public Promise<Unit> listen(AcceptProtocol<T> protocol) {
+        Runtime.getRuntime()
+               .addShutdownHook(SHUTDOWN_HOOK_THREAD_FACTORY.newThread(this::shutdown));
+
         return serve.async((promise, proactor) ->
                                proactor.listen(result -> doListen(result, protocol),
                                                config.address(), SocketType.STREAM, config.listenerFlags(),
@@ -69,11 +74,6 @@ public class TcpListener<T extends InetAddress> implements Listener<T> {
         }
 
         return shutdown;
-    }
-
-    @Override
-    public Thread shutdownHook() {
-        return SHUTDOWN_HOOK_THREAD_FACTORY.newThread(this::shutdown);
     }
 
     private void doListen(Result<ListenContext<T>> result, AcceptProtocol<T> protocol) {
@@ -101,8 +101,22 @@ public class TcpListener<T extends InetAddress> implements Listener<T> {
                                Proactor proactor, TaskExecutor executor) {
         result.onFailure(failure -> LOG.warn("Accept error: {}", failure.message()))
               .onFailure(serve::failure)
-              .onSuccess(connectionContext -> LOG.debug("Accepted connection {}", connectionContext))
-              .onSuccess(connectionContext -> executor.submit(proactor1 -> protocol.accept(context, connectionContext, proactor1)))
-              .onSuccess(__ -> repeatAccept(proactor, context, protocol, executor));
+              .onSuccess(connectionContext -> handleSuccessfulAccept(context, protocol, proactor, executor, connectionContext));
+    }
+
+    private void handleSuccessfulAccept(ListenContext<T> context,
+                                        AcceptProtocol<T> protocol,
+                                        Proactor proactor,
+                                        TaskExecutor executor,
+                                        ConnectionContext<T> connectionContext) {
+
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Accepted connection {}", connectionContext);
+        }
+
+        var connectionProtocolContext = connectionProtocolContext(context, connectionContext);
+
+        executor.submit(proactor1 -> protocol.process(connectionProtocolContext, proactor1));
+        repeatAccept(proactor, context, protocol, executor);
     }
 }

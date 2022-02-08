@@ -35,8 +35,6 @@ public interface Listener<T extends InetAddress> {
         return shutdown();
     }
 
-    Thread shutdownHook();
-
     static <T extends InetAddress> Listener<T> listener(ListenConfig<T> config) {
         return TcpListener.tcpListener(config);
     }

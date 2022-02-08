@@ -23,5 +23,5 @@ import org.pragmatica.lang.Promise;
 
 //TODO: cleanup generic types - context should be typed
 public interface ClientProtocol<T> {
-    Promise<T> start(ConnectionContext<?> context, Proactor proactor);
+    Promise<T> process(ConnectionContext<?> context, Proactor proactor);
 }

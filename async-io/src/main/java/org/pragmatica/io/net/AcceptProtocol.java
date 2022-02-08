@@ -18,11 +18,7 @@
 package org.pragmatica.io.net;
 
 import org.pragmatica.io.async.Proactor;
-import org.pragmatica.io.async.net.ConnectionContext;
 import org.pragmatica.io.async.net.InetAddress;
-import org.pragmatica.io.async.net.ListenContext;
-
-import static org.pragmatica.io.net.ConnectionProtocolContext.connectionProtocolContext;
 
 /**
  * Protocol which handles accepting of the connection requests.
@@ -37,9 +33,9 @@ public interface AcceptProtocol<T extends InetAddress> {
      * @param connection    connection context
      * @param proactor      transient {@link Proactor} instance
      */
-    void accept(ListenContext<T> listenContext, ConnectionContext<T> connection, Proactor proactor);
+    void process(ConnectionProtocolContext<T> context, Proactor proactor);
 
     static <T extends InetAddress> AcceptProtocol<T> acceptProtocol(ConnectionProtocolStarter<T> factory) {
-        return (listenContext, connection, proactor) -> factory.start(connectionProtocolContext(listenContext, connection), proactor);
+        return factory::start;
     }
 }

@@ -24,5 +24,5 @@ import org.pragmatica.io.async.net.InetAddress;
  * Basic connection-oriented protocol.
  */
 public interface ConnectionProtocol<T extends InetAddress> {
-    void run(Proactor proactor);
+    void process(Proactor proactor);
 }

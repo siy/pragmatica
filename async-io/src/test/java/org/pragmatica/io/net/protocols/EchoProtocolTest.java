@@ -37,9 +37,6 @@ class EchoProtocolTest {
         var config = listenConfig().withPort(12345).build();
         var listener = Listener.listener(config);
 
-        Runtime.getRuntime()
-               .addShutdownHook(listener.shutdownHook());
-
         listener.listen(acceptProtocol(EchoProtocol.starter(4096, empty())))
                 .onFailure(this::printFailure)
                 .flatMap(listener::shutdown)
