@@ -28,6 +28,13 @@ At present Pragmatica does not have higher level elements like support for SSL/T
 
 Only minimal set of I/O operations is supported at the moment. Support for remaining operations available via _io_uring_ API is planned for next releases. 
 
+## Additional Sources of Information
+Beside [Pragmatic Functional Java](https://github.com/siy/pragmatica/wiki) following articles might help to understand motivation and various elements of the whole approach.
+
+ - [We should write Java code differently](https://dev.to/siy/we-should-write-java-code-differently-210b) describes core considerations behind the whole approach.
+ - [Beautiful World of Monads](https://dev.to/siy/beautiful-world-of-mondas-2cd6) explains basic building blocks used across the whole Pragmatica - monads.
+ - [The Backend Revolution or Why io_uring Is So Important](https://dev.to/siy/the-backend-revolution-or-why-iouring-is-so-important-444f) tries to explain importance of the [io_uring](https://unixism.net/loti/what_is_io_uring.html) API, present in recent Linux kernels. This API is the foundation of the Async I/O part of the Pragmatica. 
+
 ## Requirements
 
 - _Pragmatica_ uses _Java 17_. There are no plans to support older versions of Java.
