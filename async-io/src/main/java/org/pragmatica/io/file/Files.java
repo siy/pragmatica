@@ -17,11 +17,9 @@
 
 package org.pragmatica.io.file;
 
-import org.pragmatica.io.async.Proactor;
+import org.pragmatica.io.async.SystemError;
 import org.pragmatica.io.async.Timeout;
-import org.pragmatica.io.async.common.OffsetT;
 import org.pragmatica.io.async.common.SizeT;
-import org.pragmatica.io.async.file.FileDescriptor;
 import org.pragmatica.io.async.file.FilePermission;
 import org.pragmatica.io.async.file.OpenFlags;
 import org.pragmatica.io.async.util.OffHeapBuffer;
@@ -53,11 +51,21 @@ public final class Files {
                                        Consumer<OffHeapBuffer> consumer) {
 
         return PromiseIO.open(path, openFlags, FilePermission.none(), timeout)
-                        .flatMap(fd -> new FileReaderProtocol(fd, blockSize, consumer, timeout)
+                        .flatMap(fd -> new BlockReaderProtocol(fd, blockSize, consumer, timeout)
                             .run()
                             .onResult(__ -> PromiseIO.close(fd, timeout)));
     }
 
+    /**
+     * Same as {@link #blocks(Path, SizeT, Set, Option, Consumer)}, except buffer size is set to  {@link #DEFAULT_BUFFER_SIZE).
+     *
+     * @param path      Path to file
+     * @param openFlags File open flags. Refer to {@link OpenFlags} for more details
+     * @param timeout   Timeout for each internal operation - open, each read and close. Same bufferSize is used for each operation
+     * @param consumer  Consumer which will receive file chunks
+     *
+     * @return Promise instance which will be resolved once last chunk will be passed to consumer or in case of error.
+     */
     public static Promise<Unit> blocks(Path path,
                                        Set<OpenFlags> openFlags,
                                        Option<Timeout> timeout,
@@ -67,7 +75,7 @@ public final class Files {
     }
 
     /**
-     * Same as {@link #blocks(Path, SizeT, Set, Option, Consumer)} except file is opened in read-only mode.
+     * Same as {@link #blocks(Path, SizeT, Set, Option, Consumer)}, except file is opened in read-only mode.
      *
      * @param path      Path to file
      * @param blockSize Chunk size
@@ -80,12 +88,22 @@ public final class Files {
         return blocks(path, blockSize, OpenFlags.readOnly(), timeout, consumer);
     }
 
+    /**
+     * Same as {@link #blocks(Path, SizeT, Option, Consumer)}, except buffer size is set to  {@link #DEFAULT_BUFFER_SIZE).
+     *
+     * @param path     Path to file
+     * @param timeout  Timeout for each internal operation - open, each read and close. Same bufferSize is used for each operation
+     * @param consumer Consumer which will receive file chunks
+     *
+     * @return Promise instance which will be resolved once last chunk will be passed to consumer or in case of error.
+     */
+
     public static Promise<Unit> blocks(Path path, Option<Timeout> timeout, Consumer<OffHeapBuffer> consumer) {
         return blocks(path, DEFAULT_BUFFER_SIZE, OpenFlags.readOnly(), timeout, consumer);
     }
 
     /**
-     * Same as {@link #blocks(Path, SizeT, Set, Option, Consumer)} except file is opened in read-only mode and no timeouts are applied to internal
+     * Same as {@link #blocks(Path, SizeT, Set, Option, Consumer)}, except file is opened in read-only mode and no timeouts are applied to internal
      * operations.
      *
      * @param path      Path to file
@@ -98,10 +116,30 @@ public final class Files {
         return blocks(path, blockSize, OpenFlags.readOnly(), Option.empty(), consumer);
     }
 
+    /**
+     * Same as {@link #blocks(Path, SizeT, Consumer)}, except buffer size is set to  {@link #DEFAULT_BUFFER_SIZE).
+     *
+     * @param path     Path to file
+     * @param consumer Consumer which will receive file chunks
+     *
+     * @return Promise instance which will be resolved once last chunk will be passed to consumer or in case of error.
+     */
     public static Promise<Unit> blocks(Path path, Consumer<OffHeapBuffer> consumer) {
         return blocks(path, DEFAULT_BUFFER_SIZE, OpenFlags.readOnly(), Option.empty(), consumer);
     }
 
+    /**
+     * Read specified file, interpret it as a sequence of UTF-8 encoded characters separated into lines and submit them one by one into provided
+     * consumer.
+     *
+     * @param path       Path to file.
+     * @param bufferSize Size of buffer which should be used to read file.
+     * @param openFlags  File open flags.
+     * @param timeout    Timeout for all internal operations.
+     * @param consumer   The consumer to submit lines to.
+     *
+     * @return Promise instance, which will be resolved once file end will be reached or in case of error.
+     */
     public static Promise<Unit> lines(Path path,
                                       SizeT bufferSize,
                                       Set<OpenFlags> openFlags,
@@ -112,93 +150,84 @@ public final class Files {
         return blocks(path, bufferSize, openFlags, timeout, lineReaderProtocol);
     }
 
+    /**
+     * Same as {@link #lines(Path, SizeT, Set, Option, Consumer)}, except buffer size is set to {@link #DEFAULT_BUFFER_SIZE).
+     *
+     * @param path      Path to file.
+     * @param openFlags File open flags.
+     * @param timeout   Timeout for all internal operations.
+     * @param consumer  The consumer to submit lines to.
+     *
+     * @return Promise instance, which will be resolved once file end will be reached or in case of error.
+     */
     public static Promise<Unit> lines(Path path, Set<OpenFlags> openFlags, Option<Timeout> timeout, Consumer<String> consumer) {
         return lines(path, DEFAULT_BUFFER_SIZE, openFlags, timeout, consumer);
     }
 
+    /**
+     * Same as {@link #lines(Path, SizeT, Set, Option, Consumer)}, except file is opened in read-only mode.
+     *
+     * @param path     Path to file.
+     * @param timeout  Timeout for all internal operations.
+     * @param consumer The consumer to submit lines to.
+     *
+     * @return Promise instance, which will be resolved once file end will be reached or in case of error.
+     */
     public static Promise<Unit> lines(Path path, SizeT bufferSize, Option<Timeout> timeout, Consumer<String> consumer) {
         return lines(path, bufferSize, OpenFlags.readOnly(), timeout, consumer);
     }
 
+    /**
+     * Same as {@link #lines(Path, SizeT, Option, Consumer)}, except buffer size is set to {@link #DEFAULT_BUFFER_SIZE).
+     *
+     * @param path      Path to file.
+     * @param openFlags File open flags.
+     * @param timeout   Timeout for all internal operations.
+     * @param consumer  The consumer to submit lines to.
+     *
+     * @return Promise instance, which will be resolved once file end will be reached or in case of error.
+     */
     public static Promise<Unit> lines(Path path, Option<Timeout> timeout, Consumer<String> consumer) {
         return lines(path, DEFAULT_BUFFER_SIZE, OpenFlags.readOnly(), timeout, consumer);
     }
 
+    /**
+     * Same as {@link #lines(Path, SizeT, Set, Option, Consumer)}, except file is opened in read-only mode and no timeouts are applied to internal
+     * operations.
+     *
+     * @param path       Path to file.
+     * @param bufferSize Size of buffer which should be used to read file.
+     * @param consumer   The consumer to submit lines to.
+     *
+     * @return Promise instance, which will be resolved once file end will be reached or in case of error.
+     */
     public static Promise<Unit> lines(Path path, SizeT bufferSize, Consumer<String> consumer) {
         return lines(path, bufferSize, OpenFlags.readOnly(), Option.empty(), consumer);
     }
 
+    /**
+     * Same as {@link #lines(Path, SizeT, Consumer)}, except buffer size is set to {@link #DEFAULT_BUFFER_SIZE).
+     *
+     * @param path     Path to file.
+     * @param consumer The consumer to submit lines to.
+     *
+     * @return Promise instance, which will be resolved once file end will be reached or in case of error.
+     */
     public static Promise<Unit> lines(Path path, Consumer<String> consumer) {
         return lines(path, DEFAULT_BUFFER_SIZE, OpenFlags.readOnly(), Option.empty(), consumer);
     }
 
-    private static final class FileReaderProtocol {
-        private final FileDescriptor fd;
-        private final Consumer<OffHeapBuffer> consumer;
-        private final Option<Timeout> timeout;
-        private final OffHeapBuffer buffer;
-        private final Promise<Unit> promise;
-        private long offset = 0;
 
-        private FileReaderProtocol(FileDescriptor fd,
-                                   SizeT bufferSize,
-                                   Consumer<OffHeapBuffer> consumer,
-                                   Option<Timeout> timeout) {
-            this.fd = fd;
-            this.consumer = consumer;
-            this.timeout = timeout;
-            this.buffer = OffHeapBuffer.fixedSize((int) bufferSize.value());
-            this.promise = Promise.promise();
-        }
-
-        public Promise<Unit> run() {
-            promise.async((__, proactor) -> processChunk(proactor));
-
-            return promise;
-        }
-
-        private void processChunk(Proactor proactor) {
-            proactor.read((result, proactor1) -> {
-                result.onFailure(promise::failure)
-                      .onSuccess(offsetT -> offset += offsetT.value())
-                      .onSuccess(__ -> consumer.accept(buffer))
-                      .filter(Causes.IRRELEVANT, size -> size.value() == buffer.size())
-                      .onSuccess(__ -> processChunk(proactor1))
-                      .onFailure(__ -> promise.resolve(Unit.unitResult()));
-            }, fd, buffer, OffsetT.offsetT(offset), timeout);
-        }
+    public enum FileCopyMode {
+        APPEND,     // By default - replace content
+        OVERWRITE,  // By default - fail if file exists
+        COPY_PERMISSION, // By default - set ones provided in parameters
     }
 
-    private record LineReaderProtocol(long bufferSize, Consumer<String> consumer, StringBuilder stringBuilder, UTF8Decoder utf8Decoder)
-        implements Consumer<OffHeapBuffer> {
-        @Override
-        public void accept(OffHeapBuffer offHeapBuffer) {
-            utf8Decoder.decodeWithRecovery(offHeapBuffer, this::characterInput);
-
-            if (offHeapBuffer.used() != bufferSize) {
-                stripCarriageReturn();
-
-                // Empty line or single trailing \r will be ignored
-                if (stringBuilder.length() > 0) {
-                    consumer.accept(stringBuilder.toString());
-                }
-            }
-        }
-
-        private void characterInput(Character character) {
-            if (character == '\n') {
-                stripCarriageReturn();
-                consumer.accept(stringBuilder.toString());
-                stringBuilder.setLength(0);
-            } else {
-                stringBuilder.append(character);
-            }
-        }
-
-        private void stripCarriageReturn() {
-            if (stringBuilder.length() > 0 && stringBuilder.charAt(stringBuilder.length() - 1) == '\r') {
-                stringBuilder.setLength(stringBuilder.length() - 1);
-            }
-        }
+    public static Promise<SizeT> copy(Path from, Path to, Set<FileCopyMode> mode, Set<FilePermission> destinationPermission, Option<Timeout> timeout) {
+        // Not implemented yet
+        return Promise.resolved(SystemError.EPERM.result());
     }
+
+
 }
