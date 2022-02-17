@@ -19,9 +19,10 @@ package org.pragmatica.io.async.uring.struct.offheap;
 
 import org.pragmatica.io.async.uring.struct.AbstractRawStructure;
 import org.pragmatica.io.async.uring.struct.OffHeapStructure;
+import org.pragmatica.io.async.uring.struct.RawStructure;
 import org.pragmatica.io.async.util.raw.RawMemory;
 
-public abstract class AbstractOffHeapStructure<T extends AbstractOffHeapStructure<T>>
+public abstract class AbstractOffHeapStructure<T extends RawStructure<T>>
     extends AbstractRawStructure<T> implements OffHeapStructure<T>, AutoCloseable {
     private boolean released = false;
 

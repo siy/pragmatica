@@ -22,7 +22,7 @@ import org.pragmatica.io.async.Timeout;
 import org.pragmatica.io.async.common.SizeT;
 import org.pragmatica.io.async.file.FileDescriptor;
 import org.pragmatica.io.async.net.InetAddress;
-import org.pragmatica.io.async.util.OffHeapBuffer;
+import org.pragmatica.io.async.util.OffHeapSlice;
 import org.pragmatica.io.net.ConnectionProtocol;
 import org.pragmatica.io.net.ConnectionProtocolContext;
 import org.pragmatica.io.net.ConnectionProtocolStarter;
@@ -54,12 +54,12 @@ public interface EchoProtocol<T extends InetAddress> extends ConnectionProtocol<
 
         private final EchoProtocolConfig<T> config;
         private final ConnectionProtocolContext<T> context;
-        private final OffHeapBuffer buffer;
+        private final OffHeapSlice buffer;
 
         public EchoProtocolImpl(EchoProtocolConfig<T> config, ConnectionProtocolContext<T> context) {
             this.config = config;
             this.context = context;
-            this.buffer = OffHeapBuffer.fixedSize(config.bufferSize());
+            this.buffer = OffHeapSlice.fixedSize(config.bufferSize());
         }
 
         @Override

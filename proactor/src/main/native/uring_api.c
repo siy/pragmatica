@@ -26,7 +26,7 @@ JNIEXPORT jint JNICALL Java_org_pragmatica_io_async_uring_UringApi_enter(JNIEnv 
     return (jint) __sys_io_uring_enter(fd, (unsigned) to_submit, (unsigned) min_complete, (unsigned) flags, NULL);
 }
 
-JNIEXPORT jint JNICALL Java_org_pragmatica_io_async_uring_UringApi_register(JNIEnv *env, jclass clazz, jint fd, jlong opcode, jlong arg, jlong nr_args) {
+JNIEXPORT jint JNICALL Java_org_pragmatica_io_async_uring_UringApi_register(JNIEnv *env, jclass clazz, jint fd, jint opcode, jlong arg, jlong nr_args) {
     return (jint) __sys_io_uring_register(fd, (unsigned) opcode, (const void*) arg, (unsigned) nr_args);
 }
 

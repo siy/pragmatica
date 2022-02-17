@@ -32,7 +32,7 @@ import org.pragmatica.io.async.uring.struct.offheap.OffHeapSocketAddress;
 import org.pragmatica.io.async.uring.struct.raw.SQEntryFlags;
 import org.pragmatica.io.async.uring.utils.ObjectHeap;
 import org.pragmatica.io.async.uring.utils.PlainObjectPool;
-import org.pragmatica.io.async.util.OffHeapBuffer;
+import org.pragmatica.io.async.util.OffHeapSlice;
 import org.pragmatica.lang.Option;
 import org.pragmatica.lang.Result;
 import org.pragmatica.lang.Unit;
@@ -110,13 +110,13 @@ public class ExchangeEntryFactory {
         return timeout.equals(Option.empty()) ? 0 : (byte) SQEntryFlags.IO_LINK.mask();
     }
 
-    public ReadExchangeEntry forRead(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fd, OffHeapBuffer buffer,
+    public ReadExchangeEntry forRead(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fd, OffHeapSlice buffer,
                                      OffsetT offset, Option<Timeout> timeout) {
         return readPool.alloc()
                        .prepare(completion, fd.descriptor(), buffer, offset.value(), calculateFlags(timeout));
     }
 
-    public WriteExchangeEntry forWrite(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fd, OffHeapBuffer buffer,
+    public WriteExchangeEntry forWrite(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fd, OffHeapSlice buffer,
                                        OffsetT offset, Option<Timeout> timeout) {
         return writePool.alloc()
                         .prepare(completion, fd.descriptor(), buffer, offset.value(), calculateFlags(timeout));

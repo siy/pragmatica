@@ -32,7 +32,7 @@ import org.pragmatica.io.async.uring.exchange.ExchangeEntryFactory;
 import org.pragmatica.io.async.uring.struct.offheap.OffHeapCString;
 import org.pragmatica.io.async.uring.struct.offheap.OffHeapSocketAddress;
 import org.pragmatica.io.async.uring.utils.ObjectHeap;
-import org.pragmatica.io.async.util.OffHeapBuffer;
+import org.pragmatica.io.async.util.OffHeapSlice;
 import org.pragmatica.lang.*;
 
 import java.nio.file.Path;
@@ -81,6 +81,12 @@ class ProactorImpl implements Proactor {
     }
 
     @Override
+    public Proactor registerFixedBuffers(OffHeapSlice fixedBufferPool) {
+        uringApi.registerBuffers(fixedBufferPool);
+        return this;
+    }
+
+    @Override
     public int processIO() {
         uringApi.processSubmissions();
         return uringApi.inFlight() > 0 ? uringApi.processCompletions(exchangeRegistry, this) : 0;
@@ -103,14 +109,14 @@ class ProactorImpl implements Proactor {
     }
 
     @Override
-    public void read(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fd, OffHeapBuffer buffer,
+    public void read(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fd, OffHeapSlice buffer,
                      OffsetT offset, Option<Timeout> timeout) {
         uringApi.submit(factory.forRead(completion, fd, buffer, offset, timeout));
         timeout.whenPresent(this::appendTimeout);
     }
 
     @Override
-    public void write(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fd, OffHeapBuffer buffer,
+    public void write(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fd, OffHeapSlice buffer,
                       OffsetT offset, Option<Timeout> timeout) {
         uringApi.submit(factory.forWrite(completion, fd, buffer, offset, timeout));
         timeout.whenPresent(this::appendTimeout);
@@ -188,7 +194,7 @@ class ProactorImpl implements Proactor {
 
     @Override
     public void read(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fileDescriptor, OffsetT offset,
-                     Option<Timeout> timeout, OffHeapBuffer... buffers) {
+                     Option<Timeout> timeout, OffHeapSlice... buffers) {
         uringApi.submit(factory.forReadVector(completion, fileDescriptor, offset, timeout, withBuffers(buffers))
                                .register(exchangeRegistry));
 
@@ -197,7 +203,7 @@ class ProactorImpl implements Proactor {
 
     @Override
     public void write(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fileDescriptor, OffsetT offset,
-                      Option<Timeout> timeout, OffHeapBuffer... buffers) {
+                      Option<Timeout> timeout, OffHeapSlice... buffers) {
         uringApi.submit(factory.forWriteVector(completion, fileDescriptor, offset, timeout, withBuffers(buffers)));
         timeout.whenPresent(this::appendTimeout);
     }

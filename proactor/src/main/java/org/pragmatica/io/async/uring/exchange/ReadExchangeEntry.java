@@ -22,7 +22,7 @@ import org.pragmatica.io.async.SystemError;
 import org.pragmatica.io.async.common.SizeT;
 import org.pragmatica.io.async.uring.struct.raw.SQEntry;
 import org.pragmatica.io.async.uring.utils.PlainObjectPool;
-import org.pragmatica.io.async.util.OffHeapBuffer;
+import org.pragmatica.io.async.util.OffHeapSlice;
 import org.pragmatica.lang.Result;
 
 import java.util.function.BiConsumer;
@@ -34,7 +34,7 @@ public class ReadExchangeEntry extends AbstractExchangeEntry<ReadExchangeEntry, 
 
     private int descriptor;
     private byte flags;
-    private OffHeapBuffer buffer;
+    private OffHeapSlice buffer;
     private long offset;
 
     protected ReadExchangeEntry(PlainObjectPool<ReadExchangeEntry> pool) {
@@ -59,7 +59,7 @@ public class ReadExchangeEntry extends AbstractExchangeEntry<ReadExchangeEntry, 
                     .off(offset);
     }
 
-    public ReadExchangeEntry prepare(BiConsumer<Result<SizeT>, Proactor> completion, int descriptor, OffHeapBuffer buffer, long offset, byte flags) {
+    public ReadExchangeEntry prepare(BiConsumer<Result<SizeT>, Proactor> completion, int descriptor, OffHeapSlice buffer, long offset, byte flags) {
         this.descriptor = descriptor;
         this.flags = flags;
         this.buffer = buffer;

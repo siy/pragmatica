@@ -22,7 +22,7 @@ import org.pragmatica.io.async.SystemError;
 import org.pragmatica.io.async.common.SizeT;
 import org.pragmatica.io.async.uring.struct.raw.SQEntry;
 import org.pragmatica.io.async.uring.utils.PlainObjectPool;
-import org.pragmatica.io.async.util.OffHeapBuffer;
+import org.pragmatica.io.async.util.OffHeapSlice;
 import org.pragmatica.lang.Result;
 
 import java.util.function.BiConsumer;
@@ -32,7 +32,7 @@ import static org.pragmatica.io.async.uring.AsyncOperation.IORING_OP_WRITE;
 public class WriteExchangeEntry extends AbstractExchangeEntry<WriteExchangeEntry, SizeT> {
     private int descriptor;
     private byte flags;
-    private OffHeapBuffer buffer;
+    private OffHeapSlice buffer;
     private long offset;
 
     protected WriteExchangeEntry(PlainObjectPool<WriteExchangeEntry> pool) {
@@ -56,7 +56,7 @@ public class WriteExchangeEntry extends AbstractExchangeEntry<WriteExchangeEntry
 
     public WriteExchangeEntry prepare(BiConsumer<Result<SizeT>, Proactor> completion,
                                       int descriptor,
-                                      OffHeapBuffer buffer,
+                                      OffHeapSlice buffer,
                                       long offset,
                                       byte flags) {
         this.descriptor = descriptor;

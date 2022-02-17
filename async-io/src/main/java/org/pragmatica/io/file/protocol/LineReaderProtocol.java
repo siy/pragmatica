@@ -17,19 +17,19 @@
 
 package org.pragmatica.io.file.protocol;
 
-import org.pragmatica.io.async.util.OffHeapBuffer;
+import org.pragmatica.io.async.util.OffHeapSlice;
 import org.pragmatica.io.codec.UTF8Decoder;
 
 import java.util.function.Consumer;
 
 public record LineReaderProtocol(long bufferSize, Consumer<String> consumer, StringBuilder stringBuilder, UTF8Decoder utf8Decoder)
-    implements Consumer<OffHeapBuffer> {
+    implements Consumer<OffHeapSlice> {
 
     @Override
-    public void accept(OffHeapBuffer offHeapBuffer) {
-        utf8Decoder.decodeWithRecovery(offHeapBuffer, this::characterInput);
+    public void accept(OffHeapSlice slice) {
+        utf8Decoder.decodeWithRecovery(slice, this::characterInput);
 
-        if (offHeapBuffer.used() != bufferSize) {
+        if (slice.used() != bufferSize) {
             stripCarriageReturn();
 
             // Empty line or single trailing \r will be ignored

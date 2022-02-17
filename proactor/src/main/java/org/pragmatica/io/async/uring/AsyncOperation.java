@@ -18,6 +18,8 @@
 package org.pragmatica.io.async.uring;
 
 /**
+ * Asynchronous operation opcodes.
+ * <p>
  * WARNING: Always keep in sync with io_uring.h
  * <p>
  * Ordinals (by the means of .ordinal() call) of constants below must match actual Linux API codes (as defined in io_uring.h).

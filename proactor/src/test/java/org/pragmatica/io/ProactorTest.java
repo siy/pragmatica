@@ -27,7 +27,7 @@ import org.pragmatica.io.async.file.FileDescriptor;
 import org.pragmatica.io.async.file.FilePermission;
 import org.pragmatica.io.async.file.OpenFlags;
 import org.pragmatica.io.async.net.*;
-import org.pragmatica.io.async.util.OffHeapBuffer;
+import org.pragmatica.io.async.util.OffHeapSlice;
 import org.pragmatica.lang.Option;
 import org.pragmatica.lang.Result;
 import org.pragmatica.lang.Unit;
@@ -114,8 +114,8 @@ class ProactorTest {
 
         System.out.println("Address: " + address);
 
-        try (var preparedText = OffHeapBuffer.fromBytes("GET /\n".getBytes(StandardCharsets.US_ASCII))) {
-            try (var buffer = OffHeapBuffer.fixedSize(768)) {
+        try (var preparedText = OffHeapSlice.fromBytes("GET /\n".getBytes(StandardCharsets.US_ASCII))) {
+            try (var buffer = OffHeapSlice.fixedSize(768)) {
                 buffer.clear().used(buffer.size());
 
                 var socketResult = new AtomicReference<Result<FileDescriptor>>();

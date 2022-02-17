@@ -19,7 +19,7 @@ package org.pragmatica.io.async.uring.struct.offheap;
 
 import org.pragmatica.io.async.uring.struct.raw.IoVector;
 import org.pragmatica.io.async.uring.struct.shape.IoVectorOffsets;
-import org.pragmatica.io.async.util.OffHeapBuffer;
+import org.pragmatica.io.async.util.OffHeapSlice;
 
 public class OffHeapIoVector extends AbstractOffHeapStructure<OffHeapIoVector> {
     private final IoVector shape;
@@ -32,7 +32,7 @@ public class OffHeapIoVector extends AbstractOffHeapStructure<OffHeapIoVector> {
         shape = IoVector.at(address());
     }
 
-    private void addBuffer(OffHeapBuffer buffer) {
+    private void addBuffer(OffHeapSlice buffer) {
         shape.base(buffer.address())
              .len(buffer.used())
              .reposition(shape.address() + IoVectorOffsets.SIZE);
@@ -42,7 +42,7 @@ public class OffHeapIoVector extends AbstractOffHeapStructure<OffHeapIoVector> {
         shape.reposition(address());
     }
 
-    public static OffHeapIoVector withBuffers(OffHeapBuffer... buffers) {
+    public static OffHeapIoVector withBuffers(OffHeapSlice... buffers) {
         var vector = new OffHeapIoVector(buffers.length);
         for (var buffer : buffers) {
             vector.addBuffer(buffer);

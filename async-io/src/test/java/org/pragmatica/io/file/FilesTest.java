@@ -18,10 +18,9 @@
 package org.pragmatica.io.file;
 
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.pragmatica.io.async.common.SizeT;
-import org.pragmatica.io.async.util.OffHeapBuffer;
+import org.pragmatica.io.async.util.OffHeapSlice;
 import org.pragmatica.io.codec.UTF8Decoder;
 import org.pragmatica.lang.Promise;
 import org.pragmatica.lang.Unit;
@@ -87,7 +86,7 @@ class FilesTest {
         assertEquals(515, lineCount2.get());
     }
 
-    private String decode(OffHeapBuffer buffer1) {
+    private String decode(OffHeapSlice buffer1) {
         var builder = new StringBuilder(_1M);
         var decoder = new UTF8Decoder();
 

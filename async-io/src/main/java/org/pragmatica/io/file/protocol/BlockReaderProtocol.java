@@ -22,7 +22,7 @@ import org.pragmatica.io.async.Timeout;
 import org.pragmatica.io.async.common.OffsetT;
 import org.pragmatica.io.async.common.SizeT;
 import org.pragmatica.io.async.file.FileDescriptor;
-import org.pragmatica.io.async.util.OffHeapBuffer;
+import org.pragmatica.io.async.util.OffHeapSlice;
 import org.pragmatica.lang.Causes;
 import org.pragmatica.lang.Option;
 import org.pragmatica.lang.Promise;
@@ -32,20 +32,20 @@ import java.util.function.Consumer;
 
 public final class BlockReaderProtocol {
     private final FileDescriptor fd;
-    private final Consumer<OffHeapBuffer> consumer;
+    private final Consumer<OffHeapSlice> consumer;
     private final Option<Timeout> timeout;
-    private final OffHeapBuffer buffer;
+    private final OffHeapSlice buffer;
     private final Promise<Unit> promise;
     private long offset = 0;
 
     public BlockReaderProtocol(FileDescriptor fd,
                                SizeT bufferSize,
-                               Consumer<OffHeapBuffer> consumer,
+                               Consumer<OffHeapSlice> consumer,
                                Option<Timeout> timeout) {
         this.fd = fd;
         this.consumer = consumer;
         this.timeout = timeout;
-        this.buffer = OffHeapBuffer.fixedSize((int) bufferSize.value());
+        this.buffer = OffHeapSlice.fixedSize((int) bufferSize.value());
         this.promise = Promise.promise();
     }
 

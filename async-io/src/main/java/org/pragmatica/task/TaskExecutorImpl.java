@@ -20,6 +20,7 @@ package org.pragmatica.task;
 import org.pragmatica.io.async.Proactor;
 import org.pragmatica.io.async.util.ActionableThreshold;
 import org.pragmatica.io.async.util.DaemonThreadFactory;
+import org.pragmatica.io.async.util.OffHeapSlice;
 import org.pragmatica.lang.Promise;
 import org.pragmatica.lang.Unit;
 
@@ -33,11 +34,18 @@ import java.util.stream.IntStream;
 import static org.pragmatica.lang.Unit.unitResult;
 
 final class TaskExecutorImpl implements TaskExecutor {
+    private static final int _1K = 1024;
+    private static final int _1M = _1K * _1K;
+    private static final int _16M = 16 * _1M;
+
+    private static final int FIXED_POOL_SIZE = _16M;
+
     private final int numThreads;
     private final ExecutorService executor;
     private final ActionableThreshold threshold;
     private final List<TaskRunner> runners = new ArrayList<>();
     private final Promise<Unit> shutdownPromise = Promise.promise();
+    private final OffHeapSlice fixedBufferPool = OffHeapSlice.fixedSize(FIXED_POOL_SIZE);
 
     private int next;
 
@@ -48,7 +56,7 @@ final class TaskExecutorImpl implements TaskExecutor {
 
         IntStream
             .range(0, numThreads)
-            .forEach(n -> runners.add(new TaskRunner(threshold)));
+            .forEach(n -> runners.add(new TaskRunner(threshold, fixedBufferPool)));
 
         runners.forEach(runner -> runner.start(executor));
     }

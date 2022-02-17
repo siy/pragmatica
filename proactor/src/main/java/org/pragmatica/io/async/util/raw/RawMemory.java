@@ -140,4 +140,13 @@ public final class RawMemory {
     public static void clear(long address, long size) {
         instance.setMemory(address, size, (byte) 0);
     }
+
+    // Thread management
+    public static void park(boolean isAbsolute, long time) {
+        instance.park(isAbsolute, time);
+    }
+
+    public static void unpark(Object thread) {
+        instance.unpark(thread);
+    }
 }
