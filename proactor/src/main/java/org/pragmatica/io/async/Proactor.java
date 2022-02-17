@@ -19,10 +19,7 @@ package org.pragmatica.io.async;
 
 import org.pragmatica.io.async.common.OffsetT;
 import org.pragmatica.io.async.common.SizeT;
-import org.pragmatica.io.async.file.FileDescriptor;
-import org.pragmatica.io.async.file.FilePermission;
-import org.pragmatica.io.async.file.OpenFlags;
-import org.pragmatica.io.async.file.SpliceDescriptor;
+import org.pragmatica.io.async.file.*;
 import org.pragmatica.io.async.file.stat.FileStat;
 import org.pragmatica.io.async.file.stat.StatFlag;
 import org.pragmatica.io.async.file.stat.StatMask;
@@ -207,7 +204,7 @@ public interface Proactor {
      * <p>
      * Open file at specified location. Upon completion callback is invoked with file descriptor of opened file as a parameter.
      * <p>
-     * Note that this method only partially covers functionality of the underlying {@code openat(2)} call. Instead simpler {@code open(2)} semantics
+     * Note that this method only partially covers functionality of the underlying {@code openat(2)} call. Instead, simpler {@code open(2)} semantics
      * is implemented.
      *
      * @param completion Callback which is invoked once operation is finished.
@@ -243,15 +240,15 @@ public interface Proactor {
     }
 
     /**
-     * Create listener bound to specified address/port and ready to accept incoming connection. Upon completion provided callback is
-     * invoked with the filled listen context instance.
+     * Create listener bound to specified address/port and ready to accept incoming connection. Upon completion provided callback is invoked with the
+     * filled listen context instance.
      *
-     * @param completion Callback which is invoked once operation is finished.
-     * @param address    Socket address
-     * @param type       Socket type
-     * @param flags      Socket open flags
-     * @param len        Length of the listening queue
-     * @param options    Socket options. See {@link SocketOption} for more details
+     * @param completion    Callback which is invoked once operation is finished.
+     * @param socketAddress Socket address
+     * @param socketType    Socket type
+     * @param openFlags     Socket open flags
+     * @param queueDepth    Length of the listening queue
+     * @param options       Socket options. See {@link SocketOption} for more details
      *
      * @see ListenContext
      */
@@ -288,7 +285,9 @@ public interface Proactor {
         accept((result, __) -> completion.accept(result), socket, flags, addressType);
     }
 
-    default void acceptV4(BiConsumer<Result<ConnectionContext<InetAddress.Inet4Address>>, Proactor> completion, FileDescriptor socket, Set<SocketFlag> flags) {
+    default void acceptV4(BiConsumer<Result<ConnectionContext<InetAddress.Inet4Address>>, Proactor> completion,
+                          FileDescriptor socket,
+                          Set<SocketFlag> flags) {
         accept(completion, socket, flags, InetAddress.Inet4Address.INADDR_ANY);
     }
 
@@ -296,7 +295,9 @@ public interface Proactor {
         accept(completion, socket, flags, InetAddress.Inet4Address.INADDR_ANY);
     }
 
-    default void acceptV6(BiConsumer<Result<ConnectionContext<InetAddress.Inet6Address>>, Proactor> completion, FileDescriptor socket, Set<SocketFlag> flags) {
+    default void acceptV6(BiConsumer<Result<ConnectionContext<InetAddress.Inet6Address>>, Proactor> completion,
+                          FileDescriptor socket,
+                          Set<SocketFlag> flags) {
         accept(completion, socket, flags, InetAddress.Inet6Address.INADDR_ANY);
     }
 
@@ -344,10 +345,11 @@ public interface Proactor {
      * Get file status information for file specified by file descriptor. Upon completion callback is invoked with requested file status details as a
      * parameter.
      *
-     * @param fd      File descriptor
-     * @param flags   Flags which affect how information is retrieved, refer to {@link StatFlag} for more details
-     * @param mask    Specification of which information should be retrieved.
-     * @param timeout Optional operation timeout
+     * @param completion Callback which is invoked once operation is finished.
+     * @param fd         File descriptor
+     * @param flags      Flags which affect how information is retrieved, refer to {@link StatFlag} for more details
+     * @param mask       Specification of which information should be retrieved.
+     * @param timeout    Optional operation timeout
      *
      * @see FileStat
      */
@@ -365,6 +367,7 @@ public interface Proactor {
      * <p>
      * Upon completion callback is invoked with total number of bytes read.
      *
+     * @param completion     Callback which is invoked once operation is finished.
      * @param fileDescriptor File descriptor to read from
      * @param offset         Initial offset in the input file
      * @param timeout        Optional operation timeout
@@ -386,6 +389,7 @@ public interface Proactor {
      * <p>
      * Upon completion callback is invoked with total number of bytes written.
      *
+     * @param completion     Callback which is invoked once operation is finished.
      * @param fileDescriptor File descriptor to read from
      * @param offset         Initial offset in file
      * @param timeout        Optional operation timeout
@@ -402,6 +406,22 @@ public interface Proactor {
         write((result, __) -> completion.accept(result), fileDescriptor, offset, timeout, buffers);
     }
 
-    //TODO: implement batching?
-    //TODO: recv, send
+    /**
+     * Perform a file synchronization between memory and file system.
+     * <p>
+     * Note that this operation is subject of some limitations, in particular there are no guarantees that it will flush buffers modified by
+     * previously submitted (but not yet finished) write operation.
+     *
+     * @param completion     Callback which is invoked once operation is finished.
+     * @param fileDescriptor File descriptor to read from
+     * @param syncMetadata   Flag which controls flushing of file metadata: {@code true} enables syncing metadata
+     * @param timeout        Optional operation timeout
+     */
+    void fsync(BiConsumer<Result<Unit>, Proactor> completion, FileDescriptor fileDescriptor,
+               boolean syncMetadata, Option<Timeout> timeout);
+
+    void falloc(BiConsumer<Result<Unit>, Proactor> completion, FileDescriptor fileDescriptor,
+                Set<FileAllocFlags> allocFlags, long offset, long len, Option<Timeout> timeout);
+
+    //fadvise, madvise, recvmsg, sendmsg, register_buffers, read_fixed, write_fixed
 }

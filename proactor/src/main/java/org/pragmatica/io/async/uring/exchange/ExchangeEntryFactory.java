@@ -21,10 +21,7 @@ import org.pragmatica.io.async.Proactor;
 import org.pragmatica.io.async.Timeout;
 import org.pragmatica.io.async.common.OffsetT;
 import org.pragmatica.io.async.common.SizeT;
-import org.pragmatica.io.async.file.FileDescriptor;
-import org.pragmatica.io.async.file.FilePermission;
-import org.pragmatica.io.async.file.OpenFlags;
-import org.pragmatica.io.async.file.SpliceDescriptor;
+import org.pragmatica.io.async.file.*;
 import org.pragmatica.io.async.file.stat.FileStat;
 import org.pragmatica.io.async.net.*;
 import org.pragmatica.io.async.uring.Bitmask;
@@ -45,44 +42,48 @@ import java.time.Duration;
 import java.util.Set;
 import java.util.function.BiConsumer;
 
+import static org.pragmatica.io.async.uring.struct.raw.SQEntry.IORING_FSYNC_DATASYNC;
 import static org.pragmatica.io.async.uring.utils.PlainObjectPool.objectPool;
 
 public class ExchangeEntryFactory {
-    private final PlainObjectPool<NopExchangeEntry> nopPool;
-    private final PlainObjectPool<DelayExchangeEntry> delayPool;
-    private final PlainObjectPool<CloseExchangeEntry> closePool;
-    private final PlainObjectPool<TimeoutExchangeEntry> timeoutPool;
-    private final PlainObjectPool<ReadExchangeEntry> readPool;
-    private final PlainObjectPool<WriteExchangeEntry> writePool;
-    private final PlainObjectPool<SpliceExchangeEntry> splicePool;
-    private final PlainObjectPool<OpenExchangeEntry> openPool;
-    private final PlainObjectPool<SocketExchangeEntry> socketPool;
-    private final PlainObjectPool<StatExchangeEntry> statPool;
-    private final PlainObjectPool<ReadVectorExchangeEntry> readVectorPool;
-    private final PlainObjectPool<WriteVectorExchangeEntry> writeVectorPool;
-    private final PlainObjectPool<ConnectExchangeEntry> connectPool;
-
-    @SuppressWarnings({"rawtypes"})
-    private final PlainObjectPool<ListenExchangeEntry> listenPool;
     @SuppressWarnings({"rawtypes"})
     private final PlainObjectPool<AcceptExchangeEntry> acceptPool;
+    private final PlainObjectPool<CloseExchangeEntry> closePool;
+    private final PlainObjectPool<ConnectExchangeEntry> connectPool;
+    private final PlainObjectPool<DelayExchangeEntry> delayPool;
+    private final PlainObjectPool<FAllocExchangeEntry> fallocPool;
+    private final PlainObjectPool<FSyncExchangeEntry> fsyncPool;
+    @SuppressWarnings({"rawtypes"})
+    private final PlainObjectPool<ListenExchangeEntry> listenPool;
+    private final PlainObjectPool<NopExchangeEntry> nopPool;
+    private final PlainObjectPool<OpenExchangeEntry> openPool;
+    private final PlainObjectPool<ReadExchangeEntry> readPool;
+    private final PlainObjectPool<ReadVectorExchangeEntry> readVectorPool;
+    private final PlainObjectPool<SocketExchangeEntry> socketPool;
+    private final PlainObjectPool<SpliceExchangeEntry> splicePool;
+    private final PlainObjectPool<StatExchangeEntry> statPool;
+    private final PlainObjectPool<TimeoutExchangeEntry> timeoutPool;
+    private final PlainObjectPool<WriteExchangeEntry> writePool;
+    private final PlainObjectPool<WriteVectorExchangeEntry> writeVectorPool;
 
     public ExchangeEntryFactory(ObjectHeap<CompletionHandler> exchangeRegistry) {
-        nopPool = objectPool(NopExchangeEntry::new, exchangeRegistry);
-        delayPool = objectPool(DelayExchangeEntry::new, exchangeRegistry);
-        closePool = objectPool(CloseExchangeEntry::new, exchangeRegistry);
-        timeoutPool = objectPool(TimeoutExchangeEntry::new, exchangeRegistry);
-        readPool = objectPool(ReadExchangeEntry::new, exchangeRegistry);
-        writePool = objectPool(WriteExchangeEntry::new, exchangeRegistry);
-        splicePool = objectPool(SpliceExchangeEntry::new, exchangeRegistry);
-        openPool = objectPool(OpenExchangeEntry::new, exchangeRegistry);
-        socketPool = objectPool(SocketExchangeEntry::new, exchangeRegistry);
-        statPool = objectPool(StatExchangeEntry::new, exchangeRegistry);
-        readVectorPool = objectPool(ReadVectorExchangeEntry::new, exchangeRegistry);
-        writeVectorPool = objectPool(WriteVectorExchangeEntry::new, exchangeRegistry);
-        connectPool = objectPool(ConnectExchangeEntry::new, exchangeRegistry);
-        listenPool = objectPool(ListenExchangeEntry::new, exchangeRegistry);
         acceptPool = objectPool(AcceptExchangeEntry::new, exchangeRegistry);
+        closePool = objectPool(CloseExchangeEntry::new, exchangeRegistry);
+        connectPool = objectPool(ConnectExchangeEntry::new, exchangeRegistry);
+        delayPool = objectPool(DelayExchangeEntry::new, exchangeRegistry);
+        fallocPool = objectPool(FAllocExchangeEntry::new, exchangeRegistry);
+        fsyncPool = objectPool(FSyncExchangeEntry::new, exchangeRegistry);
+        listenPool = objectPool(ListenExchangeEntry::new, exchangeRegistry);
+        nopPool = objectPool(NopExchangeEntry::new, exchangeRegistry);
+        openPool = objectPool(OpenExchangeEntry::new, exchangeRegistry);
+        readPool = objectPool(ReadExchangeEntry::new, exchangeRegistry);
+        readVectorPool = objectPool(ReadVectorExchangeEntry::new, exchangeRegistry);
+        socketPool = objectPool(SocketExchangeEntry::new, exchangeRegistry);
+        splicePool = objectPool(SpliceExchangeEntry::new, exchangeRegistry);
+        statPool = objectPool(StatExchangeEntry::new, exchangeRegistry);
+        timeoutPool = objectPool(TimeoutExchangeEntry::new, exchangeRegistry);
+        writePool = objectPool(WriteExchangeEntry::new, exchangeRegistry);
+        writeVectorPool = objectPool(WriteVectorExchangeEntry::new, exchangeRegistry);
     }
 
     public NopExchangeEntry forNop(BiConsumer<Result<Unit>, Proactor> completion) {
@@ -178,21 +179,35 @@ public class ExchangeEntryFactory {
                               .prepare(completion, fileDescriptor.descriptor(), offset.value(), calculateFlags(timeout), ioVector);
     }
 
+    public FSyncExchangeEntry forFSync(BiConsumer<Result<Unit>, Proactor> completion, FileDescriptor fileDescriptor,
+                                       boolean syncMetadata, Option<Timeout> timeout) {
+        return fsyncPool.alloc()
+                        .prepare(completion, fileDescriptor.descriptor(), syncMetadata ? 0 : IORING_FSYNC_DATASYNC, calculateFlags(timeout));
+    }
+
+    public FAllocExchangeEntry forFAlloc(BiConsumer<Result<Unit>, Proactor> completion, FileDescriptor fileDescriptor,
+                                         Set<FileAllocFlags> allocFlags, long offset, long len, Option<Timeout> timeout) {
+        return fallocPool.alloc()
+                         .prepare(completion, fileDescriptor.descriptor(), Bitmask.combine(allocFlags), offset, len, calculateFlags(timeout));
+    }
+
     public void clear() {
-        nopPool.clear();
-        delayPool.clear();
-        closePool.clear();
-        timeoutPool.clear();
-        readPool.clear();
-        writePool.clear();
-        splicePool.clear();
-        openPool.clear();
-        socketPool.clear();
-        listenPool.clear();
         acceptPool.clear();
+        closePool.clear();
         connectPool.clear();
-        statPool.clear();
+        delayPool.clear();
+        fsyncPool.clear();
+        fallocPool.clear();
+        listenPool.clear();
+        nopPool.clear();
+        openPool.clear();
+        readPool.clear();
         readVectorPool.clear();
+        socketPool.clear();
+        splicePool.clear();
+        statPool.clear();
+        timeoutPool.clear();
+        writePool.clear();
         writeVectorPool.clear();
     }
 }

@@ -77,7 +77,9 @@ public class UringApi implements AutoCloseable {
     static native void close(long baseAddress);
 
     // Syscall
-    static native long enter(long baseAddress, long toSubmit, long minComplete, int flags);
+    static native long enter(int fd, long toSubmit, long minComplete, int flags);
+
+    static native long register(int fd, long toSubmit, long minComplete, int flags);
 
     // Socket API
 

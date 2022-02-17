@@ -26,7 +26,7 @@ public enum AsyncOperation {
     IORING_OP_NOP,                  //Implemented
     IORING_OP_READV,                //Implemented
     IORING_OP_WRITEV,               //Implemented
-    IORING_OP_FSYNC,
+    IORING_OP_FSYNC,                //Implemented
     IORING_OP_READ_FIXED,
     IORING_OP_WRITE_FIXED,
     IORING_OP_POLL_ADD,
@@ -40,7 +40,7 @@ public enum AsyncOperation {
     IORING_OP_ASYNC_CANCEL,
     IORING_OP_LINK_TIMEOUT,         //Implemented
     IORING_OP_CONNECT,              //Implemented
-    IORING_OP_FALLOCATE,
+    IORING_OP_FALLOCATE,            //Implemented
     IORING_OP_OPENAT,               //Implemented
     IORING_OP_CLOSE,                //Implemented
     IORING_OP_FILES_UPDATE,

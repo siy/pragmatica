@@ -85,6 +85,17 @@ public interface Promise<T> {
     }
 
     /**
+     * Run asynchronous task. The task will receive an instance of {@link Proactor} as a parameter.
+     *
+     * @param action The task to run
+     *
+     * @return Current instance
+     */
+    default Promise<T> asyncIO(Consumer<Proactor> action) {
+        return async((__, proactor) -> action.accept(proactor));
+    }
+
+    /**
      * Run asynchronous task. The task will receive current instance of Promise and an instance of {@link Proactor} as a parameter.
      *
      * @param action The task to run

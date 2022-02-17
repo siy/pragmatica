@@ -15,7 +15,7 @@
  *
  */
 
-package org.pragmatica.io.file;
+package org.pragmatica.io.file.protocol;
 
 import org.pragmatica.io.async.util.OffHeapBuffer;
 import org.pragmatica.io.codec.UTF8Decoder;
@@ -24,6 +24,7 @@ import java.util.function.Consumer;
 
 public record LineReaderProtocol(long bufferSize, Consumer<String> consumer, StringBuilder stringBuilder, UTF8Decoder utf8Decoder)
     implements Consumer<OffHeapBuffer> {
+
     @Override
     public void accept(OffHeapBuffer offHeapBuffer) {
         utf8Decoder.decodeWithRecovery(offHeapBuffer, this::characterInput);

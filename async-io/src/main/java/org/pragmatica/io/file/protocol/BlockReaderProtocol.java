@@ -15,7 +15,7 @@
  *
  */
 
-package org.pragmatica.io.file;
+package org.pragmatica.io.file.protocol;
 
 import org.pragmatica.io.async.Proactor;
 import org.pragmatica.io.async.Timeout;
@@ -38,10 +38,10 @@ public final class BlockReaderProtocol {
     private final Promise<Unit> promise;
     private long offset = 0;
 
-    BlockReaderProtocol(FileDescriptor fd,
-                        SizeT bufferSize,
-                        Consumer<OffHeapBuffer> consumer,
-                        Option<Timeout> timeout) {
+    public BlockReaderProtocol(FileDescriptor fd,
+                               SizeT bufferSize,
+                               Consumer<OffHeapBuffer> consumer,
+                               Option<Timeout> timeout) {
         this.fd = fd;
         this.consumer = consumer;
         this.timeout = timeout;
@@ -50,19 +50,17 @@ public final class BlockReaderProtocol {
     }
 
     public Promise<Unit> run() {
-        promise.async((__, proactor) -> processChunk(proactor));
-
-        return promise;
+        return promise.asyncIO(this::processChunk);
     }
 
     private void processChunk(Proactor proactor) {
         proactor.read((result, proactor1) -> {
             result.onFailure(promise::failure)
                   .onSuccess(offsetT -> offset += offsetT.value())
-                  .onSuccess(__ -> consumer.accept(buffer))
+                  .onSuccessDo(() -> consumer.accept(buffer))
                   .filter(Causes.IRRELEVANT, size -> size.value() == buffer.size())
-                  .onSuccess(__ -> processChunk(proactor1))
-                  .onFailure(__ -> promise.resolve(Unit.unitResult()));
+                  .onSuccessDo(() -> processChunk(proactor1))
+                  .onFailureDo(() -> promise.resolve(Unit.unitResult()));
         }, fd, buffer, OffsetT.offsetT(offset), timeout);
     }
 }

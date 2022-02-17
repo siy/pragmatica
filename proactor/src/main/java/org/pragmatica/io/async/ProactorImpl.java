@@ -19,10 +19,7 @@ package org.pragmatica.io.async;
 
 import org.pragmatica.io.async.common.OffsetT;
 import org.pragmatica.io.async.common.SizeT;
-import org.pragmatica.io.async.file.FileDescriptor;
-import org.pragmatica.io.async.file.FilePermission;
-import org.pragmatica.io.async.file.OpenFlags;
-import org.pragmatica.io.async.file.SpliceDescriptor;
+import org.pragmatica.io.async.file.*;
 import org.pragmatica.io.async.file.stat.FileStat;
 import org.pragmatica.io.async.file.stat.StatFlag;
 import org.pragmatica.io.async.file.stat.StatMask;
@@ -202,6 +199,20 @@ class ProactorImpl implements Proactor {
     public void write(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fileDescriptor, OffsetT offset,
                       Option<Timeout> timeout, OffHeapBuffer... buffers) {
         uringApi.submit(factory.forWriteVector(completion, fileDescriptor, offset, timeout, withBuffers(buffers)));
+        timeout.whenPresent(this::appendTimeout);
+    }
+
+    @Override
+    public void fsync(BiConsumer<Result<Unit>, Proactor> completion, FileDescriptor fileDescriptor,
+                      boolean syncMetadata, Option<Timeout> timeout) {
+        uringApi.submit(factory.forFSync(completion, fileDescriptor, syncMetadata, timeout));
+        timeout.whenPresent(this::appendTimeout);
+    }
+
+    @Override
+    public void falloc(BiConsumer<Result<Unit>, Proactor> completion, FileDescriptor fileDescriptor,
+                       Set<FileAllocFlags> allocFlags, long offset, long len, Option<Timeout> timeout) {
+        uringApi.submit(factory.forFAlloc(completion, fileDescriptor, allocFlags, offset, len, timeout));
         timeout.whenPresent(this::appendTimeout);
     }
 

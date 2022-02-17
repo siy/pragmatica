@@ -24,6 +24,8 @@ import org.pragmatica.io.async.file.FilePermission;
 import org.pragmatica.io.async.file.OpenFlags;
 import org.pragmatica.io.async.util.OffHeapBuffer;
 import org.pragmatica.io.codec.UTF8Decoder;
+import org.pragmatica.io.file.protocol.BlockReaderProtocol;
+import org.pragmatica.io.file.protocol.LineReaderProtocol;
 import org.pragmatica.lang.*;
 
 import java.nio.file.Path;
