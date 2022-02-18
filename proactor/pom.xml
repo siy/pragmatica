@@ -11,6 +11,11 @@
 
     <artifactId>proactor</artifactId>
     <name>Async I/O Proactor</name>
+    <packaging>jar</packaging>
+
+    <properties>
+        <jar.finalName>${project.artifactId}-${project.version}</jar.finalName>
+    </properties>
 
     <profiles>
         <profile>

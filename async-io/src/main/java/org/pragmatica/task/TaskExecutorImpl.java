@@ -19,44 +19,44 @@ package org.pragmatica.task;
 
 import org.pragmatica.io.async.Proactor;
 import org.pragmatica.io.async.util.ActionableThreshold;
-import org.pragmatica.io.async.util.DaemonThreadFactory;
-import org.pragmatica.io.async.util.OffHeapSlice;
+import org.pragmatica.io.async.util.allocator.ChunkedAllocator;
 import org.pragmatica.lang.Promise;
 import org.pragmatica.lang.Unit;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 import java.util.stream.IntStream;
 
+import static java.util.concurrent.Executors.newFixedThreadPool;
+import static org.pragmatica.io.async.util.ActionableThreshold.threshold;
+import static org.pragmatica.io.async.util.DaemonThreadFactory.threadFactory;
+import static org.pragmatica.io.async.util.Units._1MiB;
+import static org.pragmatica.io.async.util.allocator.ChunkedAllocator.allocator;
 import static org.pragmatica.lang.Unit.unitResult;
 
 final class TaskExecutorImpl implements TaskExecutor {
-    private static final int _1K = 1024;
-    private static final int _1M = _1K * _1K;
-    private static final int _16M = 16 * _1M;
-
-    private static final int FIXED_POOL_SIZE = _16M;
+    private static final int FIXED_POOL_SIZE = 4 * _1MiB;
 
     private final int numThreads;
     private final ExecutorService executor;
     private final ActionableThreshold threshold;
     private final List<TaskRunner> runners = new ArrayList<>();
     private final Promise<Unit> shutdownPromise = Promise.promise();
-    private final OffHeapSlice fixedBufferPool = OffHeapSlice.fixedSize(FIXED_POOL_SIZE);
+    private final ChunkedAllocator allocator;
 
     private int next;
 
     TaskExecutorImpl(int numThreads) {
         this.numThreads = numThreads;
-        this.executor = Executors.newFixedThreadPool(numThreads, DaemonThreadFactory.threadFactory("TaskExecutor #%d"));
-        this.threshold = ActionableThreshold.threshold(numThreads, () -> shutdownPromise.resolve(unitResult()));
+        this.executor = newFixedThreadPool(numThreads, threadFactory("TaskExecutor #%d"));
+        this.threshold = threshold(numThreads, () -> shutdownPromise.resolve(unitResult()));
+        this.allocator = allocator(FIXED_POOL_SIZE * numThreads);
 
         IntStream
             .range(0, numThreads)
-            .forEach(n -> runners.add(new TaskRunner(threshold, fixedBufferPool)));
+            .forEach(n -> runners.add(new TaskRunner(threshold, allocator)));
 
         runners.forEach(runner -> runner.start(executor));
     }
@@ -80,7 +80,7 @@ final class TaskExecutorImpl implements TaskExecutor {
     }
 
     @Override
-    public TaskExecutor spread(Consumer<Proactor> task) {
+    public TaskExecutor replicate(Consumer<Proactor> task) {
         runners.forEach(runner -> runner.push(task));
         return this;
     }
@@ -91,7 +91,7 @@ final class TaskExecutorImpl implements TaskExecutor {
 
         executor.shutdown();
 
-        return shutdownPromise;
+        return shutdownPromise.onResultDo(allocator::close);
     }
 
     @Override

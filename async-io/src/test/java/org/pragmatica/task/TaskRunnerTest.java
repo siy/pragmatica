@@ -20,20 +20,20 @@ package org.pragmatica.task;
 import org.junit.jupiter.api.Test;
 import org.pragmatica.io.async.Timeout;
 import org.pragmatica.io.async.util.ActionableThreshold;
-import org.pragmatica.io.async.util.OffHeapSlice;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 
 import static org.pragmatica.io.async.util.DaemonThreadFactory.threadFactory;
+import static org.pragmatica.io.async.util.Units._1MiB;
+import static org.pragmatica.io.async.util.allocator.ChunkedAllocator.allocator;
 
 class TaskRunnerTest {
 
     @Test
     void runnerCanExecuteTasks() throws InterruptedException {
-        var fixedBufferPool = OffHeapSlice.fixedSize(1024 * 1024);
         var threshold = ActionableThreshold.threshold(1, () -> {});
-        var runner = new TaskRunner(threshold, fixedBufferPool);
+        var runner = new TaskRunner(threshold, allocator(_1MiB));
         var executor = Executors.newFixedThreadPool(1, threadFactory("Test {}"));
         var latch = new CountDownLatch(1);
 

@@ -28,6 +28,7 @@ import org.pragmatica.io.async.file.FilePermission;
 import org.pragmatica.io.async.file.OpenFlags;
 import org.pragmatica.io.async.net.*;
 import org.pragmatica.io.async.util.OffHeapSlice;
+import org.pragmatica.io.async.util.allocator.ChunkedAllocator;
 import org.pragmatica.lang.Option;
 import org.pragmatica.lang.Result;
 import org.pragmatica.lang.Unit;
@@ -41,12 +42,14 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.pragmatica.io.async.util.Units._1MiB;
+import static org.pragmatica.io.async.util.allocator.ChunkedAllocator.allocator;
 import static org.pragmatica.lang.Option.empty;
 import static org.pragmatica.lang.Option.option;
 
 //TODO: remaining tests
 class ProactorTest {
-    private final Proactor proactor = Proactor.proactor();
+    private final Proactor proactor = Proactor.proactor(allocator(_1MiB));
 
     @Test
     void nopCanBeSubmitted() {

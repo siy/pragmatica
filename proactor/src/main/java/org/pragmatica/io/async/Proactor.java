@@ -25,6 +25,8 @@ import org.pragmatica.io.async.file.stat.StatFlag;
 import org.pragmatica.io.async.file.stat.StatMask;
 import org.pragmatica.io.async.net.*;
 import org.pragmatica.io.async.util.OffHeapSlice;
+import org.pragmatica.io.async.util.allocator.ChunkedAllocator;
+import org.pragmatica.io.async.util.allocator.FixedBuffer;
 import org.pragmatica.lang.Option;
 import org.pragmatica.lang.Result;
 import org.pragmatica.lang.Unit;
@@ -45,15 +47,15 @@ public interface Proactor {
     /**
      * Create an instance with default queue length.
      */
-    static Proactor proactor() {
-        return proactor(DEFAULT_QUEUE_SIZE);
+    static Proactor proactor(ChunkedAllocator sharedAllocator) {
+        return proactor(DEFAULT_QUEUE_SIZE, sharedAllocator);
     }
 
     /**
      * Create an instance with default queue length.
      */
-    static Proactor proactor(int queueSize) {
-        return ProactorImpl.proactor(queueSize);
+    static Proactor proactor(int queueSize, ChunkedAllocator sharedAllocator) {
+        return ProactorImpl.proactor(queueSize, sharedAllocator);
     }
 
     /**
@@ -114,9 +116,9 @@ public interface Proactor {
     /**
      * Submit READ operation.
      * <p>
-     * Read from specified file descriptor. The number of bytes to read is defined by the provided buffer {@link OffHeapSlice#size()}. Upon
-     * successful completion {@code buffer} has its {@link OffHeapSlice#used(int)} value set to number of bytes actually read. The number of bytes
-     * read also passed as a parameter to callback upon completion.
+     * Read from specified file descriptor. The number of bytes to read is defined by the provided buffer {@link OffHeapSlice#size()}. Upon successful
+     * completion {@code buffer} has its {@link OffHeapSlice#used(int)} value set to number of bytes actually read. The number of bytes read also
+     * passed as a parameter to callback upon completion.
      *
      * @param completion Callback which is invoked once operation is finished.
      * @param fd         File descriptor to read from.
@@ -362,8 +364,8 @@ public interface Proactor {
     /**
      * Read into buffers passed as a parameters.
      * <p>
-     * Note that for proper operation this method requires that every passed buffer should have set {@link OffHeapSlice#used()} value to actual
-     * number of bytes to be read into this buffer.
+     * Note that for proper operation this method requires that every passed buffer should have set {@link OffHeapSlice#used()} value to actual number
+     * of bytes to be read into this buffer.
      * <p>
      * Upon completion callback is invoked with total number of bytes read.
      *
@@ -423,7 +425,20 @@ public interface Proactor {
     void falloc(BiConsumer<Result<Unit>, Proactor> completion, FileDescriptor fileDescriptor,
                 Set<FileAllocFlags> allocFlags, long offset, long len, Option<Timeout> timeout);
 
-    Proactor registerFixedBuffers(OffHeapSlice fixedBufferPool);
+    /**
+     * Allocate fixed buffer which will be shared between kernel and user space and can be used with {@link #readFixed()} and {@link #writeFixed()}
+     * methods.
+     * <p>
+     * Note that allocation is relatively slow process and frequent allocation/release of buffers might quickly result to fragmentation,
+     * so it is highly recommended avoiding frequent allocation/release of the fixed buffers.
+     * <p>
+     * Allocated buffer can be released using {@link FixedBuffer#dispose()}. Buffer content must not be accessed once this method is invoked.
+     *
+     * @param size Buffer size in bytes. Note that allocation is done in chunks of size {@link org.pragmatica.io.async.util.allocator.ChunkedAllocator#CHUNK_SIZE}.
+     *
+     * @return allocation result.
+     */
+    Result<FixedBuffer> allocateFixedBuffer(int size);
 
     //fadvise, madvise, recvmsg, sendmsg, register_buffers, read_fixed, write_fixed
 }

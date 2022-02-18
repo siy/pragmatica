@@ -33,6 +33,8 @@ import org.pragmatica.io.async.uring.struct.offheap.OffHeapCString;
 import org.pragmatica.io.async.uring.struct.offheap.OffHeapSocketAddress;
 import org.pragmatica.io.async.uring.utils.ObjectHeap;
 import org.pragmatica.io.async.util.OffHeapSlice;
+import org.pragmatica.io.async.util.allocator.ChunkedAllocator;
+import org.pragmatica.io.async.util.allocator.FixedBuffer;
 import org.pragmatica.lang.*;
 
 import java.nio.file.Path;
@@ -54,20 +56,24 @@ class ProactorImpl implements Proactor {
 
     private final UringApi uringApi;
     private final ObjectHeap<CompletionHandler> exchangeRegistry;
+    private final ChunkedAllocator sharedAllocator;
     private final ExchangeEntryFactory factory;
 
-    private ProactorImpl(UringApi uringApi) {
+    private ProactorImpl(UringApi uringApi, ChunkedAllocator sharedAllocator) {
         this.uringApi = uringApi;
         this.exchangeRegistry = ObjectHeap.objectHeap(uringApi.numEntries());
         this.factory = new ExchangeEntryFactory(exchangeRegistry);
+        this.sharedAllocator = sharedAllocator.register(uringApi);
     }
 
-    public static Proactor proactor(int queueSize) {
-        return proactor(queueSize, UringSetupFlags.defaultFlags());
+    public static Proactor proactor(int queueSize, ChunkedAllocator sharedAllocator) {
+        return proactor(queueSize, UringSetupFlags.defaultFlags(), sharedAllocator);
     }
 
-    public static Proactor proactor(int queueSize, Set<UringSetupFlags> openFlags) {
-        return new ProactorImpl(UringApi.uringApi(queueSize, openFlags).fold(ProactorImpl::fail, Functions::id));
+    public static Proactor proactor(int queueSize, Set<UringSetupFlags> openFlags, ChunkedAllocator sharedAllocator) {
+        var api = UringApi.uringApi(queueSize, openFlags).fold(ProactorImpl::fail, Functions::id);
+
+        return new ProactorImpl(api, sharedAllocator);
     }
 
     private static <R> R fail(Cause cause) {
@@ -78,12 +84,6 @@ class ProactorImpl implements Proactor {
     public void shutdown() {
         uringApi.close();
         factory.clear();
-    }
-
-    @Override
-    public Proactor registerFixedBuffers(OffHeapSlice fixedBufferPool) {
-        uringApi.registerBuffers(fixedBufferPool);
-        return this;
     }
 
     @Override
@@ -220,6 +220,11 @@ class ProactorImpl implements Proactor {
                        Set<FileAllocFlags> allocFlags, long offset, long len, Option<Timeout> timeout) {
         uringApi.submit(factory.forFAlloc(completion, fileDescriptor, allocFlags, offset, len, timeout));
         timeout.whenPresent(this::appendTimeout);
+    }
+
+    @Override
+    public Result<FixedBuffer> allocateFixedBuffer(int size) {
+        return sharedAllocator.allocate(size);
     }
 
     private void appendTimeout(Timeout timeout) {

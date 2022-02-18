@@ -1,0 +1,131 @@
+/*
+ *  Copyright (c) 2022 Sergiy Yevtushenko.
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ */
+
+package org.pragmatica.io.async.util.allocator;
+
+import org.pragmatica.io.async.SystemError;
+import org.pragmatica.io.async.uring.UringApi;
+import org.pragmatica.io.async.util.OffHeapSlice;
+import org.pragmatica.lang.Result;
+
+import java.util.BitSet;
+
+import static org.pragmatica.io.async.util.Units._1KiB;
+
+public class ChunkedAllocator implements AutoCloseable {
+    public static final int CHUNK_SIZE = 16 * _1KiB;
+
+    private final OffHeapSlice arena;
+    private final BitSet chunkMap;
+    private final int totalChunks;
+
+    private ChunkedAllocator(OffHeapSlice arena) {
+        this.arena = arena;
+        this.totalChunks = arena.size() / CHUNK_SIZE;
+        this.chunkMap = new BitSet(totalChunks);
+    }
+
+    public static ChunkedAllocator allocator(int size) {
+        return allocator(OffHeapSlice.fixedSize(size));
+    }
+
+    public static ChunkedAllocator allocator(OffHeapSlice arena) {
+        return new ChunkedAllocator(arena);
+    }
+
+    public ChunkedAllocator register(UringApi api) {
+        api.registerBuffers(arena);
+        return this;
+    }
+
+    @Override
+    public void close() {
+        arena.close();
+    }
+
+    public Result<FixedBuffer> allocate(int size) {
+        var numChunks = calculateNumChunks(size);
+
+        synchronized (chunkMap) {
+            var start = 0;
+
+            while (start < totalChunks) {
+                var from = chunkMap.nextClearBit(start);
+
+                if (from == totalChunks) {
+                    // no space left
+                    return SystemError.ENOMEM.result();
+                }
+
+                int freeChunks = checkFreeChunks(from, numChunks);
+
+                if (freeChunks == numChunks) {
+                    chunkMap.set(from, from + numChunks);
+                    // found segment of necessary size
+                    return Result.success(new FixedBuffer(arena.slice(from * CHUNK_SIZE, size), this));
+                }
+
+                start += from + freeChunks + 1;
+            }
+
+            return SystemError.ENOMEM.result();
+        }
+    }
+
+    public void dispose(FixedBuffer buffer) {
+        var numChunks = calculateNumChunks(buffer.size());
+        var from = (int) ((buffer.address() - arena.address()) / CHUNK_SIZE);
+
+        synchronized (chunkMap) {
+            // BitSet.clear() does most of the necessary checks
+            chunkMap.clear(from, from + numChunks);
+        }
+    }
+
+    public String allocationMap() {
+        var builder = new StringBuilder();
+
+        synchronized (chunkMap) {
+            var counter = 0;
+
+            for (int i = 0; i < totalChunks; i++) {
+                builder.append(chunkMap.get(i) ? 'U':'.');
+
+                if (++counter == 64) {
+                    builder.append('\n');
+                    counter = 0;
+                }
+            }
+        }
+
+        return builder.toString();
+    }
+
+    private static int calculateNumChunks(int size) {
+        return (size + CHUNK_SIZE - 1) / CHUNK_SIZE;
+    }
+
+    private int checkFreeChunks(int from, int numChunks) {
+        for (int i = 1; i < numChunks; i++) {
+            int index = from + i;
+            if (index >= totalChunks || chunkMap.get(index)) {
+                return i;
+            }
+        }
+        return numChunks;
+    }
+}

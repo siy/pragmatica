@@ -20,6 +20,7 @@ package org.pragmatica.task;
 import org.pragmatica.io.async.Proactor;
 import org.pragmatica.io.async.util.ActionableThreshold;
 import org.pragmatica.io.async.util.OffHeapSlice;
+import org.pragmatica.io.async.util.allocator.ChunkedAllocator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,7 +36,7 @@ final class TaskRunner {
     private static final Logger LOG = LoggerFactory.getLogger(TaskRunner.class);
 
     private final ActionableThreshold threshold;
-    private final OffHeapSlice fixedBufferPool;
+    private final ChunkedAllocator allocator;
 
     private volatile Task head;
     private volatile boolean shutdown = false;
@@ -51,9 +52,9 @@ final class TaskRunner {
         }
     }
 
-    TaskRunner(ActionableThreshold threshold, OffHeapSlice fixedBufferPool) {
+    TaskRunner(ActionableThreshold threshold, ChunkedAllocator allocator) {
         this.threshold = threshold;
-        this.fixedBufferPool = fixedBufferPool;
+        this.allocator = allocator;
     }
 
     void start(ExecutorService executor) {
@@ -113,8 +114,7 @@ final class TaskRunner {
 
     private Proactor createProactor() {
         try {
-            return Proactor.proactor()
-                           .registerFixedBuffers(fixedBufferPool);
+            return Proactor.proactor(allocator);
         } catch (Throwable e) {
             LOG.error("Unable to init Proactor", e);
 

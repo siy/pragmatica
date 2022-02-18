@@ -31,13 +31,12 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.pragmatica.io.async.util.Units._1MiB;
 import static org.pragmatica.io.file.Files.blocks;
 import static org.pragmatica.io.file.Files.lines;
 import static org.pragmatica.lang.Promise.all;
 
 class FilesTest {
-    private static final int _1M = 1024 * 1024;
-
     @Test
     void forEachBlockPassesAllChunks() {
         var fileName = Path.of("target/classes", Files.class.getName().replace('.', '/') + ".class");
@@ -45,7 +44,7 @@ class FilesTest {
         var size2 = new AtomicLong(0);
 
         all(blocks(fileName, SizeT.sizeT(512), buffer -> size1.addAndGet(buffer.used())),
-            blocks(fileName, SizeT.sizeT(_1M), buffer1 -> size2.addAndGet(buffer1.used())))
+            blocks(fileName, SizeT.sizeT(_1MiB), buffer1 -> size2.addAndGet(buffer1.used())))
             .map((_1, _2) -> {
                 assertEquals(size1.get(), size2.get());
                 return Unit.unit();
@@ -87,7 +86,7 @@ class FilesTest {
     }
 
     private String decode(OffHeapSlice buffer1) {
-        var builder = new StringBuilder(_1M);
+        var builder = new StringBuilder(_1MiB);
         var decoder = new UTF8Decoder();
 
         decoder.decodeWithRecovery(buffer1, builder::append);
