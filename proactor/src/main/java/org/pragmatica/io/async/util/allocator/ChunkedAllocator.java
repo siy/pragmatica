@@ -50,7 +50,7 @@ public class ChunkedAllocator implements AutoCloseable {
 
     public ChunkedAllocator register(UringApi api) {
         api.registerBuffers(arena).onFailure(failure -> {
-            throw new IllegalStateException("Unable to register fixed buffer: " + failure.message() + "\n" + this);
+            throw new IllegalStateException("FixedBuffer registration error: " + failure.message() + " " + this);
         });
         return this;
     }

@@ -43,7 +43,7 @@ import java.util.function.Consumer;
  */
 //TODO: finish docs
 public interface Proactor {
-    int DEFAULT_QUEUE_SIZE = 64;
+    int DEFAULT_QUEUE_SIZE = 128;
 
     /**
      * Create an instance with default queue length.
