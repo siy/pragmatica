@@ -39,14 +39,13 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.pragmatica.io.async.util.Units._1KiB;
-import static org.pragmatica.io.async.util.Units._1MiB;
 import static org.pragmatica.io.async.util.allocator.ChunkedAllocator.allocator;
 import static org.pragmatica.lang.Option.empty;
 import static org.pragmatica.lang.Option.option;
 
 //TODO: remaining tests
 class ProactorTest {
-    private final Proactor proactor = Proactor.proactor(allocator(_1MiB));
+    private final Proactor proactor = Proactor.proactor(allocator(16 * _1KiB));
 
     @Test
     void nopCanBeSubmitted() {
