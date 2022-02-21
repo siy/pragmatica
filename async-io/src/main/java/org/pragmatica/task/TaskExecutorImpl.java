@@ -31,6 +31,7 @@ import java.util.stream.IntStream;
 
 import static java.util.concurrent.Executors.newFixedThreadPool;
 import static org.pragmatica.io.async.util.ActionableThreshold.threshold;
+import static org.pragmatica.io.async.util.DaemonThreadFactory.shutdownThreadFactory;
 import static org.pragmatica.io.async.util.DaemonThreadFactory.threadFactory;
 import static org.pragmatica.io.async.util.Units._1MiB;
 import static org.pragmatica.io.async.util.allocator.ChunkedAllocator.allocator;
@@ -53,6 +54,8 @@ final class TaskExecutorImpl implements TaskExecutor {
         this.executor = newFixedThreadPool(numThreads, threadFactory("TaskExecutor #%d"));
         this.threshold = threshold(numThreads, () -> shutdownPromise.resolve(unitResult()));
         this.allocator = allocator(FIXED_POOL_SIZE);
+
+        Runtime.getRuntime().addShutdownHook(shutdownThreadFactory().newThread(this::shutdown));
 
         IntStream
             .range(0, numThreads)
@@ -90,6 +93,7 @@ final class TaskExecutorImpl implements TaskExecutor {
         runners.forEach(TaskRunner::shutdown);
 
         executor.shutdown();
+        allocator.close();
 
         return shutdownPromise.onResultDo(allocator::close);
     }

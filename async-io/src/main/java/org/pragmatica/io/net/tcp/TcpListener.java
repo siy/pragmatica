@@ -33,14 +33,13 @@ import org.pragmatica.task.TaskExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static org.pragmatica.io.async.util.DaemonThreadFactory.shutdownThreadFactory;
 import static org.pragmatica.io.net.ConnectionProtocolContext.connectionProtocolContext;
 
 public class TcpListener<T extends InetAddress> implements Listener<T> {
     private static final Logger LOG = LoggerFactory.getLogger(TcpListener.class);
-    private static final ThreadFactory SHUTDOWN_HOOK_THREAD_FACTORY = DaemonThreadFactory.threadFactory("Shutdown Hook");
 
     private final ListenConfig<T> config;
     private final Promise<Unit> shutdown = Promise.promise();
@@ -58,10 +57,10 @@ public class TcpListener<T extends InetAddress> implements Listener<T> {
     @Override
     public Promise<Unit> listen() {
         Runtime.getRuntime()
-               .addShutdownHook(SHUTDOWN_HOOK_THREAD_FACTORY.newThread(this::shutdown));
+               .addShutdownHook(shutdownThreadFactory().newThread(this::shutdown));
 
         return serve.async((promise, proactor) ->
-                               proactor.listen(result -> doListen(result),
+                               proactor.listen(this::doListen,
                                                config.address(), SocketType.STREAM, config.listenerFlags(),
                                                config.backlogSize(), config.listenerOptions()));
     }
