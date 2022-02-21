@@ -37,7 +37,7 @@ import static org.pragmatica.io.async.util.allocator.ChunkedAllocator.allocator;
 import static org.pragmatica.lang.Unit.unitResult;
 
 final class TaskExecutorImpl implements TaskExecutor {
-    private static final int FIXED_POOL_SIZE = 32 * _1MiB;
+    private static final int FIXED_POOL_SIZE = _1MiB;
 
     private final int numThreads;
     private final ExecutorService executor;
