@@ -19,4 +19,6 @@ jobs:
         uses: egor-tensin/setup-gcc@v1
 
       - name: Build with Maven
+        env:
+          MAVEN_OPTS: -Xmx1024m
         run: mvn --batch-mode --update-snapshots verify
