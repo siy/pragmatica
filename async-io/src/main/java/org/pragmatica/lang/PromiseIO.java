@@ -20,10 +20,7 @@ package org.pragmatica.lang;
 import org.pragmatica.io.async.Timeout;
 import org.pragmatica.io.async.common.OffsetT;
 import org.pragmatica.io.async.common.SizeT;
-import org.pragmatica.io.async.file.FileDescriptor;
-import org.pragmatica.io.async.file.FilePermission;
-import org.pragmatica.io.async.file.OpenFlags;
-import org.pragmatica.io.async.file.SpliceDescriptor;
+import org.pragmatica.io.async.file.*;
 import org.pragmatica.io.async.file.stat.FileStat;
 import org.pragmatica.io.async.file.stat.StatFlag;
 import org.pragmatica.io.async.file.stat.StatMask;
@@ -31,6 +28,7 @@ import org.pragmatica.io.async.net.*;
 import org.pragmatica.io.async.net.InetAddress.Inet4Address;
 import org.pragmatica.io.async.net.InetAddress.Inet6Address;
 import org.pragmatica.io.async.util.OffHeapSlice;
+import org.pragmatica.io.async.util.allocator.FixedBuffer;
 
 import java.nio.file.Path;
 import java.time.Duration;
@@ -41,6 +39,7 @@ import static org.pragmatica.lang.Option.empty;
 /**
  * "Promisified" Proactor I/O API.
  */
+//TODO: finish docs
 public interface PromiseIO {
     /**
      * Basic NOP (no-operation). Although the operation does nothing, internally it goes full round-trip to kernel and back.
@@ -301,19 +300,83 @@ public interface PromiseIO {
         return stat(fd, flags, mask, empty());
     }
 
-    static Promise<SizeT> read(FileDescriptor fd, OffsetT offset, Option<Timeout> timeout, OffHeapSlice... buffers) {
-        return Promise.promise((promise, proactor) -> proactor.read(promise::resolve, fd, offset, timeout, buffers));
+    static Promise<SizeT> readVector(FileDescriptor fd, OffsetT offset, Option<Timeout> timeout, OffHeapSlice... buffers) {
+        return Promise.promise((promise, proactor) -> proactor.readVector(promise::resolve, fd, offset, timeout, buffers));
     }
 
-    static Promise<SizeT> read(FileDescriptor fd, OffsetT offset, OffHeapSlice... buffers) {
-        return read(fd, offset, empty(), buffers);
+    static Promise<SizeT> readVector(FileDescriptor fd, OffsetT offset, OffHeapSlice... buffers) {
+        return readVector(fd, offset, empty(), buffers);
     }
 
-    static Promise<SizeT> write(FileDescriptor fd, OffsetT offset, Option<Timeout> timeout, OffHeapSlice... buffers) {
-        return Promise.promise((promise, proactor) -> proactor.write(promise::resolve, fd, offset, timeout, buffers));
+    static Promise<SizeT> readVector(FileDescriptor fd, Option<Timeout> timeout, OffHeapSlice... buffers) {
+        return readVector(fd, OffsetT.ZERO, timeout, buffers);
     }
 
-    static Promise<SizeT> write(FileDescriptor fd, OffsetT offset, OffHeapSlice... buffers) {
-        return write(fd, offset, empty(), buffers);
+    static Promise<SizeT> readVector(FileDescriptor fd, OffHeapSlice... buffers) {
+        return readVector(fd, OffsetT.ZERO, empty(), buffers);
+    }
+
+    static Promise<SizeT> writeVector(FileDescriptor fd, OffsetT offset, Option<Timeout> timeout, OffHeapSlice... buffers) {
+        return Promise.promise((promise, proactor) -> proactor.writeVector(promise::resolve, fd, offset, timeout, buffers));
+    }
+
+    static Promise<SizeT> writeVector(FileDescriptor fd, OffsetT offset, OffHeapSlice... buffers) {
+        return writeVector(fd, offset, empty(), buffers);
+    }
+
+    static Promise<SizeT> writeVector(FileDescriptor fd, Option<Timeout> timeout, OffHeapSlice... buffers) {
+        return writeVector(fd, OffsetT.ZERO, timeout, buffers);
+    }
+
+    static Promise<SizeT> writeVector(FileDescriptor fd, OffHeapSlice... buffers) {
+        return writeVector(fd, OffsetT.ZERO, empty(), buffers);
+    }
+
+    static Promise<SizeT> readFixed(FileDescriptor fd, FixedBuffer fixedBuffer, OffsetT offset, Option<Timeout> timeout) {
+        return Promise.promise((promise, proactor) -> proactor.readFixed(promise::resolve, fd, fixedBuffer, offset, timeout));
+    }
+
+    static Promise<SizeT> readFixed(FileDescriptor fd, FixedBuffer fixedBuffer, Option<Timeout> timeout) {
+        return readFixed(fd, fixedBuffer, OffsetT.ZERO, timeout);
+    }
+
+    static Promise<SizeT> readFixed(FileDescriptor fd, FixedBuffer fixedBuffer, OffsetT offset) {
+        return readFixed(fd, fixedBuffer, offset, empty());
+    }
+
+    static Promise<SizeT> readFixed(FileDescriptor fd, FixedBuffer fixedBuffer) {
+        return readFixed(fd, fixedBuffer, OffsetT.ZERO, empty());
+    }
+
+    static Promise<SizeT> writeFixed(FileDescriptor fd, FixedBuffer fixedBuffer, OffsetT offset, Option<Timeout> timeout) {
+        return Promise.promise((promise, proactor) -> proactor.writeFixed(promise::resolve, fd, fixedBuffer, offset, timeout));
+    }
+
+    static Promise<SizeT> writeFixed(FileDescriptor fd, FixedBuffer fixedBuffer, Option<Timeout> timeout) {
+        return writeFixed(fd, fixedBuffer, OffsetT.ZERO, timeout);
+    }
+
+    static Promise<SizeT> writeFixed(FileDescriptor fd, FixedBuffer fixedBuffer, OffsetT offset) {
+        return writeFixed(fd, fixedBuffer, offset, empty());
+    }
+
+    static Promise<SizeT> writeFixed(FileDescriptor fd, FixedBuffer fixedBuffer) {
+        return writeFixed(fd, fixedBuffer, OffsetT.ZERO, empty());
+    }
+
+    static Promise<Unit> fsync(FileDescriptor fd, boolean syncMetadata, Option<Timeout> timeout) {
+        return Promise.promise((promise, proactor) -> proactor.fsync(promise::resolve, fd, syncMetadata, timeout));
+    }
+
+    static Promise<Unit> fsync(FileDescriptor fd, boolean syncMetadata) {
+        return fsync(fd, syncMetadata, empty());
+    }
+
+    static Promise<Unit> falloc(FileDescriptor fd, Set<FileAllocFlags> flags, long offset, long len, Option<Timeout> timeout) {
+        return Promise.promise((promise, proactor) -> proactor.falloc(promise::resolve, fd, flags, offset, len, timeout));
+    }
+
+    static Promise<Unit> falloc(FileDescriptor fd, Set<FileAllocFlags> flags, long offset, long len) {
+        return falloc(fd, flags, offset, len, empty());
     }
 }

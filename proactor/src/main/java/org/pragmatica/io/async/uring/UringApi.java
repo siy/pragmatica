@@ -141,7 +141,7 @@ public class UringApi implements AutoCloseable {
     }
 
     public Result<OffHeapSlice[]> registerBuffers(OffHeapSlice... buffers) {
-        var vector = OffHeapIoVector.withBuffers(buffers);
+        var vector = OffHeapIoVector.withReadBuffers(buffers);
 
         try {
             int rc = register(IORING_REGISTER_BUFFERS, vector.address(), vector.length());

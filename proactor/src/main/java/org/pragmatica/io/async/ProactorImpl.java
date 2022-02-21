@@ -42,7 +42,8 @@ import java.time.Duration;
 import java.util.Set;
 import java.util.function.BiConsumer;
 
-import static org.pragmatica.io.async.uring.struct.offheap.OffHeapIoVector.withBuffers;
+import static org.pragmatica.io.async.uring.struct.offheap.OffHeapIoVector.withReadBuffers;
+import static org.pragmatica.io.async.uring.struct.offheap.OffHeapIoVector.withWriteBuffers;
 
 /**
  * Asynchronous Input/Output Proactor Implementation.
@@ -193,18 +194,18 @@ class ProactorImpl implements Proactor {
     }
 
     @Override
-    public void read(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fileDescriptor, OffsetT offset,
-                     Option<Timeout> timeout, OffHeapSlice... buffers) {
-        uringApi.submit(factory.forReadVector(completion, fileDescriptor, offset, timeout, withBuffers(buffers))
+    public void readVector(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fileDescriptor, OffsetT offset,
+                           Option<Timeout> timeout, OffHeapSlice... buffers) {
+        uringApi.submit(factory.forReadVector(completion, fileDescriptor, offset, timeout, withReadBuffers(buffers))
                                .register(exchangeRegistry));
 
         timeout.whenPresent(this::appendTimeout);
     }
 
     @Override
-    public void write(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fileDescriptor, OffsetT offset,
-                      Option<Timeout> timeout, OffHeapSlice... buffers) {
-        uringApi.submit(factory.forWriteVector(completion, fileDescriptor, offset, timeout, withBuffers(buffers)));
+    public void writeVector(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fileDescriptor, OffsetT offset,
+                            Option<Timeout> timeout, OffHeapSlice... buffers) {
+        uringApi.submit(factory.forWriteVector(completion, fileDescriptor, offset, timeout, withWriteBuffers(buffers)));
         timeout.whenPresent(this::appendTimeout);
     }
 
@@ -219,6 +220,20 @@ class ProactorImpl implements Proactor {
     public void falloc(BiConsumer<Result<Unit>, Proactor> completion, FileDescriptor fileDescriptor,
                        Set<FileAllocFlags> allocFlags, long offset, long len, Option<Timeout> timeout) {
         uringApi.submit(factory.forFAlloc(completion, fileDescriptor, allocFlags, offset, len, timeout));
+        timeout.whenPresent(this::appendTimeout);
+    }
+
+    @Override
+    public void readFixed(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fd, FixedBuffer buffer,
+                          OffsetT offset, Option<Timeout> timeout) {
+        uringApi.submit(factory.forReadFixed(completion, fd, buffer, offset, timeout));
+        timeout.whenPresent(this::appendTimeout);
+    }
+
+    @Override
+    public void writeFixed(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fd, FixedBuffer buffer,
+                           OffsetT offset, Option<Timeout> timeout) {
+        uringApi.submit(factory.forWriteFixed(completion, fd, buffer, offset, timeout));
         timeout.whenPresent(this::appendTimeout);
     }
 

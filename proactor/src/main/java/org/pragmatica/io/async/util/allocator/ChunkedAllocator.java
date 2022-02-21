@@ -23,6 +23,7 @@ import org.pragmatica.io.async.util.OffHeapSlice;
 import org.pragmatica.lang.Result;
 
 import java.util.BitSet;
+import java.util.HexFormat;
 
 import static org.pragmatica.io.async.util.Units._1KiB;
 
@@ -48,7 +49,9 @@ public class ChunkedAllocator implements AutoCloseable {
     }
 
     public ChunkedAllocator register(UringApi api) {
-        api.registerBuffers(arena);
+        api.registerBuffers(arena).onFailure(failure -> {
+            throw new IllegalStateException("Unable to register fixed buffer: " + failure.message() + "\n" + this);
+        });
         return this;
     }
 
@@ -127,5 +130,10 @@ public class ChunkedAllocator implements AutoCloseable {
             }
         }
         return numChunks;
+    }
+
+    @Override
+    public String toString() {
+        return "ChunkedAllocator(" + HexFormat.of().toHexDigits(arena.address()) + ")";
     }
 }

@@ -37,7 +37,7 @@ import static org.pragmatica.io.async.util.allocator.ChunkedAllocator.allocator;
 import static org.pragmatica.lang.Unit.unitResult;
 
 final class TaskExecutorImpl implements TaskExecutor {
-    private static final int FIXED_POOL_SIZE = 4 * _1MiB;
+    private static final int FIXED_POOL_SIZE = 128 * _1MiB;
 
     private final int numThreads;
     private final ExecutorService executor;
@@ -52,7 +52,7 @@ final class TaskExecutorImpl implements TaskExecutor {
         this.numThreads = numThreads;
         this.executor = newFixedThreadPool(numThreads, threadFactory("TaskExecutor #%d"));
         this.threshold = threshold(numThreads, () -> shutdownPromise.resolve(unitResult()));
-        this.allocator = allocator(FIXED_POOL_SIZE * numThreads);
+        this.allocator = allocator(FIXED_POOL_SIZE);
 
         IntStream
             .range(0, numThreads)

@@ -19,7 +19,6 @@ package org.pragmatica.io.async.util.allocator;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.pragmatica.io.async.util.OffHeapSlice;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.pragmatica.io.async.util.Units._1KiB;

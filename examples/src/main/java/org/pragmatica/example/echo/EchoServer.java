@@ -18,14 +18,13 @@
 package org.pragmatica.example.echo;
 
 import org.pragmatica.io.net.Listener;
-import org.pragmatica.io.net.protocols.EchoProtocol;
 import org.pragmatica.lang.Cause;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static org.pragmatica.io.async.net.InetAddress.Inet4Address.*;
+import static org.pragmatica.io.async.net.InetAddress.Inet4Address.INADDR_ANY;
 import static org.pragmatica.io.net.AcceptProtocol.acceptProtocol;
-import static org.pragmatica.io.net.protocols.EchoProtocol.echoProtocol;
+import static org.pragmatica.io.net.protocols.FixedBuffersEchoProtocol.echoProtocol;
 import static org.pragmatica.io.net.tcp.ListenConfig.listenConfig;
 import static org.pragmatica.lang.Option.empty;
 
