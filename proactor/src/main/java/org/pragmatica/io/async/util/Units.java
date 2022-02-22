@@ -15,11 +15,14 @@
  *
  */
 
-package org.pragmatica.io.net;
+package org.pragmatica.io.async.util;
 
-import org.pragmatica.io.async.Proactor;
-import org.pragmatica.io.async.net.InetAddress;
+public sealed interface Units {
+    // Memory space units
+    int _1KiB = 1024;
+    int _1MiB = _1KiB * _1KiB;
+    int _1GiB = _1MiB * _1KiB;
+    int _1TiB = _1MiB * _1MiB;
 
-public interface ConnectionProtocolStarter<T extends InetAddress> {
-    void start(ConnectionProtocolContext<T> connectionProtocolContext, Proactor proactor);
+    record unused() implements Units {}
 }

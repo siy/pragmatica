@@ -23,14 +23,17 @@ import org.pragmatica.io.async.common.SizeT;
 import org.pragmatica.io.async.file.FileDescriptor;
 import org.pragmatica.io.async.net.*;
 import org.pragmatica.io.async.uring.exchange.ExchangeEntry;
+import org.pragmatica.io.async.uring.struct.offheap.OffHeapIoVector;
 import org.pragmatica.io.async.uring.struct.offheap.OffHeapSocketAddress;
 import org.pragmatica.io.async.uring.struct.raw.RawSocketAddressIn;
 import org.pragmatica.io.async.uring.struct.raw.RawSocketAddressIn6;
 import org.pragmatica.io.async.uring.struct.raw.SQEntry;
 import org.pragmatica.io.async.uring.utils.LibraryLoader;
 import org.pragmatica.io.async.uring.utils.ObjectHeap;
+import org.pragmatica.io.async.util.OffHeapSlice;
 import org.pragmatica.io.async.util.raw.RawMemory;
 import org.pragmatica.lang.Result;
+import org.pragmatica.lang.Unit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,6 +41,7 @@ import java.util.Set;
 
 import static org.pragmatica.io.async.SystemError.ENOTSOCK;
 import static org.pragmatica.io.async.SystemError.result;
+import static org.pragmatica.io.async.uring.RegisterOperation.IORING_REGISTER_BUFFERS;
 import static org.pragmatica.lang.Result.success;
 
 /**
@@ -74,10 +78,13 @@ public class UringApi implements AutoCloseable {
     //------------------------------------------------------------------------------------------------
     // Start/Stop
     static native int init(int numEntries, long baseAddress, int flags);
+
     static native void close(long baseAddress);
 
     // Syscall
-    static native long enter(long baseAddress, long toSubmit, long minComplete, int flags);
+    static native long enter(int fd, long toSubmit, long minComplete, int flags);
+
+    static native int register(int fd, int op, long arg1, long arg2);
 
     // Socket API
 
@@ -85,8 +92,8 @@ public class UringApi implements AutoCloseable {
      * Create socket. This call is a combination of socket(2) and setsockopt(2).
      *
      * @param domain  Socket domain. Refer to {@link AddressFamily} for set of recognized values.
-     * @param type    Socket type and open flags. Refer to {@link SocketType} for possible types. The {@link
-     *                SocketFlag} flags can be OR-ed if necessary.
+     * @param type    Socket type and open flags. Refer to {@link SocketType} for possible types. The {@link SocketFlag} flags can be OR-ed if
+     *                necessary.
      * @param options Socket option1s. Only subset of possible options are supported. Refer to {@link SocketOption} for details.
      *
      * @return socket (>0) or error (<0)
@@ -98,8 +105,8 @@ public class UringApi implements AutoCloseable {
      * listen(2) calls.
      *
      * @param socket     Socket to configure.
-     * @param address    Memory address with prepared socket address structure (See {@link RawSocketAddressIn} and
-     *                   {@link RawSocketAddressIn6} for more details}.
+     * @param address    Memory address with prepared socket address structure (See {@link RawSocketAddressIn} and {@link RawSocketAddressIn6} for
+     *                   more details}.
      * @param len        Size of the prepared socket address structure.
      * @param queueDepth Set backlog queue dept.
      *
@@ -127,6 +134,32 @@ public class UringApi implements AutoCloseable {
         }
 
         return success(new UringApi(numEntries, ringBase));
+    }
+
+    private int register(RegisterOperation op, long arg1, long arg2) {
+        return register(ioUring.fd(), op.ordinal(), arg1, arg2);
+    }
+
+    public Result<OffHeapSlice[]> registerBuffers(OffHeapSlice... buffers) {
+        var vector = OffHeapIoVector.withReadBuffers(buffers);
+
+        try {
+            int rc = register(IORING_REGISTER_BUFFERS, vector.address(), vector.length());
+
+            if (rc < 0) {
+                return SystemError.result(rc);
+            }
+
+            return Result.success(buffers);
+        } finally {
+            vector.dispose();
+        }
+    }
+
+    public Result<Unit> unregisterBuffers() {
+        int rc = register(IORING_REGISTER_BUFFERS, 0L, 0L);
+
+        return rc < 0 ? SystemError.result(rc) : Unit.unitResult();
     }
 
     @Override

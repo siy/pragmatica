@@ -25,12 +25,14 @@ import static org.pragmatica.io.async.uring.struct.shape.IoUringOffsets.*;
 public class IoUring extends AbstractExternalRawStructure<IoUring> {
     private final IoUringSQ submissionQueue;
     private final IoUringCQ completionQueue;
+    private final int fd;
 
     private IoUring(long address) {
         super(address, IoUringOffsets.SIZE);
 
         submissionQueue = IoUringSQ.at(sqAddress(), this);
         completionQueue = IoUringCQ.at(cqAddress());
+        fd = getInt(ring_fd);
     }
 
     public static IoUring at(long address) {
@@ -64,8 +66,12 @@ public class IoUring extends AbstractExternalRawStructure<IoUring> {
         return getInt(flags);
     }
 
+    public int fd() {
+        return fd;
+    }
+
     public long enter(long toSubmit, long minComplete, int flags) {
-        return UringApi.enter(address(), toSubmit, minComplete, flags);
+        return UringApi.enter(fd, toSubmit, minComplete, flags);
     }
 
     public int submitAndWait(int waitNr) {

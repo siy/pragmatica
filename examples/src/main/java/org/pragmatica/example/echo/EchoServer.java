@@ -17,15 +17,13 @@
 
 package org.pragmatica.example.echo;
 
-import org.pragmatica.io.net.Listener;
-import org.pragmatica.io.net.protocols.EchoProtocol;
 import org.pragmatica.lang.Cause;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static org.pragmatica.io.async.net.InetAddress.Inet4Address.*;
-import static org.pragmatica.io.net.AcceptProtocol.acceptProtocol;
-import static org.pragmatica.io.net.protocols.EchoProtocol.echoProtocol;
+import static org.pragmatica.io.async.net.InetAddress.Inet4Address.INADDR_ANY;
+import static org.pragmatica.io.net.Listener.listener;
+import static org.pragmatica.io.net.protocols.FixedBuffersEchoProtocol.acceptEchoProtocol;
 import static org.pragmatica.io.net.tcp.ListenConfig.listenConfig;
 import static org.pragmatica.lang.Option.empty;
 
@@ -33,17 +31,14 @@ public class EchoServer {
     private static final Logger LOG = LoggerFactory.getLogger(EchoServer.class);
 
     public static void main(String[] args) {
-        var acceptProtocol = acceptProtocol(echoProtocol(INADDR_ANY, 4096, empty()));
-        var config = listenConfig(acceptProtocol).withPort(12345).build();
-        var listener = Listener.listener(config);
+        var config = listenConfig(acceptEchoProtocol(INADDR_ANY, 4096, empty()))
+            .withPort(12345).build();
 
         LOG.info("Starting server {}", config);
 
-        listener.listen()
-                .onFailure(EchoServer::printFailure)
-                .flatMap(listener::shutdown)
-                .onFailure(EchoServer::printFailure)
-                .join();
+        listener(config).listen()
+                        .onFailure(EchoServer::printFailure)
+                        .join();
     }
 
     private static void printFailure(Cause cause) {

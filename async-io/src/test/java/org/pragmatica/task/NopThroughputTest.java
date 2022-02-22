@@ -40,7 +40,7 @@ public class NopThroughputTest {
 
         Promise.<Unit>promise((__, ___, executor) -> {
             for(var i = 0; i < multiplicationFactor; i++) {
-                executor.spread(proactor -> runNop(proactor, list, shutdown, latch));
+                executor.replicate(proactor -> runNop(proactor, list, shutdown, latch));
             }
         });
 

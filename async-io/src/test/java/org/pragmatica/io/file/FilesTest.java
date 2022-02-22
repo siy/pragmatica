@@ -18,10 +18,9 @@
 package org.pragmatica.io.file;
 
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.pragmatica.io.async.common.SizeT;
-import org.pragmatica.io.async.util.OffHeapBuffer;
+import org.pragmatica.io.async.util.OffHeapSlice;
 import org.pragmatica.io.codec.UTF8Decoder;
 import org.pragmatica.lang.Promise;
 import org.pragmatica.lang.Unit;
@@ -32,13 +31,12 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.pragmatica.io.async.util.Units._1MiB;
 import static org.pragmatica.io.file.Files.blocks;
 import static org.pragmatica.io.file.Files.lines;
 import static org.pragmatica.lang.Promise.all;
 
 class FilesTest {
-    private static final int _1M = 1024 * 1024;
-
     @Test
     void forEachBlockPassesAllChunks() {
         var fileName = Path.of("target/classes", Files.class.getName().replace('.', '/') + ".class");
@@ -46,7 +44,7 @@ class FilesTest {
         var size2 = new AtomicLong(0);
 
         all(blocks(fileName, SizeT.sizeT(512), buffer -> size1.addAndGet(buffer.used())),
-            blocks(fileName, SizeT.sizeT(_1M), buffer1 -> size2.addAndGet(buffer1.used())))
+            blocks(fileName, SizeT.sizeT(_1MiB), buffer1 -> size2.addAndGet(buffer1.used())))
             .map((_1, _2) -> {
                 assertEquals(size1.get(), size2.get());
                 return Unit.unit();
@@ -87,8 +85,8 @@ class FilesTest {
         assertEquals(515, lineCount2.get());
     }
 
-    private String decode(OffHeapBuffer buffer1) {
-        var builder = new StringBuilder(_1M);
+    private String decode(OffHeapSlice buffer1) {
+        var builder = new StringBuilder(_1MiB);
         var decoder = new UTF8Decoder();
 
         decoder.decodeWithRecovery(buffer1, builder::append);

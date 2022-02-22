@@ -22,7 +22,7 @@ import org.pragmatica.io.async.Timeout;
 import org.pragmatica.io.async.common.SizeT;
 import org.pragmatica.io.async.file.FileDescriptor;
 import org.pragmatica.io.async.net.InetAddress;
-import org.pragmatica.io.async.util.OffHeapSlice;
+import org.pragmatica.io.async.util.allocator.FixedBuffer;
 import org.pragmatica.io.net.AcceptProtocol;
 import org.pragmatica.io.net.ConnectionProtocol;
 import org.pragmatica.io.net.ConnectionProtocolContext;
@@ -33,46 +33,52 @@ import org.pragmatica.lang.Unit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static org.pragmatica.lang.Option.option;
+
 /**
  * Simple TCP Echo protocol implementation. All it does is sending back received data.
+ * <p>
+ * This version uses fixed buffers to transfer data between application and OS.
  */
-public sealed interface EchoProtocol<T extends InetAddress> extends ConnectionProtocol<T> {
-
+public sealed interface FixedBuffersEchoProtocol<T extends InetAddress> extends ConnectionProtocol<T> {
     static <T extends InetAddress> AcceptProtocol<T> acceptEchoProtocol(T addressTag, int bufferSize, Option<Timeout> timeout) {
         var config = new EchoProtocolConfig<T>(bufferSize, timeout);
-        return (context, proactor) -> new  EchoProtocolImpl<T>(config, context).process(proactor);
+        return (context, proactor) -> new EchoProtocolImpl<T>(config, context).process(proactor);
     }
 
     record EchoProtocolConfig<T extends InetAddress>(int bufferSize, Option<Timeout> timeout) {}
 
-    final class EchoProtocolImpl<T extends InetAddress> implements EchoProtocol<T> {
-        private static final Logger LOG = LoggerFactory.getLogger(EchoProtocol.class);
+    final class EchoProtocolImpl<T extends InetAddress> implements FixedBuffersEchoProtocol<T> {
+        private static final Logger LOG = LoggerFactory.getLogger(FixedBuffersEchoProtocol.class);
 
         private final EchoProtocolConfig<T> config;
-        private final OffHeapSlice buffer;
         private final FileDescriptor socket;
+        private FixedBuffer buffer;
 
         public EchoProtocolImpl(EchoProtocolConfig<T> config, ConnectionProtocolContext<T> context) {
             this.config = config;
             this.socket = context.connectionContext().socket();
-            this.buffer = OffHeapSlice.fixedSize(config.bufferSize());
         }
 
         @Override
         public void process(Proactor proactor) {
-            proactor.read(this::readHandler, socket, buffer, config.timeout());
+            proactor.allocateFixedBuffer(config.bufferSize())
+                    .onFailure(f -> handleFailure(f, proactor))
+                    .onSuccess(buf -> buffer = buf);
+
+            proactor.readFixed(this::readHandler, socket, buffer, config.timeout());
         }
 
         private void readHandler(Result<SizeT> result, Proactor proactor) {
             result.fold(failure -> handleFailure(failure, proactor), size -> {
-                proactor.write(this::writeHandler, socket, buffer, config.timeout());
+                proactor.writeFixed(this::writeHandler, socket, buffer, config.timeout());
                 return Unit.unit();
             });
         }
 
         private void writeHandler(Result<SizeT> result, Proactor proactor) {
             result.fold(failure -> handleFailure(failure, proactor), size -> {
-                proactor.read(this::readHandler, socket, buffer, config.timeout());
+                proactor.readFixed(this::readHandler, socket, buffer, config.timeout());
                 return Unit.unit();
             });
         }
@@ -82,6 +88,7 @@ public sealed interface EchoProtocol<T extends InetAddress> extends ConnectionPr
                 LOG.info("I/O error: {}", failure);
             }
 
+            option(buffer).whenPresent(FixedBuffer::dispose);
             proactor.close(this::logClosing, socket);
 
             return Unit.unit();

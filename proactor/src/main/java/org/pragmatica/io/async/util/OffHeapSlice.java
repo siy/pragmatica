@@ -15,12 +15,32 @@
  *
  */
 
-package org.pragmatica.io.async.uring.struct;
+package org.pragmatica.io.async.util;
+
+import org.pragmatica.io.async.uring.struct.RawStructure;
 
 /**
- * Base class for classes which are used for passing data to JNI side. Note that these classes are allocating and deallocating off-heap memory.
- * Lifecycle of instances of such classes should be carefully tracked to avoid memory leaks.
+ * Memory buffer allocated outside Java heap.
  */
-public interface OffHeapStructure<T extends RawStructure<T>> extends RawStructure<T> {
-    void dispose();
+public interface OffHeapSlice extends RawStructure<OffHeapSlice>, AutoCloseable {
+    static OffHeapSlice fromBytes(byte[] input) {
+        return OffHeapBuffer.fromBytes(input);
+    }
+
+    static OffHeapSlice fixedSize(int size) {
+        return OffHeapBuffer.fixedSize(size);
+    }
+
+    int used();
+
+    OffHeapSlice used(int used);
+
+    OffHeapSlice slice(int offset, int length);
+
+    byte[] export();
+
+    String hexDump();
+
+    @Override
+    void close();
 }

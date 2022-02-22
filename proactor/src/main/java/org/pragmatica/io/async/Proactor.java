@@ -19,15 +19,14 @@ package org.pragmatica.io.async;
 
 import org.pragmatica.io.async.common.OffsetT;
 import org.pragmatica.io.async.common.SizeT;
-import org.pragmatica.io.async.file.FileDescriptor;
-import org.pragmatica.io.async.file.FilePermission;
-import org.pragmatica.io.async.file.OpenFlags;
-import org.pragmatica.io.async.file.SpliceDescriptor;
+import org.pragmatica.io.async.file.*;
 import org.pragmatica.io.async.file.stat.FileStat;
 import org.pragmatica.io.async.file.stat.StatFlag;
 import org.pragmatica.io.async.file.stat.StatMask;
 import org.pragmatica.io.async.net.*;
-import org.pragmatica.io.async.util.OffHeapBuffer;
+import org.pragmatica.io.async.util.OffHeapSlice;
+import org.pragmatica.io.async.util.allocator.ChunkedAllocator;
+import org.pragmatica.io.async.util.allocator.FixedBuffer;
 import org.pragmatica.lang.Option;
 import org.pragmatica.lang.Result;
 import org.pragmatica.lang.Unit;
@@ -42,21 +41,22 @@ import java.util.function.Consumer;
  * Low level externally accessible API for submission of I/O operations. The API designed as a <a href="https://en.wikipedia.org/wiki/Proactor_pattern">Proactor</a>
  * pattern.
  */
+//TODO: finish docs
 public interface Proactor {
-    int DEFAULT_QUEUE_SIZE = 64;
+    int DEFAULT_QUEUE_SIZE = 128;
 
     /**
      * Create an instance with default queue length.
      */
-    static Proactor proactor() {
-        return proactor(DEFAULT_QUEUE_SIZE);
+    static Proactor proactor(ChunkedAllocator sharedAllocator) {
+        return proactor(DEFAULT_QUEUE_SIZE, sharedAllocator);
     }
 
     /**
      * Create an instance with default queue length.
      */
-    static Proactor proactor(int queueSize) {
-        return ProactorImpl.proactor(queueSize);
+    static Proactor proactor(int queueSize, ChunkedAllocator sharedAllocator) {
+        return ProactorImpl.proactor(queueSize, sharedAllocator);
     }
 
     /**
@@ -117,9 +117,9 @@ public interface Proactor {
     /**
      * Submit READ operation.
      * <p>
-     * Read from specified file descriptor. The number of bytes to read is defined by the provided buffer {@link OffHeapBuffer#size()}. Upon
-     * successful completion {@code buffer} has its {@link OffHeapBuffer#used(int)} value set to number of bytes actually read. The number of bytes
-     * read also passed as a parameter to callback upon completion.
+     * Read from specified file descriptor. The number of bytes to read is defined by the provided buffer {@link OffHeapSlice#size()}. Upon successful
+     * completion {@code buffer} has its {@link OffHeapSlice#used(int)} value set to number of bytes actually read. The number of bytes read also
+     * passed as a parameter to callback upon completion.
      *
      * @param completion Callback which is invoked once operation is finished.
      * @param fd         File descriptor to read from.
@@ -127,25 +127,25 @@ public interface Proactor {
      * @param offset     Offset to read from if file descriptor points to file.
      * @param timeout    Optional operation timeout.
      */
-    void read(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fd, OffHeapBuffer buffer, OffsetT offset, Option<Timeout> timeout);
+    void read(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fd, OffHeapSlice buffer, OffsetT offset, Option<Timeout> timeout);
 
-    default void read(Consumer<Result<SizeT>> completion, FileDescriptor fd, OffHeapBuffer buffer, OffsetT offset, Option<Timeout> timeout) {
+    default void read(Consumer<Result<SizeT>> completion, FileDescriptor fd, OffHeapSlice buffer, OffsetT offset, Option<Timeout> timeout) {
         read((result, __) -> completion.accept(result), fd, buffer, offset, timeout);
     }
 
-    default void read(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fd, OffHeapBuffer buffer, Option<Timeout> timeout) {
+    default void read(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fd, OffHeapSlice buffer, Option<Timeout> timeout) {
         read(completion, fd, buffer, OffsetT.ZERO, timeout);
     }
 
-    default void read(Consumer<Result<SizeT>> completion, FileDescriptor fd, OffHeapBuffer buffer, Option<Timeout> timeout) {
+    default void read(Consumer<Result<SizeT>> completion, FileDescriptor fd, OffHeapSlice buffer, Option<Timeout> timeout) {
         read(completion, fd, buffer, OffsetT.ZERO, timeout);
     }
 
-    default void read(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fd, OffHeapBuffer buffer) {
+    default void read(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fd, OffHeapSlice buffer) {
         read(completion, fd, buffer, OffsetT.ZERO, Option.empty());
     }
 
-    default void read(Consumer<Result<SizeT>> completion, FileDescriptor fd, OffHeapBuffer buffer) {
+    default void read(Consumer<Result<SizeT>> completion, FileDescriptor fd, OffHeapSlice buffer) {
         read((result, __) -> completion.accept(result), fd, buffer);
     }
 
@@ -153,7 +153,7 @@ public interface Proactor {
      * Submit WRITE operation.
      * <p>
      * Writes data into specified file descriptor at specified offset. The number of bytes to write is defined by the provided buffer {@link
-     * OffHeapBuffer#used()}. Number of bytes actually written is passed as a parameter to provided callback.
+     * OffHeapSlice#used()}. Number of bytes actually written is passed as a parameter to provided callback.
      *
      * @param completion Callback which is invoked once operation is finished.
      * @param fd         File descriptor to write to.
@@ -161,25 +161,25 @@ public interface Proactor {
      * @param offset     Offset in a file to start writing if file descriptor points to file.
      * @param timeout    Optional operation timeout.
      */
-    void write(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fd, OffHeapBuffer buffer, OffsetT offset, Option<Timeout> timeout);
+    void write(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fd, OffHeapSlice buffer, OffsetT offset, Option<Timeout> timeout);
 
-    default void write(Consumer<Result<SizeT>> completion, FileDescriptor fd, OffHeapBuffer buffer, OffsetT offset, Option<Timeout> timeout) {
+    default void write(Consumer<Result<SizeT>> completion, FileDescriptor fd, OffHeapSlice buffer, OffsetT offset, Option<Timeout> timeout) {
         write((result, __) -> completion.accept(result), fd, buffer, offset, timeout);
     }
 
-    default void write(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fd, OffHeapBuffer buffer, Option<Timeout> timeout) {
+    default void write(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fd, OffHeapSlice buffer, Option<Timeout> timeout) {
         write(completion, fd, buffer, OffsetT.ZERO, timeout);
     }
 
-    default void write(Consumer<Result<SizeT>> completion, FileDescriptor fd, OffHeapBuffer buffer, Option<Timeout> timeout) {
+    default void write(Consumer<Result<SizeT>> completion, FileDescriptor fd, OffHeapSlice buffer, Option<Timeout> timeout) {
         write(completion, fd, buffer, OffsetT.ZERO, timeout);
     }
 
-    default void write(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fd, OffHeapBuffer buffer) {
+    default void write(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fd, OffHeapSlice buffer) {
         write(completion, fd, buffer, OffsetT.ZERO, Option.empty());
     }
 
-    default void write(Consumer<Result<SizeT>> completion, FileDescriptor fd, OffHeapBuffer buffer) {
+    default void write(Consumer<Result<SizeT>> completion, FileDescriptor fd, OffHeapSlice buffer) {
         write((result, __) -> completion.accept(result), fd, buffer);
     }
 
@@ -207,7 +207,7 @@ public interface Proactor {
      * <p>
      * Open file at specified location. Upon completion callback is invoked with file descriptor of opened file as a parameter.
      * <p>
-     * Note that this method only partially covers functionality of the underlying {@code openat(2)} call. Instead simpler {@code open(2)} semantics
+     * Note that this method only partially covers functionality of the underlying {@code openat(2)} call. Instead, simpler {@code open(2)} semantics
      * is implemented.
      *
      * @param completion Callback which is invoked once operation is finished.
@@ -243,15 +243,15 @@ public interface Proactor {
     }
 
     /**
-     * Create listener bound to specified address/port and ready to accept incoming connection. Upon completion provided callback is
-     * invoked with the filled listen context instance.
+     * Create listener bound to specified address/port and ready to accept incoming connection. Upon completion provided callback is invoked with the
+     * filled listen context instance.
      *
-     * @param completion Callback which is invoked once operation is finished.
-     * @param address    Socket address
-     * @param type       Socket type
-     * @param flags      Socket open flags
-     * @param len        Length of the listening queue
-     * @param options    Socket options. See {@link SocketOption} for more details
+     * @param completion    Callback which is invoked once operation is finished.
+     * @param socketAddress Socket address
+     * @param socketType    Socket type
+     * @param openFlags     Socket open flags
+     * @param queueDepth    Length of the listening queue
+     * @param options       Socket options. See {@link SocketOption} for more details
      *
      * @see ListenContext
      */
@@ -288,7 +288,9 @@ public interface Proactor {
         accept((result, __) -> completion.accept(result), socket, flags, addressType);
     }
 
-    default void acceptV4(BiConsumer<Result<ConnectionContext<InetAddress.Inet4Address>>, Proactor> completion, FileDescriptor socket, Set<SocketFlag> flags) {
+    default void acceptV4(BiConsumer<Result<ConnectionContext<InetAddress.Inet4Address>>, Proactor> completion,
+                          FileDescriptor socket,
+                          Set<SocketFlag> flags) {
         accept(completion, socket, flags, InetAddress.Inet4Address.INADDR_ANY);
     }
 
@@ -296,7 +298,9 @@ public interface Proactor {
         accept(completion, socket, flags, InetAddress.Inet4Address.INADDR_ANY);
     }
 
-    default void acceptV6(BiConsumer<Result<ConnectionContext<InetAddress.Inet6Address>>, Proactor> completion, FileDescriptor socket, Set<SocketFlag> flags) {
+    default void acceptV6(BiConsumer<Result<ConnectionContext<InetAddress.Inet6Address>>, Proactor> completion,
+                          FileDescriptor socket,
+                          Set<SocketFlag> flags) {
         accept(completion, socket, flags, InetAddress.Inet6Address.INADDR_ANY);
     }
 
@@ -344,10 +348,11 @@ public interface Proactor {
      * Get file status information for file specified by file descriptor. Upon completion callback is invoked with requested file status details as a
      * parameter.
      *
-     * @param fd      File descriptor
-     * @param flags   Flags which affect how information is retrieved, refer to {@link StatFlag} for more details
-     * @param mask    Specification of which information should be retrieved.
-     * @param timeout Optional operation timeout
+     * @param completion Callback which is invoked once operation is finished.
+     * @param fd         File descriptor
+     * @param flags      Flags which affect how information is retrieved, refer to {@link StatFlag} for more details
+     * @param mask       Specification of which information should be retrieved.
+     * @param timeout    Optional operation timeout
      *
      * @see FileStat
      */
@@ -360,48 +365,201 @@ public interface Proactor {
     /**
      * Read into buffers passed as a parameters.
      * <p>
-     * Note that for proper operation this method requires that every passed buffer should have set {@link OffHeapBuffer#used()} value to actual
-     * number of bytes to be read into this buffer.
+     * Note that for proper operation this method requires that every passed buffer should have set {@link OffHeapSlice#used()} value to actual number
+     * of bytes to be read into this buffer.
      * <p>
      * Upon completion callback is invoked with total number of bytes read.
      *
+     * @param completion     Callback which is invoked once operation is finished.
      * @param fileDescriptor File descriptor to read from
      * @param offset         Initial offset in the input file
      * @param timeout        Optional operation timeout
-     * @param buffers        Set of buffers where read information will be put. Each buffer should have it's {@link OffHeapBuffer#used()} property set
+     * @param buffers        Set of buffers where read information will be put. Each buffer should have it's {@link OffHeapSlice#used()} property set
      *                       to actual number of bytes which application expects to see in this buffer.
      */
-    void read(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fileDescriptor, OffsetT offset,
-              Option<Timeout> timeout, OffHeapBuffer... buffers);
+    void readVector(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fileDescriptor, OffsetT offset,
+                    Option<Timeout> timeout, OffHeapSlice... buffers);
 
-    default void read(Consumer<Result<SizeT>> completion, FileDescriptor fileDescriptor, OffsetT offset,
-                      Option<Timeout> timeout, OffHeapBuffer... buffers) {
-        read((result, __) -> completion.accept(result), fileDescriptor, offset, timeout, buffers);
+    default void readVector(Consumer<Result<SizeT>> completion, FileDescriptor fileDescriptor, OffsetT offset,
+                            Option<Timeout> timeout, OffHeapSlice... buffers) {
+        readVector((result, __) -> completion.accept(result), fileDescriptor, offset, timeout, buffers);
+    }
+
+    default void readVector(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fileDescriptor,
+                            Option<Timeout> timeout, OffHeapSlice... buffers) {
+        readVector(completion, fileDescriptor, OffsetT.ZERO, timeout, buffers);
+    }
+
+    default void readVector(Consumer<Result<SizeT>> completion, FileDescriptor fileDescriptor,
+                            Option<Timeout> timeout, OffHeapSlice... buffers) {
+        readVector(completion, fileDescriptor, OffsetT.ZERO, timeout, buffers);
+    }
+
+    default void readVector(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fileDescriptor, OffsetT offset,
+                            OffHeapSlice... buffers) {
+        readVector(completion, fileDescriptor, offset, Option.empty(), buffers);
+    }
+
+    default void readVector(Consumer<Result<SizeT>> completion, FileDescriptor fileDescriptor, OffsetT offset,
+                            OffHeapSlice... buffers) {
+        readVector(completion, fileDescriptor, offset, Option.empty(), buffers);
+    }
+
+    default void readVector(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fileDescriptor,
+                            OffHeapSlice... buffers) {
+        readVector(completion, fileDescriptor, OffsetT.ZERO, Option.empty(), buffers);
+    }
+
+    default void readVector(Consumer<Result<SizeT>> completion, FileDescriptor fileDescriptor, OffHeapSlice... buffers) {
+        readVector(completion, fileDescriptor, OffsetT.ZERO, Option.empty(), buffers);
     }
 
     /**
      * Write from buffers passed as a parameters.
      * <p>
-     * Note that only {@link OffHeapBuffer#used()} portion of the each buffer is written.
+     * Note that only {@link OffHeapSlice#used()} portion of the each buffer is written.
      * <p>
      * Upon completion callback is invoked with total number of bytes written.
      *
+     * @param completion     Callback which is invoked once operation is finished.
      * @param fileDescriptor File descriptor to read from
      * @param offset         Initial offset in file
      * @param timeout        Optional operation timeout
      * @param buffers        Set of buffers to write from
      */
-    void write(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fileDescriptor, OffsetT offset,
-               Option<Timeout> timeout, OffHeapBuffer... buffers);
+    void writeVector(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fileDescriptor, OffsetT offset,
+                     Option<Timeout> timeout, OffHeapSlice... buffers);
 
-    default void write(Consumer<Result<SizeT>> completion,
-                       FileDescriptor fileDescriptor,
-                       OffsetT offset,
-                       Option<Timeout> timeout,
-                       OffHeapBuffer... buffers) {
-        write((result, __) -> completion.accept(result), fileDescriptor, offset, timeout, buffers);
+    default void writeVector(Consumer<Result<SizeT>> completion, FileDescriptor fileDescriptor, OffsetT offset,
+                             Option<Timeout> timeout, OffHeapSlice... buffers) {
+        writeVector((result, __) -> completion.accept(result), fileDescriptor, offset, timeout, buffers);
     }
 
-    //TODO: implement batching?
-    //TODO: recv, send
+    default void writeVector(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fileDescriptor,
+                            Option<Timeout> timeout, OffHeapSlice... buffers) {
+        writeVector(completion, fileDescriptor, OffsetT.ZERO, timeout, buffers);
+    }
+
+    default void writeVector(Consumer<Result<SizeT>> completion, FileDescriptor fileDescriptor,
+                            Option<Timeout> timeout, OffHeapSlice... buffers) {
+        writeVector(completion, fileDescriptor, OffsetT.ZERO, timeout, buffers);
+    }
+
+    default void writeVector(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fileDescriptor, OffsetT offset,
+                            OffHeapSlice... buffers) {
+        writeVector(completion, fileDescriptor, offset, Option.empty(), buffers);
+    }
+
+    default void writeVector(Consumer<Result<SizeT>> completion, FileDescriptor fileDescriptor, OffsetT offset,
+                            OffHeapSlice... buffers) {
+        writeVector(completion, fileDescriptor, offset, Option.empty(), buffers);
+    }
+
+    default void writeVector(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fileDescriptor,
+                            OffHeapSlice... buffers) {
+        writeVector(completion, fileDescriptor, OffsetT.ZERO, Option.empty(), buffers);
+    }
+
+    default void writeVector(Consumer<Result<SizeT>> completion, FileDescriptor fileDescriptor, OffHeapSlice... buffers) {
+        writeVector(completion, fileDescriptor, OffsetT.ZERO, Option.empty(), buffers);
+    }
+
+    /**
+     * Perform a file synchronization between memory and file system.
+     * <p>
+     * Note that this operation is subject of some limitations, in particular there are no guarantees that it will flush buffers modified by
+     * previously submitted (but not yet finished) write operation.
+     *
+     * @param completion     Callback which is invoked once operation is finished.
+     * @param fileDescriptor File descriptor to read from
+     * @param syncMetadata   Flag which controls flushing of file metadata: {@code true} enables syncing metadata
+     * @param timeout        Optional operation timeout
+     */
+    void fsync(BiConsumer<Result<Unit>, Proactor> completion, FileDescriptor fileDescriptor,
+               boolean syncMetadata, Option<Timeout> timeout);
+
+    default void fsync(Consumer<Result<Unit>> completion, FileDescriptor fileDescriptor,
+                       boolean syncMetadata, Option<Timeout> timeout) {
+        fsync((result, __) -> completion.accept(result), fileDescriptor, syncMetadata, timeout);
+    }
+
+    /**
+     * Perform changes in file allocation - add/remove/replace part of the file.
+     *
+     * @param completion     Callback which is invoked once operation is finished.
+     * @param fileDescriptor File descriptor to read from
+     * @param allocFlags     Flags which define type of the operation and behavior.
+     * @param offset         Offset in file
+     * @param len            Length of the affected part of the file.
+     * @param timeout        Optional operation timeout
+     */
+    void falloc(BiConsumer<Result<Unit>, Proactor> completion, FileDescriptor fileDescriptor,
+                Set<FileAllocFlags> allocFlags, long offset, long len, Option<Timeout> timeout);
+
+    default void falloc(Consumer<Result<Unit>> completion, FileDescriptor fileDescriptor,
+                        Set<FileAllocFlags> allocFlags, long offset, long len, Option<Timeout> timeout) {
+        falloc((result, __) -> completion.accept(result), fileDescriptor, allocFlags, offset, len, timeout);
+    }
+
+    /**
+     * Allocate fixed buffer which will be shared between kernel and user space and can be used with {@link #readFixed(BiConsumer, FileDescriptor,
+     * FixedBuffer, OffsetT, Option)} and {@link #writeFixed(BiConsumer, FileDescriptor, FixedBuffer, OffsetT, Option)} methods.
+     * <p>
+     * Note that allocation is relatively slow process and frequent allocation/release of buffers might quickly result to fragmentation, so it is
+     * highly recommended avoiding frequent allocation/release of the fixed buffers.
+     * <p>
+     * Allocated buffer can be released using {@link FixedBuffer#dispose()}. Buffer content must not be accessed once this method is invoked.
+     *
+     * @param size Buffer size in bytes. Note that allocation is done in chunks of size {@link org.pragmatica.io.async.util.allocator.ChunkedAllocator#CHUNK_SIZE}.
+     *
+     * @return allocation result.
+     */
+    Result<FixedBuffer> allocateFixedBuffer(int size);
+
+    void readFixed(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fd, FixedBuffer buffer, OffsetT offset, Option<Timeout> timeout);
+
+    default void readFixed(Consumer<Result<SizeT>> completion, FileDescriptor fd, FixedBuffer buffer, OffsetT offset, Option<Timeout> timeout) {
+        readFixed((result, __) -> completion.accept(result), fd, buffer, offset, timeout);
+    }
+
+    default void readFixed(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fd, FixedBuffer buffer, Option<Timeout> timeout) {
+        readFixed(completion, fd, buffer, OffsetT.ZERO, timeout);
+    }
+
+    default void readFixed(Consumer<Result<SizeT>> completion, FileDescriptor fd, FixedBuffer buffer, Option<Timeout> timeout) {
+        readFixed(completion, fd, buffer, OffsetT.ZERO, timeout);
+    }
+
+    default void readFixed(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fd, FixedBuffer buffer) {
+        readFixed(completion, fd, buffer, OffsetT.ZERO, Option.empty());
+    }
+
+    default void readFixed(Consumer<Result<SizeT>> completion, FileDescriptor fd, FixedBuffer buffer) {
+        readFixed((result, __) -> completion.accept(result), fd, buffer);
+    }
+
+
+    void writeFixed(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fd, FixedBuffer buffer, OffsetT offset, Option<Timeout> timeout);
+
+    default void writeFixed(Consumer<Result<SizeT>> completion, FileDescriptor fd, FixedBuffer buffer, OffsetT offset, Option<Timeout> timeout) {
+        writeFixed((result, __) -> completion.accept(result), fd, buffer, offset, timeout);
+    }
+
+    default void writeFixed(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fd, FixedBuffer buffer, Option<Timeout> timeout) {
+        writeFixed(completion, fd, buffer, OffsetT.ZERO, timeout);
+    }
+
+    default void writeFixed(Consumer<Result<SizeT>> completion, FileDescriptor fd, FixedBuffer buffer, Option<Timeout> timeout) {
+        writeFixed(completion, fd, buffer, OffsetT.ZERO, timeout);
+    }
+
+    default void writeFixed(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fd, FixedBuffer buffer) {
+        writeFixed(completion, fd, buffer, OffsetT.ZERO, Option.empty());
+    }
+
+    default void writeFixed(Consumer<Result<SizeT>> completion, FileDescriptor fd, FixedBuffer buffer) {
+        writeFixed((result, __) -> completion.accept(result), fd, buffer);
+    }
+
+    //recvmsg, sendmsg, read_fixed, write_fixed
 }

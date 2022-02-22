@@ -15,20 +15,24 @@
  *
  */
 
-package org.pragmatica.io.file;
+package org.pragmatica.io.file.protocol;
 
-import org.pragmatica.io.async.util.OffHeapBuffer;
+import org.pragmatica.io.async.util.OffHeapSlice;
 import org.pragmatica.io.codec.UTF8Decoder;
 
 import java.util.function.Consumer;
 
+/**
+ * File reading protocol which treats file as a sequence of UTF-8 strings separated by '\n' or '\r\n'.
+ */
 public record LineReaderProtocol(long bufferSize, Consumer<String> consumer, StringBuilder stringBuilder, UTF8Decoder utf8Decoder)
-    implements Consumer<OffHeapBuffer> {
-    @Override
-    public void accept(OffHeapBuffer offHeapBuffer) {
-        utf8Decoder.decodeWithRecovery(offHeapBuffer, this::characterInput);
+    implements Consumer<OffHeapSlice> {
 
-        if (offHeapBuffer.used() != bufferSize) {
+    @Override
+    public void accept(OffHeapSlice slice) {
+        utf8Decoder.decodeWithRecovery(slice, this::characterInput);
+
+        if (slice.used() != bufferSize) {
             stripCarriageReturn();
 
             // Empty line or single trailing \r will be ignored

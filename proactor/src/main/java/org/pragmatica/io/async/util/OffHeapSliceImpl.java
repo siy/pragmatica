@@ -17,41 +17,34 @@
 
 package org.pragmatica.io.async.util;
 
-import org.pragmatica.io.async.uring.struct.offheap.AbstractOffHeapStructure;
 import org.pragmatica.io.async.util.raw.RawMemory;
 
 import java.util.HexFormat;
 
-/**
- * Memory buffer allocated outside Java heap.
- */
-class OffHeapBuffer extends AbstractOffHeapStructure<OffHeapSlice> implements OffHeapSlice {
+public class OffHeapSliceImpl implements OffHeapSlice {
+    private final long address;
+    private final int size;
     private int used;
 
-    private OffHeapBuffer(byte[] input) {
-        super(input.length);
-        RawMemory.putByteArray(address(), input);
-        used = input.length;
-    }
-
-    private OffHeapBuffer(int size) {
-        super(size);
-        used = 0;
-    }
-
-    static OffHeapBuffer fromBytes(byte[] input) {
-        return new OffHeapBuffer(input);
-    }
-
-    static OffHeapBuffer fixedSize(int size) {
-        return new OffHeapBuffer(size);
+    public OffHeapSliceImpl(long address, int size) {
+        this.address = address;
+        this.size = size;
+        this.used = 0;
     }
 
     @Override
-    public OffHeapSlice slice(int offset, int length) {
-        assert offset < size() && (offset + length) <= size();
+    public long address() {
+        return address;
+    }
 
-        return new OffHeapSliceImpl(address() + offset, length);
+    @Override
+    public int size() {
+        return size;
+    }
+
+    @Override
+    public OffHeapSlice clear() {
+        return this;
     }
 
     @Override
@@ -60,9 +53,16 @@ class OffHeapBuffer extends AbstractOffHeapStructure<OffHeapSlice> implements Of
     }
 
     @Override
-    public OffHeapBuffer used(int used) {
+    public OffHeapSlice used(int used) {
         this.used = Math.min(size(), used);
         return this;
+    }
+
+    @Override
+    public OffHeapSlice slice(int offset, int length) {
+        assert offset < size && (offset + length) <= size;
+
+        return new OffHeapSliceImpl(address() + offset, length);
     }
 
     @Override
@@ -73,5 +73,10 @@ class OffHeapBuffer extends AbstractOffHeapStructure<OffHeapSlice> implements Of
     @Override
     public String hexDump() {
         return HexFormat.of().withUpperCase().formatHex(export());
+    }
+
+    @Override
+    public void close() {
+        // Do nothing, slice does not hold any resources
     }
 }

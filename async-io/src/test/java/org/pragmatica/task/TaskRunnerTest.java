@@ -25,13 +25,15 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 
 import static org.pragmatica.io.async.util.DaemonThreadFactory.threadFactory;
+import static org.pragmatica.io.async.util.Units._1MiB;
+import static org.pragmatica.io.async.util.allocator.ChunkedAllocator.allocator;
 
 class TaskRunnerTest {
 
     @Test
     void runnerCanExecuteTasks() throws InterruptedException {
         var threshold = ActionableThreshold.threshold(1, () -> {});
-        var runner = new TaskRunner(threshold);
+        var runner = new TaskRunner(threshold, allocator(_1MiB));
         var executor = Executors.newFixedThreadPool(1, threadFactory("Test {}"));
         var latch = new CountDownLatch(1);
 

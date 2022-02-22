@@ -23,7 +23,6 @@ import org.pragmatica.io.async.net.ConnectionContext;
 import org.pragmatica.io.async.net.InetAddress;
 import org.pragmatica.io.async.net.ListenContext;
 import org.pragmatica.io.async.net.SocketType;
-import org.pragmatica.io.async.util.DaemonThreadFactory;
 import org.pragmatica.io.net.Listener;
 import org.pragmatica.lang.Option;
 import org.pragmatica.lang.Promise;
@@ -33,14 +32,16 @@ import org.pragmatica.task.TaskExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static org.pragmatica.io.async.util.DaemonThreadFactory.shutdownThreadFactory;
 import static org.pragmatica.io.net.ConnectionProtocolContext.connectionProtocolContext;
 
+/**
+ * TCP/IP incoming connection listener (server).
+ */
 public class TcpListener<T extends InetAddress> implements Listener<T> {
     private static final Logger LOG = LoggerFactory.getLogger(TcpListener.class);
-    private static final ThreadFactory SHUTDOWN_HOOK_THREAD_FACTORY = DaemonThreadFactory.threadFactory("Shutdown Hook");
 
     private final ListenConfig<T> config;
     private final Promise<Unit> shutdown = Promise.promise();
@@ -51,21 +52,38 @@ public class TcpListener<T extends InetAddress> implements Listener<T> {
         this.config = config;
     }
 
+    /**
+     * Create listener instance using provided configuration.
+     *
+     * @param config Listener configuration.
+     *
+     * @return Created listener
+     */
     public static <T extends InetAddress> Listener<T> tcpListener(ListenConfig<T> config) {
         return new TcpListener<>(config);
     }
 
+    /**
+     * Start listening for incoming connection.
+     *
+     * @return Promise which will be resolved when server will stop listening for incoming connection (due to failure or shutdown)
+     */
     @Override
     public Promise<Unit> listen() {
         Runtime.getRuntime()
-               .addShutdownHook(SHUTDOWN_HOOK_THREAD_FACTORY.newThread(this::shutdown));
+               .addShutdownHook(shutdownThreadFactory().newThread(this::shutdown));
 
         return serve.async((promise, proactor) ->
-                               proactor.listen(result -> doListen(result),
+                               proactor.listen(this::doListen,
                                                config.address(), SocketType.STREAM, config.listenerFlags(),
                                                config.backlogSize(), config.listenerOptions()));
     }
 
+    /**
+     * Initiate server shutdown.
+     *
+     * @return Promise which will be resolved when shutdown will be finished.
+     */
     @Override
     public Promise<Unit> shutdown() {
         if (serverContext.get() != null) {
@@ -114,8 +132,7 @@ public class TcpListener<T extends InetAddress> implements Listener<T> {
 
         var connectionProtocolContext = connectionProtocolContext(context, connectionContext);
 
-        executor.submit(proactor1 -> config.acceptProtocol().process(connectionProtocolContext, proactor1));
+        executor.submit(proactor1 -> config.acceptProtocol().accept(connectionProtocolContext, proactor1));
         repeatAccept(proactor, context, executor);
     }
-
 }

@@ -22,23 +22,23 @@ import org.pragmatica.io.async.SystemError;
 import org.pragmatica.io.async.common.SizeT;
 import org.pragmatica.io.async.uring.struct.raw.SQEntry;
 import org.pragmatica.io.async.uring.utils.PlainObjectPool;
-import org.pragmatica.io.async.util.OffHeapSlice;
+import org.pragmatica.io.async.util.allocator.FixedBuffer;
 import org.pragmatica.lang.Result;
 
 import java.util.function.BiConsumer;
 
-import static org.pragmatica.io.async.uring.AsyncOperation.IORING_OP_READ;
+import static org.pragmatica.io.async.uring.AsyncOperation.IORING_OP_READ_FIXED;
 
-public class ReadExchangeEntry extends AbstractExchangeEntry<ReadExchangeEntry, SizeT> {
+public class ReadFixedExchangeEntry extends AbstractExchangeEntry<ReadFixedExchangeEntry, SizeT> {
     private static final Result<SizeT> EOF_RESULT = SystemError.ENODATA.result();
 
     private int descriptor;
     private byte flags;
-    private OffHeapSlice buffer;
+    private FixedBuffer buffer;
     private long offset;
 
-    protected ReadExchangeEntry(PlainObjectPool<ReadExchangeEntry> pool) {
-        super(IORING_OP_READ, pool);
+    protected ReadFixedExchangeEntry(PlainObjectPool<ReadFixedExchangeEntry> pool) {
+        super(IORING_OP_READ_FIXED, pool);
     }
 
     @Override
@@ -56,10 +56,15 @@ public class ReadExchangeEntry extends AbstractExchangeEntry<ReadExchangeEntry, 
                     .flags(flags)
                     .addr(buffer.address())
                     .len(buffer.size())
-                    .off(offset);
+                    .off(offset)
+                    .bufIndex((short) 0);
     }
 
-    public ReadExchangeEntry prepare(BiConsumer<Result<SizeT>, Proactor> completion, int descriptor, OffHeapSlice buffer, long offset, byte flags) {
+    public ReadFixedExchangeEntry prepare(BiConsumer<Result<SizeT>, Proactor> completion,
+                                          int descriptor,
+                                          FixedBuffer buffer,
+                                          long offset,
+                                          byte flags) {
         this.descriptor = descriptor;
         this.flags = flags;
         this.buffer = buffer;

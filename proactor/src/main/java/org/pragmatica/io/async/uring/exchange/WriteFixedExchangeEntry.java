@@ -22,31 +22,26 @@ import org.pragmatica.io.async.SystemError;
 import org.pragmatica.io.async.common.SizeT;
 import org.pragmatica.io.async.uring.struct.raw.SQEntry;
 import org.pragmatica.io.async.uring.utils.PlainObjectPool;
-import org.pragmatica.io.async.util.OffHeapSlice;
+import org.pragmatica.io.async.util.allocator.FixedBuffer;
 import org.pragmatica.lang.Result;
 
 import java.util.function.BiConsumer;
 
-import static org.pragmatica.io.async.uring.AsyncOperation.IORING_OP_READ;
+import static org.pragmatica.io.async.uring.AsyncOperation.IORING_OP_WRITE_FIXED;
 
-public class ReadExchangeEntry extends AbstractExchangeEntry<ReadExchangeEntry, SizeT> {
-    private static final Result<SizeT> EOF_RESULT = SystemError.ENODATA.result();
-
+public class WriteFixedExchangeEntry extends AbstractExchangeEntry<WriteFixedExchangeEntry, SizeT> {
     private int descriptor;
     private byte flags;
-    private OffHeapSlice buffer;
+    private FixedBuffer buffer;
     private long offset;
 
-    protected ReadExchangeEntry(PlainObjectPool<ReadExchangeEntry> pool) {
-        super(IORING_OP_READ, pool);
+    protected WriteFixedExchangeEntry(PlainObjectPool<WriteFixedExchangeEntry> pool) {
+        super(IORING_OP_WRITE_FIXED, pool);
     }
 
     @Override
     protected void doAccept(int res, int flags, Proactor proactor) {
-        if (res > 0) {
-            buffer.used(res);
-        }
-        completion.accept(bytesReadToResult(res), proactor);
+        completion.accept(byteCountToResult(res), proactor);
     }
 
     @Override
@@ -55,11 +50,16 @@ public class ReadExchangeEntry extends AbstractExchangeEntry<ReadExchangeEntry, 
                     .fd(descriptor)
                     .flags(flags)
                     .addr(buffer.address())
-                    .len(buffer.size())
-                    .off(offset);
+                    .len(buffer.used())
+                    .off(offset)
+                    .bufIndex((short) 0);
     }
 
-    public ReadExchangeEntry prepare(BiConsumer<Result<SizeT>, Proactor> completion, int descriptor, OffHeapSlice buffer, long offset, byte flags) {
+    public WriteFixedExchangeEntry prepare(BiConsumer<Result<SizeT>, Proactor> completion,
+                                           int descriptor,
+                                           FixedBuffer buffer,
+                                           long offset,
+                                           byte flags) {
         this.descriptor = descriptor;
         this.flags = flags;
         this.buffer = buffer;
@@ -67,9 +67,9 @@ public class ReadExchangeEntry extends AbstractExchangeEntry<ReadExchangeEntry, 
         return super.prepare(completion);
     }
 
-    private Result<SizeT> bytesReadToResult(int res) {
-        return res == 0 ? EOF_RESULT
-                        : res > 0 ? sizeResult(res)
-                                  : SystemError.result(res);
+    private Result<SizeT> byteCountToResult(int res) {
+        return res > 0
+               ? sizeResult(res)
+               : SystemError.result(res);
     }
 }

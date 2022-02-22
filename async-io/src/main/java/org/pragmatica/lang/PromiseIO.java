@@ -20,17 +20,15 @@ package org.pragmatica.lang;
 import org.pragmatica.io.async.Timeout;
 import org.pragmatica.io.async.common.OffsetT;
 import org.pragmatica.io.async.common.SizeT;
-import org.pragmatica.io.async.file.FileDescriptor;
-import org.pragmatica.io.async.file.FilePermission;
-import org.pragmatica.io.async.file.OpenFlags;
-import org.pragmatica.io.async.file.SpliceDescriptor;
+import org.pragmatica.io.async.file.*;
 import org.pragmatica.io.async.file.stat.FileStat;
 import org.pragmatica.io.async.file.stat.StatFlag;
 import org.pragmatica.io.async.file.stat.StatMask;
 import org.pragmatica.io.async.net.*;
 import org.pragmatica.io.async.net.InetAddress.Inet4Address;
 import org.pragmatica.io.async.net.InetAddress.Inet6Address;
-import org.pragmatica.io.async.util.OffHeapBuffer;
+import org.pragmatica.io.async.util.OffHeapSlice;
+import org.pragmatica.io.async.util.allocator.FixedBuffer;
 
 import java.nio.file.Path;
 import java.time.Duration;
@@ -41,6 +39,7 @@ import static org.pragmatica.lang.Option.empty;
 /**
  * "Promisified" Proactor I/O API.
  */
+//TODO: finish docs
 public interface PromiseIO {
     /**
      * Basic NOP (no-operation). Although the operation does nothing, internally it goes full round-trip to kernel and back.
@@ -85,7 +84,7 @@ public interface PromiseIO {
 
     /**
      * Read data from specified file descriptor into provided buffer. The number of bytes to read is defined by buffer size. Upon successful
-     * completion, {@link OffHeapBuffer#used()} value is set to actual number of bytes read. Number of read bytes also used to resolve returned
+     * completion, {@link OffHeapSlice#used()} value is set to actual number of bytes read. Number of read bytes also used to resolve returned
      * promise.
      *
      * @param fd      File descriptor or socket
@@ -97,12 +96,12 @@ public interface PromiseIO {
      * @return a {@link Promise} instance, which is resolved with number of bytes read once operations is finished successfully or resolved with error
      *     description if operation failed.
      */
-    static Promise<SizeT> read(FileDescriptor fd, OffHeapBuffer buffer, OffsetT offset, Option<Timeout> timeout) {
+    static Promise<SizeT> read(FileDescriptor fd, OffHeapSlice buffer, OffsetT offset, Option<Timeout> timeout) {
         return Promise.promise((promise, proactor) -> proactor.read(promise::resolve, fd, buffer, offset, timeout));
     }
 
     /**
-     * Same as {@link #read(FileDescriptor, OffHeapBuffer, OffsetT, Option)}, but no timeout specified.
+     * Same as {@link #read(FileDescriptor, OffHeapSlice, OffsetT, Option)}, but no timeout specified.
      *
      * @param fd     File descriptor or socket
      * @param buffer Buffer to store read data
@@ -112,12 +111,12 @@ public interface PromiseIO {
      * @return a {@link Promise} instance, which is resolved with number of bytes read once operations is finished successfully or resolved with error
      *     description if operation failed.
      */
-    static Promise<SizeT> read(FileDescriptor fd, OffHeapBuffer buffer, OffsetT offset) {
+    static Promise<SizeT> read(FileDescriptor fd, OffHeapSlice buffer, OffsetT offset) {
         return read(fd, buffer, offset, empty());
     }
 
     /**
-     * Same as {@link #read(FileDescriptor, OffHeapBuffer, OffsetT, Option)}, but no offset needs to be provided. Convenient for use with sockets or
+     * Same as {@link #read(FileDescriptor, OffHeapSlice, OffsetT, Option)}, but no offset needs to be provided. Convenient for use with sockets or
      * pipes.
      *
      * @param fd      File descriptor or socket
@@ -127,12 +126,12 @@ public interface PromiseIO {
      * @return a {@link Promise} instance, which is resolved with number of bytes read once operations is finished successfully or resolved with error
      *     description if operation failed.
      */
-    static Promise<SizeT> read(FileDescriptor fd, OffHeapBuffer buffer, Option<Timeout> timeout) {
+    static Promise<SizeT> read(FileDescriptor fd, OffHeapSlice buffer, Option<Timeout> timeout) {
         return read(fd, buffer, OffsetT.ZERO, timeout);
     }
 
     /**
-     * Same as {@link #read(FileDescriptor, OffHeapBuffer, Option)}, but no timeout is specified.
+     * Same as {@link #read(FileDescriptor, OffHeapSlice, Option)}, but no timeout is specified.
      *
      * @param fd     File descriptor or socket
      * @param buffer Buffer to store read data
@@ -140,12 +139,12 @@ public interface PromiseIO {
      * @return a {@link Promise} instance, which is resolved with number of bytes read once operations is finished successfully or resolved with error
      *     description if operation failed.
      */
-    static Promise<SizeT> read(FileDescriptor fd, OffHeapBuffer buffer) {
+    static Promise<SizeT> read(FileDescriptor fd, OffHeapSlice buffer) {
         return read(fd, buffer, OffsetT.ZERO, empty());
     }
 
     /**
-     * Write data to specified file descriptor from provided buffer. The number of bytes to write is defined by buffer {@link OffHeapBuffer#used()}
+     * Write data to specified file descriptor from provided buffer. The number of bytes to write is defined by buffer {@link OffHeapSlice#used()}
      * value. Upon successful completion, number of bytes written also used to resolve returned promise.
      *
      * @param fd      File descriptor or socket
@@ -157,12 +156,12 @@ public interface PromiseIO {
      * @return a {@link Promise} instance, which is resolved with number of written bytes once operations is finished successfully or resolved with
      *     error description if operation failed.
      */
-    static Promise<SizeT> write(FileDescriptor fd, OffHeapBuffer buffer, OffsetT offset, Option<Timeout> timeout) {
+    static Promise<SizeT> write(FileDescriptor fd, OffHeapSlice buffer, OffsetT offset, Option<Timeout> timeout) {
         return Promise.promise((promise, proactor) -> proactor.write(promise::resolve, fd, buffer, offset, timeout));
     }
 
     /**
-     * Same as {@link #write(FileDescriptor, OffHeapBuffer, OffsetT, Option)}, but no timeout is specified.
+     * Same as {@link #write(FileDescriptor, OffHeapSlice, OffsetT, Option)}, but no timeout is specified.
      *
      * @param fd     File descriptor or socket
      * @param buffer Buffer to write
@@ -172,12 +171,12 @@ public interface PromiseIO {
      * @return a {@link Promise} instance, which is resolved with number of written bytes once operations is finished successfully or resolved with
      *     error description if operation failed.
      */
-    static Promise<SizeT> write(FileDescriptor fd, OffHeapBuffer buffer, OffsetT offset) {
+    static Promise<SizeT> write(FileDescriptor fd, OffHeapSlice buffer, OffsetT offset) {
         return write(fd, buffer, offset, empty());
     }
 
     /**
-     * Same as {@link #write(FileDescriptor, OffHeapBuffer, OffsetT, Option)}, but no offset needs to be provided. Convenient for use with sockets or
+     * Same as {@link #write(FileDescriptor, OffHeapSlice, OffsetT, Option)}, but no offset needs to be provided. Convenient for use with sockets or
      * pipes.
      *
      * @param fd      File descriptor or socket
@@ -187,12 +186,12 @@ public interface PromiseIO {
      * @return a {@link Promise} instance, which is resolved with number of written bytes once operations is finished successfully or resolved with
      *     error description if operation failed.
      */
-    static Promise<SizeT> write(FileDescriptor fd, OffHeapBuffer buffer, Option<Timeout> timeout) {
+    static Promise<SizeT> write(FileDescriptor fd, OffHeapSlice buffer, Option<Timeout> timeout) {
         return write(fd, buffer, OffsetT.ZERO, timeout);
     }
 
     /**
-     * Same as {@link #write(FileDescriptor, OffHeapBuffer, Option)}, but no timeout is specified.
+     * Same as {@link #write(FileDescriptor, OffHeapSlice, Option)}, but no timeout is specified.
      *
      * @param fd     File descriptor or socket
      * @param buffer Buffer to write
@@ -200,7 +199,7 @@ public interface PromiseIO {
      * @return a {@link Promise} instance, which is resolved with number of written bytes once operations is finished successfully or resolved with
      *     error description if operation failed.
      */
-    static Promise<SizeT> write(FileDescriptor fd, OffHeapBuffer buffer) {
+    static Promise<SizeT> write(FileDescriptor fd, OffHeapSlice buffer) {
         return write(fd, buffer, OffsetT.ZERO, empty());
     }
 
@@ -301,19 +300,83 @@ public interface PromiseIO {
         return stat(fd, flags, mask, empty());
     }
 
-    static Promise<SizeT> read(FileDescriptor fd, OffsetT offset, Option<Timeout> timeout, OffHeapBuffer... buffers) {
-        return Promise.promise((promise, proactor) -> proactor.read(promise::resolve, fd, offset, timeout, buffers));
+    static Promise<SizeT> readVector(FileDescriptor fd, OffsetT offset, Option<Timeout> timeout, OffHeapSlice... buffers) {
+        return Promise.promise((promise, proactor) -> proactor.readVector(promise::resolve, fd, offset, timeout, buffers));
     }
 
-    static Promise<SizeT> read(FileDescriptor fd, OffsetT offset, OffHeapBuffer... buffers) {
-        return read(fd, offset, empty(), buffers);
+    static Promise<SizeT> readVector(FileDescriptor fd, OffsetT offset, OffHeapSlice... buffers) {
+        return readVector(fd, offset, empty(), buffers);
     }
 
-    static Promise<SizeT> write(FileDescriptor fd, OffsetT offset, Option<Timeout> timeout, OffHeapBuffer... buffers) {
-        return Promise.promise((promise, proactor) -> proactor.write(promise::resolve, fd, offset, timeout, buffers));
+    static Promise<SizeT> readVector(FileDescriptor fd, Option<Timeout> timeout, OffHeapSlice... buffers) {
+        return readVector(fd, OffsetT.ZERO, timeout, buffers);
     }
 
-    static Promise<SizeT> write(FileDescriptor fd, OffsetT offset, OffHeapBuffer... buffers) {
-        return write(fd, offset, empty(), buffers);
+    static Promise<SizeT> readVector(FileDescriptor fd, OffHeapSlice... buffers) {
+        return readVector(fd, OffsetT.ZERO, empty(), buffers);
+    }
+
+    static Promise<SizeT> writeVector(FileDescriptor fd, OffsetT offset, Option<Timeout> timeout, OffHeapSlice... buffers) {
+        return Promise.promise((promise, proactor) -> proactor.writeVector(promise::resolve, fd, offset, timeout, buffers));
+    }
+
+    static Promise<SizeT> writeVector(FileDescriptor fd, OffsetT offset, OffHeapSlice... buffers) {
+        return writeVector(fd, offset, empty(), buffers);
+    }
+
+    static Promise<SizeT> writeVector(FileDescriptor fd, Option<Timeout> timeout, OffHeapSlice... buffers) {
+        return writeVector(fd, OffsetT.ZERO, timeout, buffers);
+    }
+
+    static Promise<SizeT> writeVector(FileDescriptor fd, OffHeapSlice... buffers) {
+        return writeVector(fd, OffsetT.ZERO, empty(), buffers);
+    }
+
+    static Promise<SizeT> readFixed(FileDescriptor fd, FixedBuffer fixedBuffer, OffsetT offset, Option<Timeout> timeout) {
+        return Promise.promise((promise, proactor) -> proactor.readFixed(promise::resolve, fd, fixedBuffer, offset, timeout));
+    }
+
+    static Promise<SizeT> readFixed(FileDescriptor fd, FixedBuffer fixedBuffer, Option<Timeout> timeout) {
+        return readFixed(fd, fixedBuffer, OffsetT.ZERO, timeout);
+    }
+
+    static Promise<SizeT> readFixed(FileDescriptor fd, FixedBuffer fixedBuffer, OffsetT offset) {
+        return readFixed(fd, fixedBuffer, offset, empty());
+    }
+
+    static Promise<SizeT> readFixed(FileDescriptor fd, FixedBuffer fixedBuffer) {
+        return readFixed(fd, fixedBuffer, OffsetT.ZERO, empty());
+    }
+
+    static Promise<SizeT> writeFixed(FileDescriptor fd, FixedBuffer fixedBuffer, OffsetT offset, Option<Timeout> timeout) {
+        return Promise.promise((promise, proactor) -> proactor.writeFixed(promise::resolve, fd, fixedBuffer, offset, timeout));
+    }
+
+    static Promise<SizeT> writeFixed(FileDescriptor fd, FixedBuffer fixedBuffer, Option<Timeout> timeout) {
+        return writeFixed(fd, fixedBuffer, OffsetT.ZERO, timeout);
+    }
+
+    static Promise<SizeT> writeFixed(FileDescriptor fd, FixedBuffer fixedBuffer, OffsetT offset) {
+        return writeFixed(fd, fixedBuffer, offset, empty());
+    }
+
+    static Promise<SizeT> writeFixed(FileDescriptor fd, FixedBuffer fixedBuffer) {
+        return writeFixed(fd, fixedBuffer, OffsetT.ZERO, empty());
+    }
+
+    static Promise<Unit> fsync(FileDescriptor fd, boolean syncMetadata, Option<Timeout> timeout) {
+        return Promise.promise((promise, proactor) -> proactor.fsync(promise::resolve, fd, syncMetadata, timeout));
+    }
+
+    static Promise<Unit> fsync(FileDescriptor fd, boolean syncMetadata) {
+        return fsync(fd, syncMetadata, empty());
+    }
+
+    static Promise<Unit> falloc(FileDescriptor fd, Set<FileAllocFlags> flags, long offset, long len, Option<Timeout> timeout) {
+        return Promise.promise((promise, proactor) -> proactor.falloc(promise::resolve, fd, flags, offset, len, timeout));
+    }
+
+    static Promise<Unit> falloc(FileDescriptor fd, Set<FileAllocFlags> flags, long offset, long len) {
+        return falloc(fd, flags, offset, len, empty());
     }
 }

@@ -19,9 +19,12 @@ package org.pragmatica.io.net;
 
 import org.pragmatica.io.async.Proactor;
 import org.pragmatica.io.async.net.ConnectionContext;
+import org.pragmatica.io.async.net.InetAddress;
 import org.pragmatica.lang.Promise;
 
-//TODO: cleanup generic types - context should be typed
+/**
+ * Client protocol (handler).
+ */
 public interface ClientProtocol<T> {
-    Promise<T> process(ConnectionContext<?> context, Proactor proactor);
+    <R extends InetAddress> Promise<T> process(ConnectionContext<R> context, Proactor proactor);
 }

@@ -35,4 +35,10 @@ public record DaemonThreadFactory(AtomicInteger counter, String pattern) impleme
         result.setDaemon(true);
         return result;
     }
+
+    public static ThreadFactory shutdownThreadFactory() {
+        return SHUTDOWN_HOOK_THREAD_FACTORY;
+    }
+
+    private static final ThreadFactory SHUTDOWN_HOOK_THREAD_FACTORY = DaemonThreadFactory.threadFactory("Shutdown Hook");
 }

@@ -19,14 +19,13 @@ package org.pragmatica.io.net.protocols;
 
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
-import org.pragmatica.io.net.Listener;
 import org.pragmatica.lang.Cause;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static org.pragmatica.io.async.net.InetAddress.Inet4Address.*;
-import static org.pragmatica.io.net.AcceptProtocol.acceptProtocol;
-import static org.pragmatica.io.net.protocols.EchoProtocol.echoProtocol;
+import static org.pragmatica.io.async.net.InetAddress.Inet4Address.INADDR_ANY;
+import static org.pragmatica.io.net.Listener.listener;
+import static org.pragmatica.io.net.protocols.EchoProtocol.acceptEchoProtocol;
 import static org.pragmatica.io.net.tcp.ListenConfig.listenConfig;
 import static org.pragmatica.lang.Option.empty;
 
@@ -36,15 +35,12 @@ class EchoProtocolTest {
 
     @Test
     void serverCanBeStarted() {
-        var protocol = acceptProtocol(echoProtocol(INADDR_ANY, 4096, empty()));
-        var config = listenConfig(protocol).withPort(12345).build();
-        var listener = Listener.listener(config);
-
-        listener.listen()
-                .onFailure(this::printFailure)
-                .flatMap(listener::shutdown)
-                .onFailure(this::printFailure)
-                .join();
+        listener(listenConfig(acceptEchoProtocol(INADDR_ANY, 4096, empty()))
+                     .withPort(12345)
+                     .build())
+            .listen()
+            .onFailure(this::printFailure)
+            .join();
     }
 
     private void printFailure(Cause cause) {

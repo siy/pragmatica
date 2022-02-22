@@ -55,7 +55,7 @@ public interface TaskExecutor {
      *
      * @return Current instance
      */
-    TaskExecutor spread(Consumer<Proactor> task);
+    TaskExecutor replicate(Consumer<Proactor> task);
 
     /**
      * Shutdown task executor. Returned promise is resolved once all internal processing is stopped and resources are released.

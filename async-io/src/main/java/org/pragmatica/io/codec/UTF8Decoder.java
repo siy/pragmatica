@@ -17,7 +17,7 @@
 
 package org.pragmatica.io.codec;
 
-import org.pragmatica.io.async.util.OffHeapBuffer;
+import org.pragmatica.io.async.util.OffHeapSlice;
 
 import java.util.function.Consumer;
 
@@ -232,7 +232,7 @@ public class UTF8Decoder {
         }
     }
 
-    public void decodeWithRecovery(OffHeapBuffer buffer, Consumer<Character> output) {
+    public void decodeWithRecovery(OffHeapSlice buffer, Consumer<Character> output) {
         decodeWithRecovery(buffer.export(), output);
     }
 }

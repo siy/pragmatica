@@ -23,6 +23,10 @@ import org.pragmatica.io.async.net.InetPort;
 import org.pragmatica.io.async.net.SocketAddress;
 import org.pragmatica.lang.Option;
 
+/**
+ * Client configuration.
+ */
+//TODO: move protocol inside config?
 public interface ClientConfig<T extends InetAddress> {
     SocketAddress<T> address();
 

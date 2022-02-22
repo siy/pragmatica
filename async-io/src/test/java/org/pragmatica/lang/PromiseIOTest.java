@@ -22,7 +22,7 @@ import org.junit.jupiter.api.Test;
 import org.pragmatica.io.async.common.OffsetT;
 import org.pragmatica.io.async.common.SizeT;
 import org.pragmatica.io.async.file.FileDescriptor;
-import org.pragmatica.io.async.util.OffHeapBuffer;
+import org.pragmatica.io.async.util.OffHeapSlice;
 
 import java.nio.file.Path;
 import java.time.Duration;
@@ -64,7 +64,7 @@ public class PromiseIOTest {
         openResult.onFailure(PromiseIOTest::fail)
                   .onSuccess(fd -> System.out.println("Open successful: " + fd))
                   .onSuccess(fd -> {
-                      try (var buffer = OffHeapBuffer.fixedSize(128)) {
+                      try (var buffer = OffHeapSlice.fixedSize(128)) {
                           Promise.<SizeT>promise((promise, proactor) -> proactor.read(promise::resolve, fd, buffer, OffsetT.ZERO, Option.empty()))
                                  .join()
                                  .onFailure(PromiseIOTest::fail)

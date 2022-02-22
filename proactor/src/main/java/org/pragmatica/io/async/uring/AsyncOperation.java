@@ -18,6 +18,8 @@
 package org.pragmatica.io.async.uring;
 
 /**
+ * Asynchronous operation opcodes.
+ * <p>
  * WARNING: Always keep in sync with io_uring.h
  * <p>
  * Ordinals (by the means of .ordinal() call) of constants below must match actual Linux API codes (as defined in io_uring.h).
@@ -26,7 +28,7 @@ public enum AsyncOperation {
     IORING_OP_NOP,                  //Implemented
     IORING_OP_READV,                //Implemented
     IORING_OP_WRITEV,               //Implemented
-    IORING_OP_FSYNC,
+    IORING_OP_FSYNC,                //Implemented
     IORING_OP_READ_FIXED,
     IORING_OP_WRITE_FIXED,
     IORING_OP_POLL_ADD,
@@ -40,7 +42,7 @@ public enum AsyncOperation {
     IORING_OP_ASYNC_CANCEL,
     IORING_OP_LINK_TIMEOUT,         //Implemented
     IORING_OP_CONNECT,              //Implemented
-    IORING_OP_FALLOCATE,
+    IORING_OP_FALLOCATE,            //Implemented
     IORING_OP_OPENAT,               //Implemented
     IORING_OP_CLOSE,                //Implemented
     IORING_OP_FILES_UPDATE,
