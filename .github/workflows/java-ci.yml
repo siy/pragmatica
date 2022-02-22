@@ -19,4 +19,4 @@ jobs:
           java-version: '17'
           cache: 'maven'
       - name: Build with Maven
-        run: sudo bash -c "ulimit -l 65536 && ulimit -a && echo $PATH && java -version && ./mvnw --no-transfer-progress --batch-mode --update-snapshots package"
+        run: sudo bash -c "ulimit -l 65536 && ulimit -a && echo $PATH && ls -l $JAVA_HOME && ls -l $JAVA_HOME/bin && java -version && ./mvnw --no-transfer-progress --batch-mode --update-snapshots package"
