@@ -21,4 +21,4 @@ jobs:
       - name: Build with Maven
         env:
           MAVEN_OPTS: -Xmx512m
-        run: sudo env "PATH=$PATH" bash -c "ulimit -l 65536 && ulimit -a && mvn --no-transfer-progress --update-snapshots package"
+        run: sudo bash -c "ulimit -l 65536 && ulimit -a && mvn --no-transfer-progress --update-snapshots package"
