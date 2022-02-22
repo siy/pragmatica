@@ -30,6 +30,10 @@ import org.pragmatica.lang.Unit;
 
 import java.util.function.Consumer;
 
+/**
+ * File reading protocol which implements sequential reading of the file in chunks of fixed size.
+ * Last chunk might be shorter than requested buffer size.
+ */
 public final class BlockReaderProtocol {
     private final FileDescriptor fd;
     private final Consumer<OffHeapSlice> consumer;

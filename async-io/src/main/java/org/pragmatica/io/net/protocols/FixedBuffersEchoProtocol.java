@@ -37,6 +37,8 @@ import static org.pragmatica.lang.Option.option;
 
 /**
  * Simple TCP Echo protocol implementation. All it does is sending back received data.
+ * <p>
+ * This version uses fixed buffers to transfer data between application and OS.
  */
 public interface FixedBuffersEchoProtocol<T extends InetAddress> extends ConnectionProtocol<T> {
     static <T extends InetAddress> ConnectionProtocolStarter<T> echoProtocol(T addressTag, int bufferSize, Option<Timeout> timeout) {
@@ -110,6 +112,5 @@ public interface FixedBuffersEchoProtocol<T extends InetAddress> extends Connect
                 LOG.debug("Socket {} closed", socket());
             }
         }
-
     }
 }

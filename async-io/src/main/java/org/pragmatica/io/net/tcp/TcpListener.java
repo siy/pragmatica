@@ -23,7 +23,6 @@ import org.pragmatica.io.async.net.ConnectionContext;
 import org.pragmatica.io.async.net.InetAddress;
 import org.pragmatica.io.async.net.ListenContext;
 import org.pragmatica.io.async.net.SocketType;
-import org.pragmatica.io.async.util.DaemonThreadFactory;
 import org.pragmatica.io.net.Listener;
 import org.pragmatica.lang.Option;
 import org.pragmatica.lang.Promise;
@@ -38,6 +37,9 @@ import java.util.concurrent.atomic.AtomicReference;
 import static org.pragmatica.io.async.util.DaemonThreadFactory.shutdownThreadFactory;
 import static org.pragmatica.io.net.ConnectionProtocolContext.connectionProtocolContext;
 
+/**
+ * TCP/IP incoming connection listener (server).
+ */
 public class TcpListener<T extends InetAddress> implements Listener<T> {
     private static final Logger LOG = LoggerFactory.getLogger(TcpListener.class);
 
@@ -50,10 +52,22 @@ public class TcpListener<T extends InetAddress> implements Listener<T> {
         this.config = config;
     }
 
+    /**
+     * Create listener instance using provided configuration.
+     *
+     * @param config Listener configuration.
+     *
+     * @return Created listener
+     */
     public static <T extends InetAddress> Listener<T> tcpListener(ListenConfig<T> config) {
         return new TcpListener<>(config);
     }
 
+    /**
+     * Start listening for incoming connection.
+     *
+     * @return Promise which will be resolved when server will stop listening for incoming connection (due to failure or shutdown)
+     */
     @Override
     public Promise<Unit> listen() {
         Runtime.getRuntime()
@@ -65,6 +79,11 @@ public class TcpListener<T extends InetAddress> implements Listener<T> {
                                                config.backlogSize(), config.listenerOptions()));
     }
 
+    /**
+     * Initiate server shutdown.
+     *
+     * @return Promise which will be resolved when shutdown will be finished.
+     */
     @Override
     public Promise<Unit> shutdown() {
         if (serverContext.get() != null) {
@@ -116,5 +135,4 @@ public class TcpListener<T extends InetAddress> implements Listener<T> {
         executor.submit(proactor1 -> config.acceptProtocol().process(connectionProtocolContext, proactor1));
         repeatAccept(proactor, context, executor);
     }
-
 }

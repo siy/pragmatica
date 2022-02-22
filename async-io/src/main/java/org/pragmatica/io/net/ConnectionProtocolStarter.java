@@ -20,6 +20,7 @@ package org.pragmatica.io.net;
 import org.pragmatica.io.async.Proactor;
 import org.pragmatica.io.async.net.InetAddress;
 
+//TODO: cleanup AcceptProtocol/ConnectionProtocolStarter mess
 public interface ConnectionProtocolStarter<T extends InetAddress> {
     void start(ConnectionProtocolContext<T> connectionProtocolContext, Proactor proactor);
 }

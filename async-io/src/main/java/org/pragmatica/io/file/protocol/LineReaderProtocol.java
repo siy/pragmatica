@@ -22,6 +22,9 @@ import org.pragmatica.io.codec.UTF8Decoder;
 
 import java.util.function.Consumer;
 
+/**
+ * File reading protocol which treats file as a sequence of UTF-8 strings separated by '\n' or '\r\n'.
+ */
 public record LineReaderProtocol(long bufferSize, Consumer<String> consumer, StringBuilder stringBuilder, UTF8Decoder utf8Decoder)
     implements Consumer<OffHeapSlice> {
 

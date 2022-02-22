@@ -35,11 +35,14 @@ import java.nio.file.Path;
 import java.util.Set;
 import java.util.function.Consumer;
 
+/**
+ * Useful file handling utilities.
+ */
 public final class Files {
     private static final SizeT DEFAULT_BUFFER_SIZE = SizeT.sizeT(16_384L);
 
     /**
-     * Read specified file in chunks of specified size and pass them to provided consumer. Note that last chunk might be shorter than requested size.
+     * Read specified file in chunks of specified size and pass them to provided consumer. The last chunk might be shorter than requested size.
      *
      * @param path      Path to file
      * @param blockSize Chunk size
@@ -223,6 +226,7 @@ public final class Files {
     }
 
 
+    //TODO: implement copy
     public enum FileCopyMode {
         APPEND,     // By default - replace content
         OVERWRITE,  // By default - fail if file exists
