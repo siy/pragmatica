@@ -31,10 +31,6 @@ public interface Listener<T extends InetAddress> {
 
     Promise<Unit> shutdown();
 
-    default Promise<Unit> shutdown(Unit unit) {
-        return shutdown();
-    }
-
     static <T extends InetAddress> Listener<T> listener(ListenConfig<T> config) {
         return TcpListener.tcpListener(config);
     }

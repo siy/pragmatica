@@ -32,9 +32,5 @@ public interface AcceptProtocol<T extends InetAddress> {
      * @param context  connection context
      * @param proactor transient {@link Proactor} instance
      */
-    void process(ConnectionProtocolContext<T> context, Proactor proactor);
-
-    static <T extends InetAddress> AcceptProtocol<T> acceptProtocol(ConnectionProtocolStarter<T> factory) {
-        return factory::start;
-    }
+    void accept(ConnectionProtocolContext<T> context, Proactor proactor);
 }

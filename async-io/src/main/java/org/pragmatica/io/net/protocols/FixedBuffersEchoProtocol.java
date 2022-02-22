@@ -23,9 +23,9 @@ import org.pragmatica.io.async.common.SizeT;
 import org.pragmatica.io.async.file.FileDescriptor;
 import org.pragmatica.io.async.net.InetAddress;
 import org.pragmatica.io.async.util.allocator.FixedBuffer;
+import org.pragmatica.io.net.AcceptProtocol;
 import org.pragmatica.io.net.ConnectionProtocol;
 import org.pragmatica.io.net.ConnectionProtocolContext;
-import org.pragmatica.io.net.ConnectionProtocolStarter;
 import org.pragmatica.lang.Cause;
 import org.pragmatica.lang.Option;
 import org.pragmatica.lang.Result;
@@ -40,29 +40,24 @@ import static org.pragmatica.lang.Option.option;
  * <p>
  * This version uses fixed buffers to transfer data between application and OS.
  */
-public interface FixedBuffersEchoProtocol<T extends InetAddress> extends ConnectionProtocol<T> {
-    static <T extends InetAddress> ConnectionProtocolStarter<T> echoProtocol(T addressTag, int bufferSize, Option<Timeout> timeout) {
-        return new EchoProtocolConfig<>(bufferSize, timeout);
+public sealed interface FixedBuffersEchoProtocol<T extends InetAddress> extends ConnectionProtocol<T> {
+    static <T extends InetAddress> AcceptProtocol<T> acceptEchoProtocol(T addressTag, int bufferSize, Option<Timeout> timeout) {
+        var config = new EchoProtocolConfig<T>(bufferSize, timeout);
+        return (context, proactor) -> new EchoProtocolImpl<T>(config, context).process(proactor);
     }
 
-    record EchoProtocolConfig<T extends InetAddress>(int bufferSize, Option<Timeout> timeout) implements ConnectionProtocolStarter<T> {
-        @Override
-        public void start(ConnectionProtocolContext<T> context, Proactor proactor) {
-            new EchoProtocolImpl<T>(this, context)
-                .process(proactor);
-        }
-    }
+    record EchoProtocolConfig<T extends InetAddress>(int bufferSize, Option<Timeout> timeout) {}
 
-    class EchoProtocolImpl<T extends InetAddress> implements ConnectionProtocol<T> {
+    final class EchoProtocolImpl<T extends InetAddress> implements FixedBuffersEchoProtocol<T> {
         private static final Logger LOG = LoggerFactory.getLogger(FixedBuffersEchoProtocol.class);
 
         private final EchoProtocolConfig<T> config;
-        private final ConnectionProtocolContext<T> context;
+        private final FileDescriptor socket;
         private FixedBuffer buffer;
 
         public EchoProtocolImpl(EchoProtocolConfig<T> config, ConnectionProtocolContext<T> context) {
             this.config = config;
-            this.context = context;
+            this.socket = context.connectionContext().socket();
         }
 
         @Override
@@ -71,27 +66,19 @@ public interface FixedBuffersEchoProtocol<T extends InetAddress> extends Connect
                     .onFailure(f -> handleFailure(f, proactor))
                     .onSuccess(buf -> buffer = buf);
 
-            proactor.readFixed(this::readHandler, socket(), buffer, timeout());
-        }
-
-        private FileDescriptor socket() {
-            return context.connectionContext().socket();
-        }
-
-        private Option<Timeout> timeout() {
-            return config.timeout();
+            proactor.readFixed(this::readHandler, socket, buffer, config.timeout());
         }
 
         private void readHandler(Result<SizeT> result, Proactor proactor) {
             result.fold(failure -> handleFailure(failure, proactor), size -> {
-                proactor.writeFixed(this::writeHandler, socket(), buffer, timeout());
+                proactor.writeFixed(this::writeHandler, socket, buffer, config.timeout());
                 return Unit.unit();
             });
         }
 
         private void writeHandler(Result<SizeT> result, Proactor proactor) {
             result.fold(failure -> handleFailure(failure, proactor), size -> {
-                proactor.readFixed(this::readHandler, socket(), buffer, timeout());
+                proactor.readFixed(this::readHandler, socket, buffer, config.timeout());
                 return Unit.unit();
             });
         }
@@ -102,14 +89,14 @@ public interface FixedBuffersEchoProtocol<T extends InetAddress> extends Connect
             }
 
             option(buffer).whenPresent(FixedBuffer::dispose);
-            proactor.close(this::logClosing, socket());
+            proactor.close(this::logClosing, socket);
 
             return Unit.unit();
         }
 
         private void logClosing(Result<Unit> unused) {
             if (LOG.isDebugEnabled()) {
-                LOG.debug("Socket {} closed", socket());
+                LOG.debug("Socket {} closed", socket);
             }
         }
     }

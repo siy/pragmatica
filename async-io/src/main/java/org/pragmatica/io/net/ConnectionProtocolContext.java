@@ -22,7 +22,7 @@ import org.pragmatica.io.async.net.InetAddress;
 import org.pragmatica.io.async.net.ListenContext;
 
 /**
- * Context provided to the {@link ConnectionProtocolStarter}.
+ * Context provided to the {@link AcceptProtocol}.
  */
 public interface ConnectionProtocolContext<T extends InetAddress> {
     ListenContext<T> listenContext();

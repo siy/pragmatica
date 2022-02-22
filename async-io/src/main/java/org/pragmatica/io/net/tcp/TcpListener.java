@@ -132,7 +132,7 @@ public class TcpListener<T extends InetAddress> implements Listener<T> {
 
         var connectionProtocolContext = connectionProtocolContext(context, connectionContext);
 
-        executor.submit(proactor1 -> config.acceptProtocol().process(connectionProtocolContext, proactor1));
+        executor.submit(proactor1 -> config.acceptProtocol().accept(connectionProtocolContext, proactor1));
         repeatAccept(proactor, context, executor);
     }
 }
