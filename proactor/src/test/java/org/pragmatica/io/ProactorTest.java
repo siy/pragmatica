@@ -77,7 +77,7 @@ class ProactorTest {
     @Test
     void fileCanBeOpenedReadAndClosed() {
         var fileDescriptor = new AtomicReference<Result<FileDescriptor>>();
-        var fileName = "src/test/resources/english-wiki.html";
+        var fileName = "src/test/resources/english-wiki.test.data";
 
         System.out.println("Trying to open " + fileName);
 

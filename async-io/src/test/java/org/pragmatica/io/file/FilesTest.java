@@ -55,7 +55,7 @@ class FilesTest {
 
     @Test
     void readUTF8File() {
-        var fileName = Path.of("src/test/resources/utf8/chinese-wiki.html");
+        var fileName = Path.of("src/test/resources/utf8/chinese-wiki.test.data");
         var reference = new AtomicReference<String>(null);
 
         var promise = blocks(fileName, SizeT.sizeT(1024 * 1024), buffer1 -> reference.set(decode(buffer1)));
@@ -68,9 +68,9 @@ class FilesTest {
 
     @Test
     void readFileLineByLine() {
-        var fileName1 = Path.of("src/test/resources/utf8/japanese-wiki.html");
+        var fileName1 = Path.of("src/test/resources/utf8/japanese-wiki.test.data");
         var lineCount1 = new AtomicLong(0);
-        var fileName2 = Path.of("src/test/resources/utf8/chinese-wiki.html");
+        var fileName2 = Path.of("src/test/resources/utf8/chinese-wiki.test.data");
         var lineCount2 = new AtomicLong(0);
 
         var promise1 = lines(fileName1, line -> lineCount1.incrementAndGet());
