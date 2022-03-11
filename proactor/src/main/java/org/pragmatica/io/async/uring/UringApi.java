@@ -221,6 +221,10 @@ public class UringApi implements AutoCloseable {
         return ioUring.numEntries();
     }
 
+    public int fd() {
+        return ioUring.fd();
+    }
+
     public static Result<FileDescriptor> socket(AddressFamily af, SocketType type, Set<SocketFlag> flags, Set<SocketOption> options) {
         return result(socket(af.familyId(), type.code() | Bitmask.combine(flags), Bitmask.combine(options)),
                       (af == AddressFamily.INET6) ? FileDescriptor::socket6 : FileDescriptor::socket);

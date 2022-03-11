@@ -24,6 +24,7 @@ import org.pragmatica.io.async.file.stat.FileStat;
 import org.pragmatica.io.async.file.stat.StatFlag;
 import org.pragmatica.io.async.file.stat.StatMask;
 import org.pragmatica.io.async.net.*;
+import org.pragmatica.io.async.uring.UringSetupFlags;
 import org.pragmatica.io.async.util.OffHeapSlice;
 import org.pragmatica.io.async.util.allocator.ChunkedAllocator;
 import org.pragmatica.io.async.util.allocator.FixedBuffer;
@@ -33,9 +34,13 @@ import org.pragmatica.lang.Unit;
 
 import java.nio.file.Path;
 import java.time.Duration;
+import java.util.EnumSet;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+
+import static org.pragmatica.lang.Option.empty;
+import static org.pragmatica.lang.Option.option;
 
 /**
  * Low level externally accessible API for submission of I/O operations. The API designed as a <a href="https://en.wikipedia.org/wiki/Proactor_pattern">Proactor</a>
@@ -46,17 +51,17 @@ public interface Proactor {
     int DEFAULT_QUEUE_SIZE = 128;
 
     /**
-     * Create an instance with default queue length.
+     * Create a root instance.
      */
     static Proactor proactor(ChunkedAllocator sharedAllocator) {
-        return proactor(DEFAULT_QUEUE_SIZE, sharedAllocator);
+        return ProactorImpl.proactor(DEFAULT_QUEUE_SIZE, UringSetupFlags.defaultFlags(), sharedAllocator, empty());
     }
 
     /**
-     * Create an instance with default queue length.
+     * Create a child instance.
      */
-    static Proactor proactor(int queueSize, ChunkedAllocator sharedAllocator) {
-        return ProactorImpl.proactor(queueSize, sharedAllocator);
+    static Proactor proactor(ChunkedAllocator sharedAllocator, Proactor root) {
+        return ProactorImpl.proactor(DEFAULT_QUEUE_SIZE, UringSetupFlags.sharedWorkQueue(), sharedAllocator, option(root));
     }
 
     /**

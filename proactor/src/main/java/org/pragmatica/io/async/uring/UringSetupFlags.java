@@ -31,6 +31,7 @@ public enum UringSetupFlags implements Bitmask {
     ATTACH_WQ(1 << 5); /* attach to existing wq */
 
     private static final EnumSet<UringSetupFlags> DEFAULT = EnumSet.noneOf(UringSetupFlags.class);
+    private static final EnumSet<UringSetupFlags> SHARED_WQ = EnumSet.of(ATTACH_WQ);
     private final int mask;
 
     UringSetupFlags(final int mask) {
@@ -44,5 +45,9 @@ public enum UringSetupFlags implements Bitmask {
 
     public static EnumSet<UringSetupFlags> defaultFlags() {
         return DEFAULT;
+    }
+
+    public static EnumSet<UringSetupFlags> sharedWorkQueue() {
+        return SHARED_WQ;
     }
 }

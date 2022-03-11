@@ -20,6 +20,7 @@ package org.pragmatica.task;
 import org.pragmatica.io.async.Proactor;
 import org.pragmatica.io.async.util.ActionableThreshold;
 import org.pragmatica.io.async.util.allocator.ChunkedAllocator;
+import org.pragmatica.lang.Option;
 import org.pragmatica.lang.Promise;
 import org.pragmatica.lang.Unit;
 
@@ -44,6 +45,7 @@ final class TaskExecutorImpl implements TaskExecutor {
     private final ExecutorService executor;
     private final ActionableThreshold threshold;
     private final List<TaskRunner> runners = new ArrayList<>();
+    private final List<Proactor> proactors = new ArrayList<>();
     private final Promise<Unit> shutdownPromise = Promise.promise();
     private final ChunkedAllocator allocator;
 
@@ -57,10 +59,15 @@ final class TaskExecutorImpl implements TaskExecutor {
 
         Runtime.getRuntime().addShutdownHook(shutdownThreadFactory().newThread(this::shutdown));
 
-        IntStream
-            .range(0, numThreads)
-            .forEach(n -> runners.add(new TaskRunner(threshold, allocator)));
+        var rootProactor = Proactor.proactor(allocator);
 
+        IntStream
+            .range(1, numThreads)
+            .forEach(__ -> proactors.add(Proactor.proactor(allocator, rootProactor)));
+
+        proactors.add(rootProactor);
+
+        proactors.forEach(proactor -> runners.add(new TaskRunner(threshold, proactor)));
         runners.forEach(runner -> runner.start(executor));
     }
 
@@ -93,6 +100,7 @@ final class TaskExecutorImpl implements TaskExecutor {
         runners.forEach(TaskRunner::shutdown);
 
         executor.shutdown();
+        proactors.forEach(Proactor::shutdown);
         allocator.close();
 
         return shutdownPromise.onResultDo(allocator::close);

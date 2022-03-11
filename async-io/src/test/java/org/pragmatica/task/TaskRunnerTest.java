@@ -18,6 +18,7 @@
 package org.pragmatica.task;
 
 import org.junit.jupiter.api.Test;
+import org.pragmatica.io.async.Proactor;
 import org.pragmatica.io.async.Timeout;
 import org.pragmatica.io.async.util.ActionableThreshold;
 
@@ -33,17 +34,19 @@ class TaskRunnerTest {
     @Test
     void runnerCanExecuteTasks() throws InterruptedException {
         var threshold = ActionableThreshold.threshold(1, () -> {});
-        var runner = new TaskRunner(threshold, allocator(_1MiB));
+        var proactor = Proactor.proactor(allocator(_1MiB));
+        var runner = new TaskRunner(threshold, proactor);
         var executor = Executors.newFixedThreadPool(1, threadFactory("Test {}"));
         var latch = new CountDownLatch(1);
 
         runner.start(executor);
 
-        runner.push(proactor -> proactor.delay(__ -> latch.countDown(), Timeout.timeout(100).millis()));
+        runner.push(proactor1 -> proactor1.delay(__ -> latch.countDown(), Timeout.timeout(100).millis()));
 
         latch.await();
 
         runner.shutdown();
+        proactor.shutdown();
         executor.shutdown();
     }
 }
