@@ -43,7 +43,6 @@ public class IoUringSQ extends AbstractExternalRawStructure<IoUringSQ> {
     private IoUringSQ(long address, IoUring ioUring) {
         super(address, IoUringSQOffsets.SIZE);
         this.ioUring = ioUring;
-        adjustAddresses();
     }
 
     public static IoUringSQ at(long address, IoUring ioUring) {

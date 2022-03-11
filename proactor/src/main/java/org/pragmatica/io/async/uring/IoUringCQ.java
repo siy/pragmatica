@@ -39,7 +39,6 @@ public class IoUringCQ extends AbstractExternalRawStructure<IoUringCQ> {
 
     private IoUringCQ(long address) {
         super(address, IoUringCQOffsets.SIZE);
-        adjustAddresses();
     }
 
     public static IoUringCQ at(long address) {

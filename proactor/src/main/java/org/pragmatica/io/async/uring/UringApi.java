@@ -48,17 +48,18 @@ import static org.pragmatica.lang.Result.success;
  * Low-level IO URING API
  */
 public class UringApi implements AutoCloseable {
-    // Actual size of struct io_uring is 160 bytes at the moment of writing: May 2020
+    // Actual size of struct io_uring is 216 bytes at the moment of writing: March 2022
     private static final long SIZE = 256;
     private static final Logger LOG = LoggerFactory.getLogger(UringApi.class);
 
     public static final int MIN_QUEUE_SIZE = 128;
 
-    private final long ringBase;
-    private final int submissionEntries;
+//    private final long ringBase;
+//    private final int submissionEntries;
     private final int threshold;
     private final SQEntry sqEntry;
-    private final IoUring ioUring;
+    private final IoUringHolder ioUring;
+//    private final IoUringHolder holder;
 
     private boolean closed = false;
     private int count = 0;
@@ -78,6 +79,7 @@ public class UringApi implements AutoCloseable {
     //------------------------------------------------------------------------------------------------
     // Start/Stop
     static native int init(int numEntries, long baseAddress, int flags);
+    static native int initParams(int numEntries, long baseAddress);
 
     static native void close(long baseAddress);
 
@@ -115,25 +117,26 @@ public class UringApi implements AutoCloseable {
     static native int prepareForListen(int socket, long address, int len, int queueDepth);
     //------------------------------------------------------------------------------------------------
 
-    private UringApi(int numEntries, long ringBase) {
-        submissionEntries = numEntries;
-        threshold = numEntries - 2;
-        this.ringBase = ringBase;
-        sqEntry = SQEntry.at(0);
-        ioUring = IoUring.at(ringBase);
+    private UringApi(IoUringHolder ioUring) {
+        this.ioUring = ioUring;
+        this.threshold = ioUring.numEntries() - 2;
+        this.sqEntry = SQEntry.at(0);
     }
 
     public static Result<UringApi> uringApi(int requestedEntries, Set<UringSetupFlags> openFlags) {
-        var ringBase = RawMemory.allocate(SIZE);
-        var numEntries = calculateNumEntries(requestedEntries);
-        var rc = init(numEntries, ringBase, Bitmask.combine(openFlags));
+        return uringApi(requestedEntries, openFlags, 0);
+    }
+
+    public static Result<UringApi> uringApi(int requestedEntries, Set<UringSetupFlags> openFlags, int workQueueFD) {
+        var ioUring = IoUringHolder.create(requestedEntries, openFlags, workQueueFD);
+        var rc = ioUring.init();
 
         if (rc != 0) {
-            RawMemory.dispose(ringBase);
+            ioUring.dispose();
             return SystemError.fromCode(rc).result();
         }
 
-        return success(new UringApi(numEntries, ringBase));
+        return success(new UringApi(ioUring));
     }
 
     private int register(RegisterOperation op, long arg1, long arg2) {
@@ -168,8 +171,7 @@ public class UringApi implements AutoCloseable {
             return;
         }
 
-        close(ringBase);
-        RawMemory.dispose(ringBase);
+        ioUring.close();
         closed = true;
     }
 
@@ -215,17 +217,8 @@ public class UringApi implements AutoCloseable {
         }
     }
 
-    private static int calculateNumEntries(int size) {
-        if (size <= MIN_QUEUE_SIZE) {
-            return MIN_QUEUE_SIZE;
-        }
-
-        //Round up to the nearest power of two
-        return 1 << (32 - Integer.numberOfLeadingZeros(size - 1));
-    }
-
     public int numEntries() {
-        return submissionEntries;
+        return ioUring.numEntries();
     }
 
     public static Result<FileDescriptor> socket(AddressFamily af, SocketType type, Set<SocketFlag> flags, Set<SocketOption> options) {

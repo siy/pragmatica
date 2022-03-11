@@ -18,21 +18,24 @@
 package org.pragmatica.io.async.uring;
 
 import org.pragmatica.io.async.uring.struct.AbstractExternalRawStructure;
-import org.pragmatica.io.async.uring.struct.shape.IoUringOffsets;
+import org.pragmatica.io.async.uring.struct.shape.IoUringParamsOffsets;
 
 import static org.pragmatica.io.async.uring.struct.shape.IoUringOffsets.*;
 
 public class IoUring extends AbstractExternalRawStructure<IoUring> {
+    public static final int RAW_SIZE = SIZE + IoUringParamsOffsets.SIZE;
+
     private final IoUringSQ submissionQueue;
     private final IoUringCQ completionQueue;
-    private final int fd;
+    private final IoUringParams params;
+    private int fd;
 
     private IoUring(long address) {
-        super(address, IoUringOffsets.SIZE);
+        super(address, RAW_SIZE);
 
         submissionQueue = IoUringSQ.at(sqAddress(), this);
         completionQueue = IoUringCQ.at(cqAddress());
-        fd = getInt(ring_fd);
+        params = IoUringParams.at(paramsAddress());
     }
 
     public static IoUring at(long address) {
@@ -44,6 +47,8 @@ public class IoUring extends AbstractExternalRawStructure<IoUring> {
         super.address(address);
         submissionQueue.reposition(sqAddress());
         completionQueue.reposition(cqAddress());
+        params.reposition(paramsAddress());
+        fd = getInt(ring_fd);
     }
 
     private long sqAddress() {
@@ -54,12 +59,20 @@ public class IoUring extends AbstractExternalRawStructure<IoUring> {
         return address() + cq.offset();
     }
 
+    private long paramsAddress() {
+        return address() + SIZE;
+    }
+
     public IoUringSQ submissionQueue() {
         return submissionQueue;
     }
 
     public IoUringCQ completionQueue() {
         return completionQueue;
+    }
+
+    public IoUringParams params() {
+        return params;
     }
 
     public int flags() {
