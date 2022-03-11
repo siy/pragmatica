@@ -19,28 +19,43 @@ package org.pragmatica.lang;
 
 import java.util.function.Supplier;
 
-public interface Suppliers {
-    static<T> Supplier<T> lazy(Supplier<T> sourceFactory) {
-        return new Supplier<T>() {
-            private final Supplier<T> initializer = this::init;
-            private Supplier<T> factory = sourceFactory;
-            private volatile Supplier<T> delegate = initializer;
+/**
+ * Useful utilities for {@link Supplier} functional interface.
+ */
+public final class Suppliers {
+    public static <T> Supplier<T> memoize(Supplier<T> factory) {
+        return new MemoizingSupplier<>(factory);
+    }
 
-            private synchronized T init() {
-                if (delegate != initializer) {
-                    return delegate.get();
-                }
+    /**
+     * Simple implementation of thread-safe memoizing supplier. Comparing to regular supplier, this one has small performance penalty because each
+     * access requires retrieval of the volatile value. Usually this is not an issue in real applications.
+     */
+    private static class MemoizingSupplier<T> implements Supplier<T> {
+        private final Supplier<T> initializer = this::init;
+        private volatile Supplier<T> delegate = initializer;
+        private Supplier<T> factory;
 
-                var value = factory.get();
-                delegate = () -> value;
-                factory = null;
-                return value;
-            }
+        public MemoizingSupplier(Supplier<T> factory) {
+            this.factory = factory;
+        }
 
-            @Override
-            public T get() {
+        private synchronized T init() {
+            if (delegate != initializer) {
                 return delegate.get();
             }
-        };
+
+            var value = factory.get();
+            delegate = () -> value;
+            factory = null; // allow factory to be garbage collected
+            return value;
+        }
+
+        @Override
+        public T get() {
+            return delegate.get();
+        }
     }
+
+    private Suppliers() {}
 }
