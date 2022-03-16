@@ -39,7 +39,6 @@ public class IoUringCQ extends AbstractExternalRawStructure<IoUringCQ> {
 
     private IoUringCQ(long address) {
         super(address, IoUringCQOffsets.SIZE);
-        adjustAddresses();
     }
 
     public static IoUringCQ at(long address) {
@@ -59,30 +58,22 @@ public class IoUringCQ extends AbstractExternalRawStructure<IoUringCQ> {
         adjustAddresses();
     }
 
-    public int ready() {
-        return (int) (RawMemory.getLongVolatile(ktailAddr) - RawMemory.getLong(kheadAddr));
-    }
-
     public int processCompletions(ObjectHeap<CompletionHandler> pendingCompletions, Proactor proactor) {
-        var ready = ready();
+        var head = RawMemory.getLong(kheadAddr);
+        var ready = RawMemory.getLongVolatile(ktailAddr) - head;
 
         if (ready > 0) {
-            var head = RawMemory.getLong(kheadAddr);
             var last = head + ready;
 
-            for(; head != last; head++) {
+            for (; head != last; head++) {
                 cqEntry.reposition(cqesAddress + ((head & mask) << 4));
                 pendingCompletions.elementUnsafe((int) cqEntry.userData())
                                   .accept(cqEntry.res(), cqEntry.flags(), proactor);
             }
 
-            advanceCQ(ready);
+            RawMemory.putLongVolatile(kheadAddr, last);
         }
 
-        return ready;
-    }
-
-    public void advanceCQ(int count) {
-        RawMemory.putLongVolatile(kheadAddr, RawMemory.getLong(kheadAddr) + count);
+        return (int) ready;
     }
 }

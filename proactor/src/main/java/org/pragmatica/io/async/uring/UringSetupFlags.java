@@ -20,7 +20,7 @@ package org.pragmatica.io.async.uring;
 import java.util.EnumSet;
 
 /**
- * Flags for {@link UringApi#init(int, long, int)} method.
+ * Flags for {@link UringApi#init(int, long)} method.
  */
 public enum UringSetupFlags implements Bitmask {
     IO_POLL(1),    /* io_context is polled */
@@ -31,6 +31,8 @@ public enum UringSetupFlags implements Bitmask {
     ATTACH_WQ(1 << 5); /* attach to existing wq */
 
     private static final EnumSet<UringSetupFlags> DEFAULT = EnumSet.noneOf(UringSetupFlags.class);
+    private static final EnumSet<UringSetupFlags> SHARED_WQ = EnumSet.of(ATTACH_WQ);
+    private static final EnumSet<UringSetupFlags> SUBMISSION_QUEUE_POLL = EnumSet.of(SQ_POLL);
     private final int mask;
 
     UringSetupFlags(final int mask) {
@@ -44,5 +46,13 @@ public enum UringSetupFlags implements Bitmask {
 
     public static EnumSet<UringSetupFlags> defaultFlags() {
         return DEFAULT;
+    }
+
+    public static EnumSet<UringSetupFlags> sharedWorkQueue() {
+        return SHARED_WQ;
+    }
+
+    public static EnumSet<UringSetupFlags> submissionQueuePoll() {
+        return SUBMISSION_QUEUE_POLL;
     }
 }

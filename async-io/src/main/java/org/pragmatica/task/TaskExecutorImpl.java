@@ -27,9 +27,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
-import java.util.stream.IntStream;
 
 import static java.util.concurrent.Executors.newFixedThreadPool;
+import static java.util.stream.IntStream.range;
 import static org.pragmatica.io.async.util.ActionableThreshold.threshold;
 import static org.pragmatica.io.async.util.DaemonThreadFactory.shutdownThreadFactory;
 import static org.pragmatica.io.async.util.DaemonThreadFactory.threadFactory;
@@ -38,12 +38,15 @@ import static org.pragmatica.io.async.util.allocator.ChunkedAllocator.allocator;
 import static org.pragmatica.lang.Unit.unitResult;
 
 final class TaskExecutorImpl implements TaskExecutor {
-    private static final int FIXED_POOL_SIZE = 32 * _1MiB;
+    public static final int FIXED_POOL_SIZE = 32 * _1MiB;
+
+    private static final boolean USE_SHARED_WQ = false; //With `true` performance is slightly worse
 
     private final int numThreads;
     private final ExecutorService executor;
     private final ActionableThreshold threshold;
     private final List<TaskRunner> runners = new ArrayList<>();
+    private final List<Proactor> proactors = new ArrayList<>();
     private final Promise<Unit> shutdownPromise = Promise.promise();
     private final ChunkedAllocator allocator;
 
@@ -57,10 +60,19 @@ final class TaskExecutorImpl implements TaskExecutor {
 
         Runtime.getRuntime().addShutdownHook(shutdownThreadFactory().newThread(this::shutdown));
 
-        IntStream
-            .range(0, numThreads)
-            .forEach(n -> runners.add(new TaskRunner(threshold, allocator)));
+        if (USE_SHARED_WQ) {
+            var rootProactor = Proactor.proactor(allocator);
 
+            range(1, numThreads)
+                .forEach(__ -> proactors.add(Proactor.proactor(allocator, rootProactor)));
+
+            proactors.add(rootProactor);
+        } else {
+            range(0, numThreads)
+                .forEach(__ -> proactors.add(Proactor.proactor(allocator)));
+        }
+
+        proactors.forEach(proactor -> runners.add(new TaskRunner(threshold, proactor)));
         runners.forEach(runner -> runner.start(executor));
     }
 
@@ -93,6 +105,7 @@ final class TaskExecutorImpl implements TaskExecutor {
         runners.forEach(TaskRunner::shutdown);
 
         executor.shutdown();
+        proactors.forEach(Proactor::shutdown);
         allocator.close();
 
         return shutdownPromise.onResultDo(allocator::close);

@@ -20,6 +20,7 @@ package org.pragmatica.task;
 import org.pragmatica.io.async.Proactor;
 import org.pragmatica.io.async.util.ActionableThreshold;
 import org.pragmatica.io.async.util.allocator.ChunkedAllocator;
+import org.pragmatica.lang.Option;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,7 +36,7 @@ final class TaskRunner {
     private static final Logger LOG = LoggerFactory.getLogger(TaskRunner.class);
 
     private final ActionableThreshold threshold;
-    private final ChunkedAllocator allocator;
+    private final Proactor proactor;
 
     private volatile Task head;
     private volatile boolean shutdown = false;
@@ -51,9 +52,9 @@ final class TaskRunner {
         }
     }
 
-    TaskRunner(ActionableThreshold threshold, ChunkedAllocator allocator) {
+    TaskRunner(ActionableThreshold threshold, Proactor proactor) {
         this.threshold = threshold;
-        this.allocator = allocator;
+        this.proactor = proactor;
     }
 
     void start(ExecutorService executor) {
@@ -71,15 +72,15 @@ final class TaskRunner {
     }
 
     private void run() {
-        var proactor = createProactor();
-
         while (!shutdown) {
             var head = swapHead();
 
             if (head == null) {
                 var idleRunCount = 0;
 
-                while (proactor.processIO() > 0) {
+                while (proactor.processCompletions() > 0) {
+                    proactor.processSubmissions();
+
                     idleRunCount++;
 
                     if (idleRunCount == 4096) {
@@ -93,6 +94,8 @@ final class TaskRunner {
                     Thread.onSpinWait();
                 }
             } else {
+                proactor.processCompletions();
+
                 while (head != null) {
                     try {
                         head.task.accept(proactor);
@@ -103,23 +106,10 @@ final class TaskRunner {
                     head = head.next;
                 }
 
-                proactor.processIO();
+                proactor.processSubmissions();
             }
         }
-        proactor.shutdown();
-
         threshold.registerEvent();
-    }
-
-    private Proactor createProactor() {
-        try {
-            return Proactor.proactor(allocator);
-        } catch (Throwable e) {
-            LOG.error("Unable to init Proactor", e);
-
-            System.exit(-1);
-            throw new RuntimeException("Unreachable statement");
-        }
     }
 
     public void shutdown() {

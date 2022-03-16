@@ -31,7 +31,6 @@ import org.pragmatica.io.async.uring.struct.raw.SQEntry;
 import org.pragmatica.io.async.uring.utils.LibraryLoader;
 import org.pragmatica.io.async.uring.utils.ObjectHeap;
 import org.pragmatica.io.async.util.OffHeapSlice;
-import org.pragmatica.io.async.util.raw.RawMemory;
 import org.pragmatica.lang.Result;
 import org.pragmatica.lang.Unit;
 import org.slf4j.Logger;
@@ -48,17 +47,13 @@ import static org.pragmatica.lang.Result.success;
  * Low-level IO URING API
  */
 public class UringApi implements AutoCloseable {
-    // Actual size of struct io_uring is 160 bytes at the moment of writing: May 2020
-    private static final long SIZE = 256;
     private static final Logger LOG = LoggerFactory.getLogger(UringApi.class);
 
     public static final int MIN_QUEUE_SIZE = 128;
 
-    private final long ringBase;
-    private final int submissionEntries;
     private final int threshold;
     private final SQEntry sqEntry;
-    private final IoUring ioUring;
+    private final IoUringData ioUring;
 
     private boolean closed = false;
     private int count = 0;
@@ -77,17 +72,14 @@ public class UringApi implements AutoCloseable {
     // Native IO_URING API & helpers
     //------------------------------------------------------------------------------------------------
     // Start/Stop
-    static native int init(int numEntries, long baseAddress, int flags);
-
+    static native int init(int numEntries, long baseAddress);
     static native void close(long baseAddress);
 
-    // Syscall
+    // System calls
     static native long enter(int fd, long toSubmit, long minComplete, int flags);
-
     static native int register(int fd, int op, long arg1, long arg2);
 
     // Socket API
-
     /**
      * Create socket. This call is a combination of socket(2) and setsockopt(2).
      *
@@ -115,25 +107,26 @@ public class UringApi implements AutoCloseable {
     static native int prepareForListen(int socket, long address, int len, int queueDepth);
     //------------------------------------------------------------------------------------------------
 
-    private UringApi(int numEntries, long ringBase) {
-        submissionEntries = numEntries;
-        threshold = numEntries - 2;
-        this.ringBase = ringBase;
-        sqEntry = SQEntry.at(0);
-        ioUring = IoUring.at(ringBase);
+    private UringApi(IoUringData ioUring) {
+        this.ioUring = ioUring;
+        this.threshold = ioUring.numEntries() - 2;
+        this.sqEntry = SQEntry.at(0);
     }
 
     public static Result<UringApi> uringApi(int requestedEntries, Set<UringSetupFlags> openFlags) {
-        var ringBase = RawMemory.allocate(SIZE);
-        var numEntries = calculateNumEntries(requestedEntries);
-        var rc = init(numEntries, ringBase, Bitmask.combine(openFlags));
+        return uringApi(requestedEntries, openFlags, 0);
+    }
+
+    public static Result<UringApi> uringApi(int requestedEntries, Set<UringSetupFlags> openFlags, int workQueueFD) {
+        var ioUring = IoUringData.create(requestedEntries, openFlags, workQueueFD);
+        var rc = ioUring.init();
 
         if (rc != 0) {
-            RawMemory.dispose(ringBase);
+            ioUring.dispose();
             return SystemError.fromCode(rc).result();
         }
 
-        return success(new UringApi(numEntries, ringBase));
+        return success(new UringApi(ioUring));
     }
 
     private int register(RegisterOperation op, long arg1, long arg2) {
@@ -168,20 +161,20 @@ public class UringApi implements AutoCloseable {
             return;
         }
 
-        close(ringBase);
-        RawMemory.dispose(ringBase);
+        ioUring.close();
         closed = true;
     }
 
     public int processCompletions(ObjectHeap<CompletionHandler> pendingCompletions, Proactor proactor) {
-        int completions = ioUring.completionQueue().processCompletions(pendingCompletions, proactor);
-        inFlight -= completions;
+        if (inFlight == 0) {
+            return 0;
+        }
 
-        return completions;
-    }
+        int completed = ioUring.completionQueue().processCompletions(pendingCompletions, proactor);
 
-    public int inFlight() {
-        return inFlight;
+        inFlight -= completed;
+
+        return completed;
     }
 
     public void processSubmissions() {
@@ -215,17 +208,12 @@ public class UringApi implements AutoCloseable {
         }
     }
 
-    private static int calculateNumEntries(int size) {
-        if (size <= MIN_QUEUE_SIZE) {
-            return MIN_QUEUE_SIZE;
-        }
-
-        //Round up to the nearest power of two
-        return 1 << (32 - Integer.numberOfLeadingZeros(size - 1));
+    public int numEntries() {
+        return ioUring.numEntries();
     }
 
-    public int numEntries() {
-        return submissionEntries;
+    public int fd() {
+        return ioUring.fd();
     }
 
     public static Result<FileDescriptor> socket(AddressFamily af, SocketType type, Set<SocketFlag> flags, Set<SocketOption> options) {

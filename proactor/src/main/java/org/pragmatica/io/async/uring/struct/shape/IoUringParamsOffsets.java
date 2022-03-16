@@ -19,14 +19,15 @@ package org.pragmatica.io.async.uring.struct.shape;
 
 import org.pragmatica.io.async.util.raw.RawProperty;
 
-public interface IoUringOffsets {
-    // Rounded up to next power of two
-    // WARNING: this offset is also hardcoded in the uring_api.c!
-    int SIZE = 256;
-    //int SIZE = 216;
-    RawProperty sq = RawProperty.raw(0, 104);
-    RawProperty cq = RawProperty.raw(104, 88);
-    RawProperty flags = RawProperty.raw(192, 4);
-    RawProperty ring_fd = RawProperty.raw(196, 4);
-    RawProperty features = RawProperty.raw(200, 4);
+public interface IoUringParamsOffsets {
+    int SIZE = 120;
+    RawProperty sq_entries = RawProperty.raw(0, 4);
+    RawProperty cq_entries = RawProperty.raw(4, 4);
+    RawProperty flags = RawProperty.raw(8, 4);
+    RawProperty sq_thread_cpu = RawProperty.raw(12, 4);
+    RawProperty sq_thread_idle = RawProperty.raw(16, 4);
+    RawProperty features = RawProperty.raw(20, 4);
+    RawProperty wq_fd = RawProperty.raw(24, 4);
+    RawProperty sq_off = RawProperty.raw(40, 40);
+    RawProperty cq_off = RawProperty.raw(80, 40);
 }

@@ -67,12 +67,11 @@ class ProactorImpl implements Proactor {
         this.sharedAllocator = sharedAllocator.register(uringApi);
     }
 
-    public static Proactor proactor(int queueSize, ChunkedAllocator sharedAllocator) {
-        return proactor(queueSize, UringSetupFlags.defaultFlags(), sharedAllocator);
-    }
-
-    public static Proactor proactor(int queueSize, Set<UringSetupFlags> openFlags, ChunkedAllocator sharedAllocator) {
-        var api = UringApi.uringApi(queueSize, openFlags).fold(ProactorImpl::fail, Functions::id);
+    public static Proactor proactor(int queueSize, Set<UringSetupFlags> openFlags, ChunkedAllocator sharedAllocator, Option<Proactor> rootProactor) {
+        var api = rootProactor.map(ProactorImpl.class::cast)
+                              .fold(() -> UringApi.uringApi(queueSize, openFlags),
+                                    root -> UringApi.uringApi(queueSize, openFlags, root.uringApi.fd()))
+                              .fold(ProactorImpl::fail, Functions::id);
 
         return new ProactorImpl(api, sharedAllocator);
     }
@@ -88,9 +87,13 @@ class ProactorImpl implements Proactor {
     }
 
     @Override
-    public int processIO() {
+    public void processSubmissions() {
         uringApi.processSubmissions();
-        return uringApi.inFlight() > 0 ? uringApi.processCompletions(exchangeRegistry, this) : 0;
+    }
+
+    @Override
+    public int processCompletions() {
+        return uringApi.processCompletions(exchangeRegistry, this);
     }
 
     @Override

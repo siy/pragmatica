@@ -24,6 +24,7 @@ import org.pragmatica.io.async.file.stat.FileStat;
 import org.pragmatica.io.async.file.stat.StatFlag;
 import org.pragmatica.io.async.file.stat.StatMask;
 import org.pragmatica.io.async.net.*;
+import org.pragmatica.io.async.uring.UringSetupFlags;
 import org.pragmatica.io.async.util.OffHeapSlice;
 import org.pragmatica.io.async.util.allocator.ChunkedAllocator;
 import org.pragmatica.io.async.util.allocator.FixedBuffer;
@@ -37,6 +38,9 @@ import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
+import static org.pragmatica.lang.Option.empty;
+import static org.pragmatica.lang.Option.option;
+
 /**
  * Low level externally accessible API for submission of I/O operations. The API designed as a <a href="https://en.wikipedia.org/wiki/Proactor_pattern">Proactor</a>
  * pattern.
@@ -46,17 +50,17 @@ public interface Proactor {
     int DEFAULT_QUEUE_SIZE = 128;
 
     /**
-     * Create an instance with default queue length.
+     * Create a root instance.
      */
     static Proactor proactor(ChunkedAllocator sharedAllocator) {
-        return proactor(DEFAULT_QUEUE_SIZE, sharedAllocator);
+        return ProactorImpl.proactor(DEFAULT_QUEUE_SIZE, UringSetupFlags.defaultFlags(), sharedAllocator, empty());
     }
 
     /**
-     * Create an instance with default queue length.
+     * Create a child instance.
      */
-    static Proactor proactor(int queueSize, ChunkedAllocator sharedAllocator) {
-        return ProactorImpl.proactor(queueSize, sharedAllocator);
+    static Proactor proactor(ChunkedAllocator sharedAllocator, Proactor root) {
+        return ProactorImpl.proactor(DEFAULT_QUEUE_SIZE, UringSetupFlags.sharedWorkQueue(), sharedAllocator, option(root));
     }
 
     /**
@@ -64,7 +68,14 @@ public interface Proactor {
      *
      * @return number of pending completions
      */
-    int processIO();
+    default int processIO() {
+        processSubmissions();
+        return processCompletions();
+    }
+
+    void processSubmissions();
+
+    int processCompletions();
 
     /**
      * Shutdown current Proactor instance.
@@ -436,27 +447,27 @@ public interface Proactor {
     }
 
     default void writeVector(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fileDescriptor,
-                            Option<Timeout> timeout, OffHeapSlice... buffers) {
+                             Option<Timeout> timeout, OffHeapSlice... buffers) {
         writeVector(completion, fileDescriptor, OffsetT.ZERO, timeout, buffers);
     }
 
     default void writeVector(Consumer<Result<SizeT>> completion, FileDescriptor fileDescriptor,
-                            Option<Timeout> timeout, OffHeapSlice... buffers) {
+                             Option<Timeout> timeout, OffHeapSlice... buffers) {
         writeVector(completion, fileDescriptor, OffsetT.ZERO, timeout, buffers);
     }
 
     default void writeVector(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fileDescriptor, OffsetT offset,
-                            OffHeapSlice... buffers) {
+                             OffHeapSlice... buffers) {
         writeVector(completion, fileDescriptor, offset, Option.empty(), buffers);
     }
 
     default void writeVector(Consumer<Result<SizeT>> completion, FileDescriptor fileDescriptor, OffsetT offset,
-                            OffHeapSlice... buffers) {
+                             OffHeapSlice... buffers) {
         writeVector(completion, fileDescriptor, offset, Option.empty(), buffers);
     }
 
     default void writeVector(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fileDescriptor,
-                            OffHeapSlice... buffers) {
+                             OffHeapSlice... buffers) {
         writeVector(completion, fileDescriptor, OffsetT.ZERO, Option.empty(), buffers);
     }
 
@@ -504,6 +515,9 @@ public interface Proactor {
     /**
      * Allocate fixed buffer which will be shared between kernel and user space and can be used with {@link #readFixed(BiConsumer, FileDescriptor,
      * FixedBuffer, OffsetT, Option)} and {@link #writeFixed(BiConsumer, FileDescriptor, FixedBuffer, OffsetT, Option)} methods.
+     * <p>
+     * Fixed buffers are allocated from common memory arena shared across all instances of {@link Proactor}. The arena size is configured at start and
+     * can't be changed at run time.
      * <p>
      * Note that allocation is relatively slow process and frequent allocation/release of buffers might quickly result to fragmentation, so it is
      * highly recommended avoiding frequent allocation/release of the fixed buffers.
