@@ -21,13 +21,13 @@ import org.pragmatica.io.async.uring.struct.offheap.AbstractOffHeapStructure;
 
 import java.util.Set;
 
-public class IoUringHolder extends AbstractOffHeapStructure<IoUringHolder> {
+public class IoUringData extends AbstractOffHeapStructure<IoUringData> {
     private final IoUring ioUring;
     private final int numEntries;
     private final int workQueueFD;
     private final int flags;
 
-    private IoUringHolder(int requestedEntries, Set<UringSetupFlags> openFlags, int workQueueFD) {
+    private IoUringData(int requestedEntries, Set<UringSetupFlags> openFlags, int workQueueFD) {
         super(IoUring.RAW_SIZE);
         clear();
 
@@ -37,8 +37,8 @@ public class IoUringHolder extends AbstractOffHeapStructure<IoUringHolder> {
         this.workQueueFD = workQueueFD;
     }
 
-    public static IoUringHolder create(int requestedEntries, Set<UringSetupFlags> openFlags, int workQueueFD) {
-        return new IoUringHolder(requestedEntries, openFlags, workQueueFD);
+    public static IoUringData create(int requestedEntries, Set<UringSetupFlags> openFlags, int workQueueFD) {
+        return new IoUringData(requestedEntries, openFlags, workQueueFD);
     }
 
     private static int calculateNumEntries(int size) {
@@ -58,7 +58,7 @@ public class IoUringHolder extends AbstractOffHeapStructure<IoUringHolder> {
         ioUring.params().flags(flags);
         ioUring.params().workQueueFD(workQueueFD);
 
-        var rc = UringApi.initParams(numEntries, ioUring.address());
+        var rc = UringApi.init(numEntries, ioUring.address());
 
         if (rc == 0) {
             ioUring.reposition(address());

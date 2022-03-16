@@ -34,7 +34,6 @@ import org.pragmatica.lang.Unit;
 
 import java.nio.file.Path;
 import java.time.Duration;
-import java.util.EnumSet;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;

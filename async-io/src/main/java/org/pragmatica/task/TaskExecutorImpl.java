@@ -20,7 +20,6 @@ package org.pragmatica.task;
 import org.pragmatica.io.async.Proactor;
 import org.pragmatica.io.async.util.ActionableThreshold;
 import org.pragmatica.io.async.util.allocator.ChunkedAllocator;
-import org.pragmatica.lang.Option;
 import org.pragmatica.lang.Promise;
 import org.pragmatica.lang.Unit;
 
@@ -28,9 +27,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
-import java.util.stream.IntStream;
 
 import static java.util.concurrent.Executors.newFixedThreadPool;
+import static java.util.stream.IntStream.range;
 import static org.pragmatica.io.async.util.ActionableThreshold.threshold;
 import static org.pragmatica.io.async.util.DaemonThreadFactory.shutdownThreadFactory;
 import static org.pragmatica.io.async.util.DaemonThreadFactory.threadFactory;
@@ -40,6 +39,7 @@ import static org.pragmatica.lang.Unit.unitResult;
 
 final class TaskExecutorImpl implements TaskExecutor {
     private static final int FIXED_POOL_SIZE = 32 * _1MiB;
+    private static final boolean USE_SHARED_WQ = false;
 
     private final int numThreads;
     private final ExecutorService executor;
@@ -59,13 +59,17 @@ final class TaskExecutorImpl implements TaskExecutor {
 
         Runtime.getRuntime().addShutdownHook(shutdownThreadFactory().newThread(this::shutdown));
 
-        var rootProactor = Proactor.proactor(allocator);
+        if (USE_SHARED_WQ) {
+            var rootProactor = Proactor.proactor(allocator);
 
-        IntStream
-            .range(1, numThreads)
-            .forEach(__ -> proactors.add(Proactor.proactor(allocator, rootProactor)));
+            range(1, numThreads)
+                .forEach(__ -> proactors.add(Proactor.proactor(allocator, rootProactor)));
 
-        proactors.add(rootProactor);
+            proactors.add(rootProactor);
+        } else {
+            range(0, numThreads)
+                .forEach(__ -> proactors.add(Proactor.proactor(allocator)));
+        }
 
         proactors.forEach(proactor -> runners.add(new TaskRunner(threshold, proactor)));
         runners.forEach(runner -> runner.start(executor));

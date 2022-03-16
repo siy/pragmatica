@@ -15,12 +15,14 @@
 int __sys_io_uring_enter(int fd, unsigned to_submit, unsigned min_complete, unsigned flags, sigset_t *sig);
 int __sys_io_uring_register(int fd, unsigned opcode, const void *arg, unsigned nr_args);
 
-JNIEXPORT jint JNICALL Java_org_pragmatica_io_async_uring_UringApi_init(JNIEnv *env, jclass clazz, jint num_entries, jlong base_address, jint flags) {
-    return (jint) io_uring_queue_init((unsigned) num_entries, RING_PTR, (unsigned) flags);
-}
+JNIEXPORT jint JNICALL Java_org_pragmatica_io_async_uring_UringApi_init(JNIEnv *env, jclass clazz, jint num_entries, jlong base_address) {
+    jint rc = (jint) io_uring_queue_init_params((unsigned) num_entries, RING_PTR, PARAMS_PTR);
 
-JNIEXPORT jint JNICALL Java_org_pragmatica_io_async_uring_UringApi_initParams(JNIEnv *env, jclass clazz, jint num_entries, jlong base_address) {
-    return (jint) io_uring_queue_init_params((unsigned) num_entries, RING_PTR, PARAMS_PTR);
+    if (rc == 0) {
+        io_uring_ring_dontfork(RING_PTR);
+    }
+
+    return rc;
 }
 
 JNIEXPORT void JNICALL Java_org_pragmatica_io_async_uring_UringApi_close(JNIEnv *env, jclass clazz, jlong base_address) {

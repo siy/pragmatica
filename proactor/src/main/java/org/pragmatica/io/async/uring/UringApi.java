@@ -31,7 +31,6 @@ import org.pragmatica.io.async.uring.struct.raw.SQEntry;
 import org.pragmatica.io.async.uring.utils.LibraryLoader;
 import org.pragmatica.io.async.uring.utils.ObjectHeap;
 import org.pragmatica.io.async.util.OffHeapSlice;
-import org.pragmatica.io.async.util.raw.RawMemory;
 import org.pragmatica.lang.Result;
 import org.pragmatica.lang.Unit;
 import org.slf4j.Logger;
@@ -58,7 +57,7 @@ public class UringApi implements AutoCloseable {
 //    private final int submissionEntries;
     private final int threshold;
     private final SQEntry sqEntry;
-    private final IoUringHolder ioUring;
+    private final IoUringData ioUring;
 //    private final IoUringHolder holder;
 
     private boolean closed = false;
@@ -78,8 +77,7 @@ public class UringApi implements AutoCloseable {
     // Native IO_URING API & helpers
     //------------------------------------------------------------------------------------------------
     // Start/Stop
-    static native int init(int numEntries, long baseAddress, int flags);
-    static native int initParams(int numEntries, long baseAddress);
+    static native int init(int numEntries, long baseAddress);
 
     static native void close(long baseAddress);
 
@@ -117,7 +115,7 @@ public class UringApi implements AutoCloseable {
     static native int prepareForListen(int socket, long address, int len, int queueDepth);
     //------------------------------------------------------------------------------------------------
 
-    private UringApi(IoUringHolder ioUring) {
+    private UringApi(IoUringData ioUring) {
         this.ioUring = ioUring;
         this.threshold = ioUring.numEntries() - 2;
         this.sqEntry = SQEntry.at(0);
@@ -128,7 +126,7 @@ public class UringApi implements AutoCloseable {
     }
 
     public static Result<UringApi> uringApi(int requestedEntries, Set<UringSetupFlags> openFlags, int workQueueFD) {
-        var ioUring = IoUringHolder.create(requestedEntries, openFlags, workQueueFD);
+        var ioUring = IoUringData.create(requestedEntries, openFlags, workQueueFD);
         var rc = ioUring.init();
 
         if (rc != 0) {
