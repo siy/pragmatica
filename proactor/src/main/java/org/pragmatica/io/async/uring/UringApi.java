@@ -47,18 +47,13 @@ import static org.pragmatica.lang.Result.success;
  * Low-level IO URING API
  */
 public class UringApi implements AutoCloseable {
-    // Actual size of struct io_uring is 216 bytes at the moment of writing: March 2022
-    private static final long SIZE = 256;
     private static final Logger LOG = LoggerFactory.getLogger(UringApi.class);
 
     public static final int MIN_QUEUE_SIZE = 128;
 
-//    private final long ringBase;
-//    private final int submissionEntries;
     private final int threshold;
     private final SQEntry sqEntry;
     private final IoUringData ioUring;
-//    private final IoUringHolder holder;
 
     private boolean closed = false;
     private int count = 0;
@@ -78,16 +73,13 @@ public class UringApi implements AutoCloseable {
     //------------------------------------------------------------------------------------------------
     // Start/Stop
     static native int init(int numEntries, long baseAddress);
-
     static native void close(long baseAddress);
 
-    // Syscall
+    // System calls
     static native long enter(int fd, long toSubmit, long minComplete, int flags);
-
     static native int register(int fd, int op, long arg1, long arg2);
 
     // Socket API
-
     /**
      * Create socket. This call is a combination of socket(2) and setsockopt(2).
      *
@@ -174,14 +166,15 @@ public class UringApi implements AutoCloseable {
     }
 
     public int processCompletions(ObjectHeap<CompletionHandler> pendingCompletions, Proactor proactor) {
-        int completions = ioUring.completionQueue().processCompletions(pendingCompletions, proactor);
-        inFlight -= completions;
+        if (inFlight == 0) {
+            return 0;
+        }
 
-        return completions;
-    }
+        int completed = ioUring.completionQueue().processCompletions(pendingCompletions, proactor);
 
-    public int inFlight() {
-        return inFlight;
+        inFlight -= completed;
+
+        return completed;
     }
 
     public void processSubmissions() {

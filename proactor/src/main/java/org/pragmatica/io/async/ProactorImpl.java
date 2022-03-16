@@ -87,9 +87,13 @@ class ProactorImpl implements Proactor {
     }
 
     @Override
-    public int processIO() {
+    public void processSubmissions() {
         uringApi.processSubmissions();
-        return uringApi.inFlight() > 0 ? uringApi.processCompletions(exchangeRegistry, this) : 0;
+    }
+
+    @Override
+    public int processCompletions() {
+        return uringApi.processCompletions(exchangeRegistry, this);
     }
 
     @Override

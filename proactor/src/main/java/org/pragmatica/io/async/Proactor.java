@@ -68,7 +68,14 @@ public interface Proactor {
      *
      * @return number of pending completions
      */
-    int processIO();
+    default int processIO() {
+        processSubmissions();
+        return processCompletions();
+    }
+
+    void processSubmissions();
+
+    int processCompletions();
 
     /**
      * Shutdown current Proactor instance.
@@ -440,27 +447,27 @@ public interface Proactor {
     }
 
     default void writeVector(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fileDescriptor,
-                            Option<Timeout> timeout, OffHeapSlice... buffers) {
+                             Option<Timeout> timeout, OffHeapSlice... buffers) {
         writeVector(completion, fileDescriptor, OffsetT.ZERO, timeout, buffers);
     }
 
     default void writeVector(Consumer<Result<SizeT>> completion, FileDescriptor fileDescriptor,
-                            Option<Timeout> timeout, OffHeapSlice... buffers) {
+                             Option<Timeout> timeout, OffHeapSlice... buffers) {
         writeVector(completion, fileDescriptor, OffsetT.ZERO, timeout, buffers);
     }
 
     default void writeVector(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fileDescriptor, OffsetT offset,
-                            OffHeapSlice... buffers) {
+                             OffHeapSlice... buffers) {
         writeVector(completion, fileDescriptor, offset, Option.empty(), buffers);
     }
 
     default void writeVector(Consumer<Result<SizeT>> completion, FileDescriptor fileDescriptor, OffsetT offset,
-                            OffHeapSlice... buffers) {
+                             OffHeapSlice... buffers) {
         writeVector(completion, fileDescriptor, offset, Option.empty(), buffers);
     }
 
     default void writeVector(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fileDescriptor,
-                            OffHeapSlice... buffers) {
+                             OffHeapSlice... buffers) {
         writeVector(completion, fileDescriptor, OffsetT.ZERO, Option.empty(), buffers);
     }
 
@@ -508,6 +515,9 @@ public interface Proactor {
     /**
      * Allocate fixed buffer which will be shared between kernel and user space and can be used with {@link #readFixed(BiConsumer, FileDescriptor,
      * FixedBuffer, OffsetT, Option)} and {@link #writeFixed(BiConsumer, FileDescriptor, FixedBuffer, OffsetT, Option)} methods.
+     * <p>
+     * Fixed buffers are allocated from common memory arena shared across all instances of {@link Proactor}. The arena size is configured at start and
+     * can't be changed at run time.
      * <p>
      * Note that allocation is relatively slow process and frequent allocation/release of buffers might quickly result to fragmentation, so it is
      * highly recommended avoiding frequent allocation/release of the fixed buffers.

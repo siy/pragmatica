@@ -78,7 +78,9 @@ final class TaskRunner {
             if (head == null) {
                 var idleRunCount = 0;
 
-                while (proactor.processIO() > 0) {
+                while (proactor.processCompletions() > 0) {
+                    proactor.processSubmissions();
+
                     idleRunCount++;
 
                     if (idleRunCount == 4096) {
@@ -92,6 +94,8 @@ final class TaskRunner {
                     Thread.onSpinWait();
                 }
             } else {
+                proactor.processCompletions();
+
                 while (head != null) {
                     try {
                         head.task.accept(proactor);
@@ -102,7 +106,7 @@ final class TaskRunner {
                     head = head.next;
                 }
 
-                proactor.processIO();
+                proactor.processSubmissions();
             }
         }
         threshold.registerEvent();
