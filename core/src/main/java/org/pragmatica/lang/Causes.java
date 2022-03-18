@@ -25,9 +25,8 @@ import java.text.MessageFormat;
 import java.util.function.Predicate;
 
 /**
- * Common variants of {@link Cause}.
+ * Frequently used variants of {@link Cause}.
  */
-//TODO: add more variants
 public final class Causes {
     public static final Cause IRRELEVANT = new SimpleCause("irrelevant");
 

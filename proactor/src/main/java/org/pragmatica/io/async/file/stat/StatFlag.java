@@ -20,12 +20,15 @@ package org.pragmatica.io.async.file.stat;
 import org.pragmatica.io.async.Proactor;
 import org.pragmatica.io.async.file.FileDescriptor;
 import org.pragmatica.io.async.uring.Bitmask;
+import org.pragmatica.lang.Option;
 
 import java.nio.file.Path;
-import java.util.EnumSet;
+import java.util.Set;
+import java.util.function.BiConsumer;
 
 /**
- * Flags which control behavior of {@link Proactor#stat(Path, EnumSet, EnumSet)} and {@link Proactor#stat(FileDescriptor, EnumSet, EnumSet)} methods.
+ * Flags which control behavior of {@link Proactor#stat(BiConsumer, Path, Set, Set, Option)} and {@link Proactor#stat(BiConsumer, FileDescriptor, Set,
+ * Set, Option)} methods.
  * <p>
  * Note that {@link #EMPTY_PATH} is used internally. This flag controls what is used to point to file - path or file descriptor. While this is not an
  * error to pass this flag to methods above, it is ignored.

@@ -26,6 +26,11 @@ public interface Cause {
      */
     String message();
 
+    /**
+     * Represent cause as a failure {@link Result} instance.
+     *
+     * @return cause converted into {@link Result} with necessary type.
+     */
     default <T> Result<T> result() {
         return Result.failure(this);
     }

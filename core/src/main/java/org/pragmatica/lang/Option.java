@@ -82,7 +82,7 @@ public sealed interface Option<T> permits Some, None {
      * @return this instance for fluent call chaining
      */
     default Option<T> whenPresent(Consumer<? super T> consumer) {
-        apply(() -> {}, consumer);
+        apply(Functions::unitFn, consumer);
         return this;
     }
 
@@ -94,7 +94,7 @@ public sealed interface Option<T> permits Some, None {
      * @return this instance for fluent call chaining
      */
     default Option<T> whenEmpty(Runnable action) {
-        apply(action, __ -> {});
+        apply(action, Functions::unitFn);
         return this;
     }
 

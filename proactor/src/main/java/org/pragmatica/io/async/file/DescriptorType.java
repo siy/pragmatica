@@ -17,6 +17,9 @@
 
 package org.pragmatica.io.async.file;
 
+/**
+ * File descriptor type. Regular file, TCPv4 socket and TCPv6 types are recognized.
+ */
 public enum DescriptorType {
     FILE, SOCKET, SOCKET6
 }

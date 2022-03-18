@@ -18,49 +18,20 @@
 package org.pragmatica.lang;
 
 /**
- * Collection of basic functions which accept 0-9 parameters and return single result. Note that these functions are not supposed to throw any
- * exceptions
+ * Collection of basic functions for various use cases.
  */
 public interface Functions {
     /**
-     * Universal identity function.
-     *
-     * @param value input value
-     *
-     * @return input value.
+     * Function with no parameters (supplier). Provided for consistency.
      */
-    static <T> T id(T value) {
-        return value;
-    }
-
-    /**
-     * Universal consumer of values which does nothing with them.
-     *
-     * @param value value to consume
-     */
-    static <T> void blackHole(T value) {
-    }
-
-    @FunctionalInterface
-    interface ThrowingSupplier<T> {
-        T get() throws Throwable;
-    }
-
-    @FunctionalInterface
-    interface TriConsumer<T, K, V> {
-        void accept(T t, K k, V v);
-    }
-
-    @FunctionalInterface
-    interface FNx<R> {
-        R apply(Object... values);
-    }
-
     @FunctionalInterface
     interface FN0<R> {
         R apply();
     }
 
+    /**
+     * Function with one parameter.
+     */
     @FunctionalInterface
     interface FN1<R, T1> {
         R apply(T1 param1);
@@ -78,6 +49,9 @@ public interface Functions {
         }
     }
 
+    /**
+     * Function with two parameters.
+     */
     @FunctionalInterface
     interface FN2<R, T1, T2> {
         R apply(T1 param1, T2 param2);
@@ -91,6 +65,9 @@ public interface Functions {
         }
     }
 
+    /**
+     * Function with three parameters.
+     */
     @FunctionalInterface
     interface FN3<R, T1, T2, T3> {
         R apply(T1 param1, T2 param2, T3 param3);
@@ -104,6 +81,9 @@ public interface Functions {
         }
     }
 
+    /**
+     * Function with four parameters.
+     */
     @FunctionalInterface
     interface FN4<R, T1, T2, T3, T4> {
         R apply(T1 param1, T2 param2, T3 param3, T4 param4);
@@ -117,6 +97,9 @@ public interface Functions {
         }
     }
 
+    /**
+     * Function with five parameters.
+     */
     @FunctionalInterface
     interface FN5<R, T1, T2, T3, T4, T5> {
         R apply(T1 param1, T2 param2, T3 param3, T4 param4, T5 param5);
@@ -130,6 +113,9 @@ public interface Functions {
         }
     }
 
+    /**
+     * Function with six parameters.
+     */
     @FunctionalInterface
     interface FN6<R, T1, T2, T3, T4, T5, T6> {
         R apply(T1 param1, T2 param2, T3 param3, T4 param4, T5 param5, T6 param6);
@@ -143,6 +129,9 @@ public interface Functions {
         }
     }
 
+    /**
+     * Function with seven parameters.
+     */
     @FunctionalInterface
     interface FN7<R, T1, T2, T3, T4, T5, T6, T7> {
         R apply(T1 param1, T2 param2, T3 param3, T4 param4, T5 param5, T6 param6, T7 param7);
@@ -156,6 +145,9 @@ public interface Functions {
         }
     }
 
+    /**
+     * Function with eight parameters.
+     */
     @FunctionalInterface
     interface FN8<R, T1, T2, T3, T4, T5, T6, T7, T8> {
         R apply(T1 param1, T2 param2, T3 param3, T4 param4, T5 param5, T6 param6, T7 param7, T8 param8);
@@ -169,6 +161,9 @@ public interface Functions {
         }
     }
 
+    /**
+     * Function with nine parameters.
+     */
     @FunctionalInterface
     interface FN9<R, T1, T2, T3, T4, T5, T6, T7, T8, T9> {
         R apply(T1 param1, T2 param2, T3 param3, T4 param4, T5 param5, T6 param6, T7 param7, T8 param8, T9 param9);
@@ -180,5 +175,82 @@ public interface Functions {
         default <N> FN9<N, T1, T2, T3, T4, T5, T6, T7, T8, T9> then(FN1<N, R> function) {
             return (v1, v2, v3, v4, v5, v6, v7, v8, v9) -> function.apply(apply(v1, v2, v3, v4, v5, v6, v7, v8, v9));
         }
+    }
+
+    /**
+     * Universal identity function.
+     */
+    static <T> T id(T value) {
+        return value;
+    }
+
+    /**
+     * Supplier which can throw an exception.
+     */
+    @FunctionalInterface
+    interface ThrowingSupplier<T> {
+        T get() throws Throwable;
+    }
+
+    /**
+     * Consumer with three parameters.
+     */
+    @FunctionalInterface
+    interface TriConsumer<T, K, V> {
+        void accept(T t, K k, V v);
+    }
+
+    /**
+     * Function with variable argument list.
+     */
+    @FunctionalInterface
+    interface FNx<R> {
+        R apply(Object... values);
+    }
+
+    /**
+     * Universal consumers of values which do nothing with input values. Useful for cases when API requires function, but there is no need to do
+     * anything with the received values.
+     */
+    static <T1> void unitFn() {
+    }
+
+    static <T1> void unitFn(T1 value) {
+    }
+
+    static <T1, T2> void unitFn(T1 param1, T2 param2) {
+    }
+
+    static <T1, T2, T3> void unitFn(T1 param1, T2 param2, T3 param3) {
+    }
+
+    static <T1, T2, T3, T4> void unitFn(T1 param1, T2 param2, T3 param3, T4 param4) {
+    }
+
+    static <T1, T2, T3, T4, T5> void unitFn(T1 param1, T2 param2, T3 param3, T4 param4, T5 param5) {
+    }
+
+    static <T1, T2, T3, T4, T5, T6> void unitFn(T1 param1, T2 param2, T3 param3, T4 param4, T5 param5, T6 param6) {
+    }
+
+    static <T1, T2, T3, T4, T5, T6, T7> void unitFn(T1 param1, T2 param2, T3 param3, T4 param4, T5 param5, T6 param6, T7 param7) {
+    }
+
+    static <T1, T2, T3, T4, T5, T6, T7, T8> void unitFn(T1 param1, T2 param2, T3 param3, T4 param4, T5 param5, T6 param6, T7 param7, T8 param8) {
+    }
+
+    static <T1, T2, T3, T4, T5, T6, T7, T8, T9> void unitFn(T1 param1, T2 param2, T3 param3, T4 param4, T5 param5, T6 param6, T7 param7, T8 param8, T9 param9) {
+    }
+
+    static <R, T1> R toNull(T1 value) {
+        return null;
+    }
+
+    static <T1> boolean toTrue(T1 value) {
+        return true;
+    }
+
+    static <T1> boolean toFalse(T1 value) {
+        return false;
     }
 }

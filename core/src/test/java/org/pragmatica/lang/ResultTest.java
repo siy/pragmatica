@@ -70,11 +70,11 @@ class ResultTest {
     void onlyOneMethodIsInvokedOnApply() {
         Result.success(321).apply(
             failure -> fail(failure.message()),
-            Functions::blackHole
+            Functions::unitFn
         );
 
         Result.failure(Causes.cause("Some error")).apply(
-            Functions::blackHole,
+            Functions::unitFn,
             value -> fail(value.toString())
         );
     }

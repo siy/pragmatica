@@ -22,7 +22,7 @@ import org.pragmatica.io.async.uring.Bitmask;
 import java.util.EnumSet;
 
 /**
- * Flags which control which information is requested and returned in the {@link FileStat}.
+ * Flags which control which information is requested and returned from the {@link FileStat}.
  */
 public enum StatMask implements Bitmask {
     TYPE(0x000000001),    /* Want/got stx_mode & S_IFMT */

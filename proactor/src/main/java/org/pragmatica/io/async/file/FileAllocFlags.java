@@ -18,7 +18,16 @@
 package org.pragmatica.io.async.file;
 
 import org.pragmatica.io.async.uring.Bitmask;
+import org.pragmatica.lang.Option;
 
+import java.util.Set;
+import java.util.function.BiConsumer;
+
+/**
+ * File allocation flags.
+ * <p>
+ * These flags control behavior of {@link org.pragmatica.io.async.Proactor#falloc(BiConsumer, FileDescriptor, Set, long, long, Option)} method.
+ */
 public enum FileAllocFlags implements Bitmask {
     KEEP_SIZE(0x01),    /* default is extend size */
     PUNCH_HOLE(0x02),   /* de-allocates range */

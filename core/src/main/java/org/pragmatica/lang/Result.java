@@ -91,7 +91,7 @@ public sealed interface Result<T> permits Success, Failure {
      * @return current instance for fluent call chaining
      */
     default Result<T> onSuccess(Consumer<T> consumer) {
-        fold(v -> null, v -> {
+        fold(Functions::toNull, v -> {
             consumer.accept(v);
             return null;
         });
@@ -104,7 +104,7 @@ public sealed interface Result<T> permits Success, Failure {
      * @return current instance for fluent call chaining
      */
     default Result<T> onSuccessDo(Runnable action) {
-        fold(v -> null, v -> {
+        fold(Functions::toNull, v -> {
             action.run();
             return null;
         });
@@ -122,7 +122,7 @@ public sealed interface Result<T> permits Success, Failure {
         fold(v -> {
             consumer.accept(v);
             return null;
-        }, v -> null);
+        }, Functions::toNull);
         return this;
     }
 
@@ -135,7 +135,7 @@ public sealed interface Result<T> permits Success, Failure {
         fold(v -> {
             action.run();
             return null;
-        }, v -> null);
+        }, Functions::toNull);
         return this;
     }
 
@@ -165,7 +165,7 @@ public sealed interface Result<T> permits Success, Failure {
      * @return {@code true} if instance is success and {@code false} otherwise
      */
     default boolean isSuccess() {
-        return fold(__ -> false, __ -> true);
+        return fold(Functions::toFalse, Functions::toTrue);
     }
 
     /**
@@ -174,7 +174,7 @@ public sealed interface Result<T> permits Success, Failure {
      * @return {@code true} if instance is failure and {@code false} otherwise
      */
     default boolean isFailure() {
-        return fold(__ -> true, __ -> false);
+        return fold(Functions::toTrue, Functions::toFalse);
     }
 
     /**

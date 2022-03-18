@@ -22,6 +22,9 @@ import org.pragmatica.io.async.uring.Bitmask;
 import java.util.EnumSet;
 import java.util.Set;
 
+/**
+ * Flags for the {@link SpliceDescriptor}.
+ */
 public enum SpliceFlags implements Bitmask {
     MOVE(1),        /* SPLICE_F_MOVE    : Move pages instead of copying.  */
     NONBLOCK(2),    /* SPLICE_F_NONBLOCK: Don't block on the pipe splicing */
