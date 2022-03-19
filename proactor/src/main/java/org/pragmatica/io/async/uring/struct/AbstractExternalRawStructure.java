@@ -17,6 +17,9 @@
 
 package org.pragmatica.io.async.uring.struct;
 
+/**
+ * Base class for structures stored off-heap.
+ */
 public abstract class AbstractExternalRawStructure<T extends ExternalRawStructure<T>>
     extends AbstractRawStructure<T> implements ExternalRawStructure<T> {
 

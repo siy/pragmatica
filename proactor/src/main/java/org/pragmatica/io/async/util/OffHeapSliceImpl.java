@@ -21,12 +21,12 @@ import org.pragmatica.io.async.util.raw.RawMemory;
 
 import java.util.HexFormat;
 
-public class OffHeapSliceImpl implements OffHeapSlice {
+class OffHeapSliceImpl implements OffHeapSlice {
     private final long address;
     private final int size;
     private int used;
 
-    public OffHeapSliceImpl(long address, int size) {
+    OffHeapSliceImpl(long address, int size) {
         this.address = address;
         this.size = size;
         this.used = 0;

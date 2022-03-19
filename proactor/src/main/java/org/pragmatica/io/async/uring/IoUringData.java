@@ -21,6 +21,9 @@ import org.pragmatica.io.async.uring.struct.offheap.AbstractOffHeapStructure;
 
 import java.util.Set;
 
+/**
+ * Convenient container for the {@code io_uring} data.
+ */
 public class IoUringData extends AbstractOffHeapStructure<IoUringData> {
     private final IoUring ioUring;
     private final int numEntries;

@@ -29,6 +29,9 @@ import java.util.function.BiConsumer;
 
 import static org.pragmatica.io.async.uring.AsyncOperation.IORING_OP_READV;
 
+/**
+ * Exchange entry for {@code readVector} request.
+ */
 public class ReadVectorExchangeEntry extends AbstractExchangeEntry<ReadVectorExchangeEntry, SizeT> {
     private static final Result<SizeT> EOF_RESULT = SystemError.ENODATA.result();
 

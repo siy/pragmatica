@@ -32,6 +32,9 @@ import java.util.function.BiConsumer;
 
 import static org.pragmatica.io.async.uring.AsyncOperation.IORING_OP_NOP;
 
+/**
+ * Exchange entry for {@code socket} request.
+ */
 public class SocketExchangeEntry extends AbstractExchangeEntry<SocketExchangeEntry, FileDescriptor> {
     private AddressFamily addressFamily;
     private SocketType socketType;

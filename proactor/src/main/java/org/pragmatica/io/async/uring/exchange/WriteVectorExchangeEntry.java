@@ -29,6 +29,9 @@ import java.util.function.BiConsumer;
 
 import static org.pragmatica.io.async.uring.AsyncOperation.IORING_OP_WRITEV;
 
+/**
+ * Exchange entry for {@code writeVector} request.
+ */
 public class WriteVectorExchangeEntry extends AbstractExchangeEntry<WriteVectorExchangeEntry, SizeT> {
     private static final Result<SizeT> EOF_RESULT = SystemError.ENODATA.result();
 

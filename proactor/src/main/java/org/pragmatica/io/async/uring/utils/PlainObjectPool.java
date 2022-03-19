@@ -21,6 +21,9 @@ import org.pragmatica.io.async.uring.CompletionHandler;
 import org.pragmatica.io.async.uring.exchange.AbstractExchangeEntry;
 import org.pragmatica.lang.Functions.FN1;
 
+/**
+ * Object pool for reusable instances of {@link AbstractExchangeEntry} implementations.
+ */
 @SuppressWarnings({"unchecked", "rawtypes"})
 public class PlainObjectPool<T extends AbstractExchangeEntry> {
     private T head;

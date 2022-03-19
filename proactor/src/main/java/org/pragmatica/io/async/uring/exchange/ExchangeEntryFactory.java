@@ -47,6 +47,12 @@ import java.util.function.BiConsumer;
 import static org.pragmatica.io.async.uring.struct.raw.SQEntry.IORING_FSYNC_DATASYNC;
 import static org.pragmatica.io.async.uring.utils.PlainObjectPool.objectPool;
 
+/**
+ * Factory for the different types of exchange entries.
+ * <p>
+ * This implementation uses pools of the instances for each type of exchange entry. This approach eliminates pressure on GC when huge amount of
+ * requests are issued.
+ */
 public class ExchangeEntryFactory {
     @SuppressWarnings({"rawtypes"})
     private final PlainObjectPool<AcceptExchangeEntry> acceptPool;

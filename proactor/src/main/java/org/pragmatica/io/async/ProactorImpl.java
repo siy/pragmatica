@@ -49,7 +49,7 @@ import static org.pragmatica.io.async.uring.struct.offheap.OffHeapIoVector.withW
  * Asynchronous Input/Output Proactor Implementation.
  * <pre>
  * WARNING!
- * The implementation is fairly low level and designed for single thread use.
+ * The implementation intentionally (for performance reasons) does not use any means of synchronization of the access, i.e. it is not thread safe.
  * </pre>
  */
 class ProactorImpl implements Proactor {

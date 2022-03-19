@@ -21,6 +21,9 @@ import org.pragmatica.lang.Result;
 
 import static org.pragmatica.io.async.SystemError.EFAULT;
 
+/**
+ * Generic IP address.
+ */
 public sealed interface InetAddress {
     /**
      * Get byte representation of address in network byte order.
@@ -29,18 +32,35 @@ public sealed interface InetAddress {
      */
     byte[] asBytes();
 
+    /**
+     * Convert byte representation of the IPv4 address into the address.
+     *
+     * @param address The byte representation of the address.
+     *
+     * @return Result of conversion of the address.
+     */
     static Result<Inet4Address> inet4Address(final byte[] address) {
         return address.length != Inet4Address.SIZE
                ? EFAULT.result()
                : Result.success(new Inet4Address(address));
     }
 
+    /**
+     * Convert byte representation of the IPv6 address into the address.
+     *
+     * @param address The byte representation of the address.
+     *
+     * @return Result of conversion of the address.
+     */
     static Result<Inet6Address> inet6Address(final byte[] address) {
         return address.length != Inet6Address.SIZE
                ? EFAULT.result()
                : Result.success(new Inet6Address(address));
     }
 
+    /**
+     * IPv4 address implementation.
+     */
     record Inet4Address(byte[] asBytes) implements InetAddress {
         public static final int SIZE = 4;
         public static final Inet4Address INADDR_ANY = new Inet4Address(new byte[SIZE]);
@@ -53,6 +73,9 @@ public sealed interface InetAddress {
         }
     }
 
+    /**
+     * IPv6 address implementation.
+     */
     record Inet6Address(byte[] asBytes) implements InetAddress {
         public static final int SIZE = 16;
         public static final Inet6Address INADDR_ANY = new Inet6Address(new byte[SIZE]);

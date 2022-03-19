@@ -31,6 +31,9 @@ import java.util.function.BiConsumer;
 import static org.pragmatica.io.async.uring.AsyncOperation.IORING_OP_STATX;
 import static org.pragmatica.lang.Result.success;
 
+/**
+ * Exchange entry for {@code statx} request.
+ */
 public class StatExchangeEntry extends AbstractExchangeEntry<StatExchangeEntry, FileStat> {
     private final OffHeapFileStat fileStat = OffHeapFileStat.fileStat();
     private OffHeapCString rawPath;

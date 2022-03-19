@@ -17,6 +17,9 @@
 
 package org.pragmatica.io.async.net;
 
+/**
+ * IP port.
+ */
 public record InetPort(short port) {
     public static InetPort inetPort(final int port) {
         return new InetPort((short) port);

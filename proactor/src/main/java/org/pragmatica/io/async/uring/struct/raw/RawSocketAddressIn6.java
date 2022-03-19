@@ -30,6 +30,9 @@ import static org.pragmatica.io.async.net.InetAddress.inet6Address;
 import static org.pragmatica.io.async.net.InetPort.inetPort;
 import static org.pragmatica.lang.Result.success;
 
+/**
+ * IPv6 socket address storage.
+ */
 public final class RawSocketAddressIn6 extends AbstractExternalRawStructure<RawSocketAddressIn6>
     implements RawSocketAddress<Inet6Address> {
 

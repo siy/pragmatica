@@ -19,6 +19,9 @@ package org.pragmatica.io.async.uring.struct.shape;
 
 import org.pragmatica.io.async.util.raw.RawProperty;
 
+/**
+ * Offsets/Sizes of the fields of the {@link org.pragmatica.io.async.uring.struct.raw.RawStatxTimestamp}
+ */
 public interface StatxTimestampOffsets {
     int SIZE = 16;
     RawProperty tv_sec = RawProperty.raw(0, 8);

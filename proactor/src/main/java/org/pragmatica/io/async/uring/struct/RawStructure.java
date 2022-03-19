@@ -17,6 +17,9 @@
 
 package org.pragmatica.io.async.uring.struct;
 
+/**
+ * API for C-style structures.
+ */
 public interface RawStructure<T extends RawStructure<T>> {
     long address();
 

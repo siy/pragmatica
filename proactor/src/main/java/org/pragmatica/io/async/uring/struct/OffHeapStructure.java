@@ -18,7 +18,7 @@
 package org.pragmatica.io.async.uring.struct;
 
 /**
- * Base class for classes which are used for passing data to JNI side. Note that these classes are allocating and deallocating off-heap memory.
+ * API for classes which are used for exchanging data with JNI side. Note that these classes are allocating and deallocating off-heap memory.
  * Lifecycle of instances of such classes should be carefully tracked to avoid memory leaks.
  */
 public interface OffHeapStructure<T extends RawStructure<T>> extends RawStructure<T> {

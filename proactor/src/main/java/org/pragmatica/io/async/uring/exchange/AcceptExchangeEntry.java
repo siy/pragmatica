@@ -31,6 +31,9 @@ import java.util.function.BiConsumer;
 import static org.pragmatica.io.async.net.ConnectionContext.connection;
 import static org.pragmatica.io.async.uring.AsyncOperation.IORING_OP_ACCEPT;
 
+/**
+ * Exchange entry for {@code accept} request.
+ */
 public class AcceptExchangeEntry<T extends InetAddress> extends AbstractExchangeEntry<AcceptExchangeEntry<T>, ConnectionContext<T>> {
     private final OffHeapSocketAddress clientAddress = OffHeapSocketAddress.v4();
     private int descriptor;

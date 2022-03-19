@@ -21,6 +21,9 @@ import org.pragmatica.io.async.util.raw.RawProperty;
 
 import static org.pragmatica.io.async.util.raw.RawProperty.raw;
 
+/**
+ * Offsets/Sizes of the fields of the {@link org.pragmatica.io.async.uring.struct.raw.IoVector}
+ */
 public interface IoVectorOffsets {
     int SIZE = 16;
     RawProperty iov_base = raw(0, 8);

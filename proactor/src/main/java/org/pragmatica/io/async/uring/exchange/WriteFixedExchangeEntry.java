@@ -29,6 +29,9 @@ import java.util.function.BiConsumer;
 
 import static org.pragmatica.io.async.uring.AsyncOperation.IORING_OP_WRITE_FIXED;
 
+/**
+ * Exchange entry for {@code writeFixed} request.
+ */
 public class WriteFixedExchangeEntry extends AbstractExchangeEntry<WriteFixedExchangeEntry, SizeT> {
     private int descriptor;
     private byte flags;

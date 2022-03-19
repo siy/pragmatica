@@ -29,6 +29,9 @@ import java.util.function.BiConsumer;
 import static org.pragmatica.io.async.uring.AsyncOperation.IORING_OP_FALLOCATE;
 import static org.pragmatica.lang.Unit.unitResult;
 
+/**
+ * Exchange entry for {@code falloc} request.
+ */
 public class FAllocExchangeEntry extends AbstractExchangeEntry<FAllocExchangeEntry, Unit> {
     private int descriptor;
     private int allocFlags;

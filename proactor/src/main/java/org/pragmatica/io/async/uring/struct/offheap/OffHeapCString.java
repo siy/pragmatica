@@ -21,6 +21,9 @@ import org.pragmatica.io.async.util.raw.RawMemory;
 
 import java.nio.charset.StandardCharsets;
 
+/**
+ * C-style string container. At the native code side strings are accessible as UTF-8 encoded, zero-terminated byte arrays.
+ */
 public class OffHeapCString extends AbstractOffHeapStructure<OffHeapCString> {
     private OffHeapCString(final byte[] input) {
         super(input.length + 1);

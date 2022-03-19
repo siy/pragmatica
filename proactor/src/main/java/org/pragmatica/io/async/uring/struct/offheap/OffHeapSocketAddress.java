@@ -27,6 +27,11 @@ import org.pragmatica.io.async.uring.struct.raw.RawSocketAddressIn6;
 import org.pragmatica.io.async.util.raw.RawProperty;
 import org.pragmatica.lang.Result;
 
+/**
+ * Specifically-formatted socket address. Such a formatting is used by {@code connect}, {@code listen} and {@code accept} calls.
+ * <p>
+ * The formatting is designed to handle IPv4 and IPv6 connection information with single API.
+ */
 public class OffHeapSocketAddress extends AbstractOffHeapStructure<OffHeapSocketAddress> {
     private static final int SIZE = 128 + 4;    //Equal to sizeof(struct sockaddr_storage) + sizeof(socklen_t)
     private static final RawProperty sockaddrLen = RawProperty.raw(0, 4);

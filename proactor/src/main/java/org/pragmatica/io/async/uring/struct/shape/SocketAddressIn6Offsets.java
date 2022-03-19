@@ -19,6 +19,9 @@ package org.pragmatica.io.async.uring.struct.shape;
 
 import org.pragmatica.io.async.util.raw.RawProperty;
 
+/**
+ * Offsets/Sizes of the fields of the {@link org.pragmatica.io.async.uring.struct.raw.RawSocketAddressIn6}
+ */
 public interface SocketAddressIn6Offsets {
     int SIZE = 28;
     RawProperty sin6_family = RawProperty.raw(0, 2);

@@ -18,9 +18,10 @@
 package org.pragmatica.io.async.uring;
 
 import java.util.EnumSet;
+import java.util.Set;
 
 /**
- * Flags for {@link UringApi#init(int, long)} method.
+ * Flags for {@link IoUringData#create(int, Set, int)}.
  */
 public enum UringSetupFlags implements Bitmask {
     IO_POLL(1),    /* io_context is polled */

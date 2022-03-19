@@ -19,6 +19,9 @@ package org.pragmatica.io.async.uring.struct.shape;
 
 import org.pragmatica.io.async.util.raw.RawProperty;
 
+/**
+ * Offsets/Sizes of the fields of the {@link org.pragmatica.io.async.uring.struct.offheap.OffHeapTimeSpec}
+ */
 public interface TimeSpecOffsets {
     int SIZE = 16;
     RawProperty tv_sec = RawProperty.raw(0, 8);

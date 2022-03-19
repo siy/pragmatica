@@ -17,6 +17,9 @@
 
 package org.pragmatica.io.async.util.raw;
 
+/**
+ * Descriptor for single property of C-style structure.
+ */
 public record RawProperty(int offset, int size) {
     public static RawProperty raw(final int offset, final int size) {
         return new RawProperty(offset, size);

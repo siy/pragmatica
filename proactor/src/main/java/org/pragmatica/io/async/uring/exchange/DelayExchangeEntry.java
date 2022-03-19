@@ -32,6 +32,9 @@ import static org.pragmatica.io.async.Timeout.timeout;
 import static org.pragmatica.io.async.uring.AsyncOperation.IORING_OP_TIMEOUT;
 import static org.pragmatica.lang.Result.success;
 
+/**
+ * Exchange entry for {@code delay} request.
+ */
 public class DelayExchangeEntry extends AbstractExchangeEntry<DelayExchangeEntry, Duration> {
     private final OffHeapTimeSpec timeSpec = OffHeapTimeSpec.uninitialized();
     private long startNanos;

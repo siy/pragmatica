@@ -30,6 +30,9 @@ import java.util.function.BiConsumer;
 
 import static org.pragmatica.io.async.uring.AsyncOperation.IORING_OP_SPLICE;
 
+/**
+ * Exchange entry for {@code splice} request.
+ */
 public class SpliceExchangeEntry extends AbstractExchangeEntry<SpliceExchangeEntry, SizeT> {
     private SpliceDescriptor descriptor;
     private byte flags;

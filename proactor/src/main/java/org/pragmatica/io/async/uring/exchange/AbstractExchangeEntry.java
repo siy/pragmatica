@@ -31,6 +31,9 @@ import java.util.function.BiConsumer;
 import static org.pragmatica.io.async.common.SizeT.sizeT;
 import static org.pragmatica.lang.Result.success;
 
+/**
+ * Base type for containers used to store callback information for in-flight requests.
+ */
 @SuppressWarnings("rawtypes")
 public abstract class AbstractExchangeEntry<T extends AbstractExchangeEntry<T, R>, R> implements ExchangeEntry<T> {
     private static final int RESULT_SIZET_POOL_SIZE = 65536;

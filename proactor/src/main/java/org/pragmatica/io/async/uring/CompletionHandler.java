@@ -23,5 +23,12 @@ import org.pragmatica.io.async.Proactor;
  * Low level completion handler
  */
 public interface CompletionHandler {
+    /**
+     * This method is called when request is completed.
+     *
+     * @param result   Result value (actual meaning depends on the system call)
+     * @param flags    Additional flags
+     * @param proactor The instance of {@link Proactor} which can be used during request handling.
+     */
     void accept(int result, int flags, final Proactor proactor);
 }

@@ -18,7 +18,7 @@
 package org.pragmatica.io.async.uring;
 
 /**
- * Register operation opcodes.
+ * Operation opcodes for {@link UringApi#register(RegisterOperation, long, long)}.
  * <p>
  * WARNING: Always keep in sync with io_uring.h
  * <p>

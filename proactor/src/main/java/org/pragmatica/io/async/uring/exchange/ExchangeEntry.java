@@ -21,6 +21,9 @@ import org.pragmatica.io.async.uring.CompletionHandler;
 import org.pragmatica.io.async.uring.struct.raw.SQEntry;
 import org.pragmatica.io.async.uring.utils.ObjectHeap;
 
+/**
+ * API of the containers used to store callback information for in-flight requests.
+ */
 public interface ExchangeEntry<T extends ExchangeEntry<T>> extends CompletionHandler {
     /**
      * Finally close the instance and release associated resources

@@ -28,6 +28,9 @@ import org.pragmatica.lang.Result;
 import java.util.Set;
 import java.util.function.BiConsumer;
 
+/**
+ * Exchange entry for {@code listen} request.
+ */
 public class ListenExchangeEntry<T extends InetAddress> extends AbstractExchangeEntry<ListenExchangeEntry<T>, ListenContext<T>> {
     private SocketAddress<T> socketAddress;
     private SocketType socketType;

@@ -22,6 +22,9 @@ import org.pragmatica.io.async.uring.struct.shape.IoUringParamsOffsets;
 
 import static org.pragmatica.io.async.uring.struct.shape.IoUringOffsets.*;
 
+/**
+ * Representation of the internals of the {@code io_uring} structure.
+ */
 public class IoUring extends AbstractExternalRawStructure<IoUring> {
     public static final int RAW_SIZE = SIZE + IoUringParamsOffsets.SIZE;
 

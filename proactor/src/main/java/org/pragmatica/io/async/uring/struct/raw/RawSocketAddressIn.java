@@ -28,6 +28,9 @@ import static org.pragmatica.io.async.net.InetAddress.inet4Address;
 import static org.pragmatica.io.async.net.InetPort.inetPort;
 import static org.pragmatica.lang.Result.success;
 
+/**
+ * IPv4 socket address storage.
+ */
 public final class RawSocketAddressIn
     extends AbstractExternalRawStructure<RawSocketAddressIn>
     implements RawSocketAddress<Inet4Address> {

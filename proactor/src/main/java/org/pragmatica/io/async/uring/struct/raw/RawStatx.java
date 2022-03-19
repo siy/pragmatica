@@ -27,6 +27,9 @@ import org.pragmatica.io.async.uring.struct.shape.StatxOffsets;
 
 import static org.pragmatica.io.async.file.stat.DeviceId.deviceId;
 
+/**
+ * File status information storage.
+ */
 public class RawStatx extends AbstractExternalRawStructure<RawStatx> {
     private final RawStatxTimestamp atime = RawStatxTimestamp.at(0);
     private final RawStatxTimestamp btime = RawStatxTimestamp.at(0);
@@ -56,98 +59,98 @@ public class RawStatx extends AbstractExternalRawStructure<RawStatx> {
         super.reposition(address);
     }
 
-    /* What results were written [uncond] */
+    /** What results were written [uncond] */
     public int mask() {
         return getInt(StatxOffsets.stx_mask);
     }
 
-    /* Preferred general I/O size [uncond] */
+    /** Preferred general I/O size [uncond] */
     public int blockSize() {
         return getInt(StatxOffsets.stx_blksize);
     }
 
-    /* Flags conveying information about the file [uncond] */
+    /** Flags conveying information about the file [uncond] */
     public long attributes() {
         return getLong(StatxOffsets.stx_attributes);
     }
 
-    /* Number of hard links */
+    /** Number of hard links */
     public int numLinks() {
         return getInt(StatxOffsets.stx_nlink);
     }
 
-    /* User ID of owner */
+    /** User ID of owner */
     public int ownerUID() {
         return getInt(StatxOffsets.stx_uid);
     }
 
-    /* Group ID of owner */
+    /** Group ID of owner */
     public int ownerGID() {
         return getInt(StatxOffsets.stx_gid);
     }
 
-    /* File mode */
+    /** File mode */
     public short mode() {
         return getShort(StatxOffsets.stx_mode);
     }
 
-    /* Inode number */
+    /** Inode number */
     public long inode() {
         return getLong(StatxOffsets.stx_ino);
     }
 
-    /* File size */
+    /** File size */
     public long fileSize() {
         return getLong(StatxOffsets.stx_size);
     }
 
-    /* Number of 512-byte blocks allocated */
+    /** Number of 512-byte blocks allocated */
     public long blocks() {
         return getLong(StatxOffsets.stx_blocks);
     }
 
-    /* Mask to show what's supported in stx_attributes */
+    /** Mask to show what's supported in stx_attributes */
     public long attributesMask() {
         return getLong(StatxOffsets.stx_attributes_mask);
     }
 
-    /* Device ID of special file [if bdev/cdev] */
+    /** Device ID of special file [if bdev/cdev] */
     public int rdevMajor() {
         return getInt(StatxOffsets.stx_rdev_major);
     }
 
-    /* Device ID of special file [if bdev/cdev] */
+    /** Device ID of special file [if bdev/cdev] */
     public int rdevMinor() {
         return getInt(StatxOffsets.stx_rdev_minor);
     }
 
-    /* ID of device containing file [uncond] */
+    /** ID of device containing file [uncond] */
     public int devMajor() {
         return getInt(StatxOffsets.stx_dev_major);
     }
 
-    /* ID of device containing file [uncond] */
+    /** ID of device containing file [uncond] */
     public int devMinor() {
         return getInt(StatxOffsets.stx_dev_minor);
     }
 
-    /* Last access time */
-    public RawStatxTimestamp lastAccessTime() {
+    /** Last access time */
+    public RawStatxTimestamp accessTime() {
         return atime;
     }
 
-    /* File creation time */
-    public RawStatxTimestamp creationTime() {
+    /** File creation time */
+    public RawStatxTimestamp birthTime() {
         return btime;
     }
 
-    /* Last attribute change time */
-    public RawStatxTimestamp changeTime() {
+    /** Last metadata change time */
+    public RawStatxTimestamp metadataChangeTime() {
         return ctime;
     }
 
-    /* Last data modification time */
-    public RawStatxTimestamp modificationTime() {
+    /** Last content modification time */
+    public RawStatxTimestamp contentModificationTime() {
         return mtime;
     }
 
@@ -165,10 +168,10 @@ public class RawStatx extends AbstractExternalRawStructure<RawStatx> {
             fileSize(),
             blocks(),
             StatAttribute.fromLong(attributesMask()),
-            lastAccessTime().detach(),
-            creationTime().detach(),
-            changeTime().detach(),
-            modificationTime().detach(),
+            accessTime().detach(),
+            birthTime().detach(),
+            metadataChangeTime().detach(),
+            contentModificationTime().detach(),
             deviceId(rdevMajor(), rdevMinor()),
             deviceId(devMajor(), devMinor()));
     }

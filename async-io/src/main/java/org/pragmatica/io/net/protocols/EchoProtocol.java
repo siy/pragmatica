@@ -34,7 +34,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Simple TCP Echo protocol implementation. All it does is sending back received data.
+ * Simple TCP Echo protocol implementation. It just sends back received data.
  */
 public sealed interface EchoProtocol<T extends InetAddress> extends ConnectionProtocol<T> {
 

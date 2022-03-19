@@ -21,6 +21,9 @@ import org.pragmatica.io.async.file.stat.FileStat;
 import org.pragmatica.io.async.uring.struct.raw.RawStatx;
 import org.pragmatica.io.async.uring.struct.shape.StatxOffsets;
 
+/**
+ * Representation of file status information.
+ */
 public class OffHeapFileStat extends AbstractOffHeapStructure<OffHeapFileStat> {
     private final RawStatx shape;
 

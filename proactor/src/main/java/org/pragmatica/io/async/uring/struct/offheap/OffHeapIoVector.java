@@ -17,10 +17,19 @@
 
 package org.pragmatica.io.async.uring.struct.offheap;
 
+import org.pragmatica.io.async.common.OffsetT;
+import org.pragmatica.io.async.file.FileDescriptor;
 import org.pragmatica.io.async.uring.struct.raw.IoVector;
 import org.pragmatica.io.async.uring.struct.shape.IoVectorOffsets;
 import org.pragmatica.io.async.util.OffHeapSlice;
+import org.pragmatica.lang.Option;
 
+import java.util.function.BiConsumer;
+
+/**
+ * Representation of I/O vector for vector-based read/write operations (see {@link org.pragmatica.io.async.Proactor#readVector(BiConsumer, FileDescriptor, OffsetT, Option, OffHeapSlice...)} and
+ * {@link org.pragmatica.io.async.Proactor#writeVector(BiConsumer, FileDescriptor, OffsetT, Option, OffHeapSlice...)} methods).
+ */
 public class OffHeapIoVector extends AbstractOffHeapStructure<OffHeapIoVector> {
     private final IoVector shape;
     private final int count;

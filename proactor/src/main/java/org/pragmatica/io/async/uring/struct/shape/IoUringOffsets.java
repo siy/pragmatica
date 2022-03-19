@@ -19,6 +19,9 @@ package org.pragmatica.io.async.uring.struct.shape;
 
 import org.pragmatica.io.async.util.raw.RawProperty;
 
+/**
+ * Offsets/Sizes of the fields of the {@link org.pragmatica.io.async.uring.IoUring}
+ */
 public interface IoUringOffsets {
     // Rounded up to next power of two
     // WARNING: this offset is also hardcoded in the uring_api.c!

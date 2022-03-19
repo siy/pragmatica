@@ -25,7 +25,7 @@ import static org.pragmatica.io.async.uring.struct.shape.IoUringCQOffsets.khead;
 import static org.pragmatica.io.async.uring.struct.shape.IoUringSQOffsets.*;
 
 /**
- * I/O Uring Submission Queue
+ * Representation of the internals of the {@code io_uring_sq} structure.
  */
 public class IoUringSQ extends AbstractExternalRawStructure<IoUringSQ> {
     private static final long IORING_SQ_NEED_WAKEUP = (1L); /* needs io_uring_enter wakeup */

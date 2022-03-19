@@ -22,6 +22,9 @@ import org.pragmatica.io.async.uring.struct.OffHeapStructure;
 import org.pragmatica.io.async.uring.struct.RawStructure;
 import org.pragmatica.io.async.util.raw.RawMemory;
 
+/**
+ * Base class for the classes which are used for exchanging data with JNI side.
+ */
 public abstract class AbstractOffHeapStructure<T extends RawStructure<T>>
     extends AbstractRawStructure<T> implements OffHeapStructure<T>, AutoCloseable {
     private boolean released = false;

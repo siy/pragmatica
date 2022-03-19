@@ -26,6 +26,9 @@ import org.pragmatica.lang.Unit;
 
 import static org.pragmatica.io.async.uring.AsyncOperation.IORING_OP_LINK_TIMEOUT;
 
+/**
+ * Exchange entry for {@code timeout} request.
+ */
 public class TimeoutExchangeEntry extends AbstractExchangeEntry<TimeoutExchangeEntry, Unit> {
     private final OffHeapTimeSpec timeSpec = OffHeapTimeSpec.uninitialized();
 

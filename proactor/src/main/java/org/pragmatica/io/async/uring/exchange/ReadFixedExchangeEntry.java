@@ -29,6 +29,9 @@ import java.util.function.BiConsumer;
 
 import static org.pragmatica.io.async.uring.AsyncOperation.IORING_OP_READ_FIXED;
 
+/**
+ * Exchange entry for {@code readFixed} request.
+ */
 public class ReadFixedExchangeEntry extends AbstractExchangeEntry<ReadFixedExchangeEntry, SizeT> {
     private static final Result<SizeT> EOF_RESULT = SystemError.ENODATA.result();
 

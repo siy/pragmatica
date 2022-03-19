@@ -25,8 +25,8 @@ public enum SocketType {
     DGRAM(2),        // Supports datagrams (connectionless, unreliable messages of a fixed maximum length).
     RAW(3),          // Provides raw network protocol access.
     RDM(4),          // Provides a reliable datagram layer that does not guarantee ordering.
-    SEQPACKET(5),    // Provides a sequenced, reliable, two-way connection-based data transmission path for datagrams of fixed maximum length
-    ;
+    SEQPACKET(5);    // Provides a sequenced, reliable, two-way connection-based data transmission path for datagrams of fixed maximum length
+    
     private final int code;
 
     SocketType(final int code) {

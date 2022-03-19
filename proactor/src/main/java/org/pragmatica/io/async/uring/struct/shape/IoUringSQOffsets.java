@@ -19,6 +19,9 @@ package org.pragmatica.io.async.uring.struct.shape;
 
 import org.pragmatica.io.async.util.raw.RawProperty;
 
+/**
+ * Offsets/Sizes of the fields of the {@link org.pragmatica.io.async.uring.IoUringSQ}
+ */
 public interface IoUringSQOffsets {
     int SIZE = 104;
     RawProperty khead = RawProperty.raw(0, 8);

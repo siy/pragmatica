@@ -29,6 +29,9 @@ import java.util.function.BiConsumer;
 import static org.pragmatica.io.async.uring.AsyncOperation.IORING_OP_FSYNC;
 import static org.pragmatica.lang.Unit.unitResult;
 
+/**
+ * Exchange entry for {@code fsync} request.
+ */
 public class FSyncExchangeEntry extends AbstractExchangeEntry<FSyncExchangeEntry, Unit> {
     private int descriptor;
     private int fsyncFlags;

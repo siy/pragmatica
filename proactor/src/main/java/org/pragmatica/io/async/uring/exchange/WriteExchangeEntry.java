@@ -29,6 +29,9 @@ import java.util.function.BiConsumer;
 
 import static org.pragmatica.io.async.uring.AsyncOperation.IORING_OP_WRITE;
 
+/**
+ * Exchange entry for {@code write} request.
+ */
 public class WriteExchangeEntry extends AbstractExchangeEntry<WriteExchangeEntry, SizeT> {
     private int descriptor;
     private byte flags;

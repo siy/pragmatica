@@ -20,6 +20,9 @@ package org.pragmatica.io.async.net;
 import org.pragmatica.io.async.net.InetAddress.Inet4Address;
 import org.pragmatica.io.async.net.InetAddress.Inet6Address;
 
+/**
+ * Generic IP socket address.
+ */
 public sealed interface SocketAddress<T extends InetAddress> {
     AddressFamily family();
 
@@ -57,8 +60,14 @@ public sealed interface SocketAddress<T extends InetAddress> {
         };
     }
 
+    /**
+     * Socket Address for IPv4.
+     */
     record SocketAddressIn(AddressFamily family, InetPort port, Inet4Address address) implements SocketAddress<Inet4Address> {}
 
+    /**
+     * Socket Address for IPv6.
+     */
     record SocketAddressIn6(AddressFamily family, InetPort port, Inet6Address address,
                             Inet6FlowInfo flowInfo, Inet6ScopeId scopeId) implements SocketAddress<Inet6Address> {}
 

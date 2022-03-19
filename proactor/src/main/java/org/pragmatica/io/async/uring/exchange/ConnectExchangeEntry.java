@@ -30,6 +30,9 @@ import java.util.function.BiConsumer;
 import static org.pragmatica.io.async.uring.AsyncOperation.IORING_OP_CONNECT;
 import static org.pragmatica.lang.Result.success;
 
+/**
+ * Exchange entry for {@code connect} request.
+ */
 public class ConnectExchangeEntry extends AbstractExchangeEntry<ConnectExchangeEntry, FileDescriptor> {
     private OffHeapSocketAddress clientAddress;
     private byte flags;

@@ -29,6 +29,9 @@ import java.util.function.BiConsumer;
 import static org.pragmatica.io.async.uring.AsyncOperation.IORING_OP_CLOSE;
 import static org.pragmatica.lang.Unit.unitResult;
 
+/**
+ * Exchange entry for {@code close} request.
+ */
 public class CloseExchangeEntry extends AbstractExchangeEntry<CloseExchangeEntry, Unit> {
     private int descriptor;
     private byte flags;

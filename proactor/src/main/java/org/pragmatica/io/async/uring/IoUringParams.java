@@ -20,6 +20,9 @@ package org.pragmatica.io.async.uring;
 import org.pragmatica.io.async.uring.struct.AbstractExternalRawStructure;
 import org.pragmatica.io.async.uring.struct.shape.IoUringParamsOffsets;
 
+/**
+ * Representation of the internals of the {@code io_uring_params} structure.
+ */
 public class IoUringParams extends AbstractExternalRawStructure<IoUringParams> {
     private IoUringParams(long address) {
         super(address, IoUringParamsOffsets.SIZE);

@@ -20,10 +20,8 @@ package org.pragmatica.io.async;
 import org.pragmatica.lang.Tuple.Tuple2;
 
 import java.time.Duration;
-import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
-import static org.pragmatica.io.async.Timeout.TimeoutImpl.fromNanos;
 import static org.pragmatica.lang.Tuple.tuple;
 
 /**
@@ -93,32 +91,7 @@ public sealed interface Timeout extends Comparable<Timeout> {
         return () -> value;
     }
 
-    final class TimeoutImpl implements Timeout {
-        private final long nanoseconds;
-
-        private TimeoutImpl(long nanoseconds) {
-            this.nanoseconds = nanoseconds;
-        }
-
-        @Override
-        public long nanoseconds() {
-            return nanoseconds;
-        }
-
-        static Timeout fromNanos(long nanoseconds) {
-            return new TimeoutImpl(nanoseconds);
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            return (this == o) || (o instanceof TimeoutImpl timeout && nanoseconds == timeout.nanoseconds);
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(nanoseconds);
-        }
-
+    record TimeoutImpl(long nanoseconds) implements Timeout {
         @Override
         public String toString() {
             return "Timeout(" + nanoseconds + "ns)";
@@ -137,7 +110,7 @@ public sealed interface Timeout extends Comparable<Timeout> {
          * @return Created instance
          */
         default Timeout nanos() {
-            return fromNanos(value());
+            return new TimeoutImpl(value());
         }
 
         /**
@@ -146,7 +119,7 @@ public sealed interface Timeout extends Comparable<Timeout> {
          * @return Created instance
          */
         default Timeout micros() {
-            return fromNanos(TimeUnit.MICROSECONDS.toNanos(value()));
+            return new TimeoutImpl(TimeUnit.MICROSECONDS.toNanos(value()));
         }
 
         /**
@@ -155,7 +128,7 @@ public sealed interface Timeout extends Comparable<Timeout> {
          * @return Created instance
          */
         default Timeout millis() {
-            return fromNanos(TimeUnit.MILLISECONDS.toNanos(value()));
+            return new TimeoutImpl(TimeUnit.MILLISECONDS.toNanos(value()));
         }
 
         /**
@@ -164,7 +137,7 @@ public sealed interface Timeout extends Comparable<Timeout> {
          * @return Created instance
          */
         default Timeout seconds() {
-            return fromNanos(TimeUnit.SECONDS.toNanos(value()));
+            return new TimeoutImpl(TimeUnit.SECONDS.toNanos(value()));
         }
 
         /**
@@ -173,7 +146,7 @@ public sealed interface Timeout extends Comparable<Timeout> {
          * @return Created instance
          */
         default Timeout minutes() {
-            return fromNanos(TimeUnit.MINUTES.toNanos(value()));
+            return new TimeoutImpl(TimeUnit.MINUTES.toNanos(value()));
         }
 
         /**
@@ -182,7 +155,7 @@ public sealed interface Timeout extends Comparable<Timeout> {
          * @return Created instance
          */
         default Timeout hours() {
-            return fromNanos(TimeUnit.HOURS.toNanos(value()));
+            return new TimeoutImpl(TimeUnit.HOURS.toNanos(value()));
         }
 
         /**
@@ -191,7 +164,7 @@ public sealed interface Timeout extends Comparable<Timeout> {
          * @return Created instance
          */
         default Timeout days() {
-            return fromNanos(TimeUnit.DAYS.toNanos(value()));
+            return new TimeoutImpl(TimeUnit.DAYS.toNanos(value()));
         }
     }
 }

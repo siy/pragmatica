@@ -17,6 +17,9 @@
 
 package org.pragmatica.io.async.net;
 
+/**
+ * IPv6 Scope ID.
+ */
 public record Inet6ScopeId(int scopeId) {
     public static Inet6ScopeId inet6ScopeId(int scopeId) {
         return new Inet6ScopeId(scopeId);

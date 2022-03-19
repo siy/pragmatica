@@ -17,6 +17,9 @@
 
 package org.pragmatica.io.async.uring.struct;
 
+/**
+ * Api for structures stored off-heap.
+ */
 public interface ExternalRawStructure<T extends RawStructure<T>> extends RawStructure<T> {
     void reposition(final long address);
 }

@@ -29,6 +29,9 @@ import java.util.function.BiConsumer;
 
 import static org.pragmatica.io.async.uring.AsyncOperation.IORING_OP_READ;
 
+/**
+ * Exchange entry for {@code read} request.
+ */
 public class ReadExchangeEntry extends AbstractExchangeEntry<ReadExchangeEntry, SizeT> {
     private static final Result<SizeT> EOF_RESULT = SystemError.ENODATA.result();
 

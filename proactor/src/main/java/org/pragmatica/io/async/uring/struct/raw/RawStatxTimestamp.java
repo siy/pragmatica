@@ -21,6 +21,10 @@ import org.pragmatica.io.async.file.stat.StatTimestamp;
 import org.pragmatica.io.async.uring.struct.AbstractExternalRawStructure;
 import org.pragmatica.io.async.uring.struct.shape.StatxTimestampOffsets;
 
+/**
+ * Storage for timestamps used in file status information. Used to represent last access time (atime), birth time (btime),
+ * last metadata change time (ctime) and last content modification time (mtime).
+ */
 public class RawStatxTimestamp extends AbstractExternalRawStructure<RawStatxTimestamp> {
     private RawStatxTimestamp(final long address) {
         super(address, StatxTimestampOffsets.SIZE);

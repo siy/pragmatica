@@ -20,7 +20,12 @@ package org.pragmatica.io.async.net;
 import org.pragmatica.io.async.uring.Bitmask;
 
 import java.util.EnumSet;
+import java.util.Set;
+import java.util.function.BiConsumer;
 
+/**
+ * Creation options for {@link org.pragmatica.io.async.Proactor#socket(BiConsumer, AddressFamily, SocketType, Set, Set)}.
+ */
 public enum SocketOption implements Bitmask {
     SO_KEEPALIVE(0x0001), // Enable keep-alive packets
     SO_REUSEADDR(0x0002), // Enable reuse address option

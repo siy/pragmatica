@@ -22,6 +22,9 @@ import org.pragmatica.io.async.net.SocketAddress;
 import org.pragmatica.io.async.uring.struct.ExternalRawStructure;
 import org.pragmatica.lang.Result;
 
+/**
+ * Generic socket address storage API.
+ */
 public sealed interface RawSocketAddress<T extends InetAddress> permits RawSocketAddressIn, RawSocketAddressIn6 {
     void assign(final SocketAddress<T> input);
 

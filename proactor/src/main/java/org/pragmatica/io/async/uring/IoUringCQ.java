@@ -27,7 +27,7 @@ import org.pragmatica.io.async.util.raw.RawMemory;
 import static org.pragmatica.io.async.uring.struct.shape.IoUringCQOffsets.*;
 
 /**
- * I/O Uring Completion Queue
+ * Representation of the internals of the {@code io_uring_cq} structure.
  */
 public class IoUringCQ extends AbstractExternalRawStructure<IoUringCQ> {
     private final CQEntry cqEntry = CQEntry.at(0);

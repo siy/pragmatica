@@ -31,6 +31,9 @@ import java.util.function.BiConsumer;
 import static org.pragmatica.io.async.uring.AsyncOperation.IORING_OP_OPENAT;
 import static org.pragmatica.lang.Result.success;
 
+/**
+ * Exchange entry for {@code open} request.
+ */
 public class OpenExchangeEntry extends AbstractExchangeEntry<OpenExchangeEntry, FileDescriptor> {
     private static final int AT_FDCWD = -100; // Special value used to indicate the openat/statx functions should use the current working directory.
 

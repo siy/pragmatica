@@ -17,6 +17,9 @@
 
 package org.pragmatica.io.async.util;
 
+/**
+ * Some common memory/file size units.
+ */
 public sealed interface Units {
     // Memory space units
     int _1KiB = 1024;

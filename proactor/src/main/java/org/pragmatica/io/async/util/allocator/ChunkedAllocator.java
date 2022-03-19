@@ -27,6 +27,15 @@ import java.util.HexFormat;
 
 import static org.pragmatica.io.async.util.Units._1KiB;
 
+/**
+ * Simple allocator which allocates provided memory arena as chunks of fixed size.
+ * <p>
+ * Used algorithm is inherently susceptible to fragmentation. To prevent fragmentation, two strategies could be employed.
+ * One is to always allocate same amounts of memory (usually aligned to default chunk size). Another is to allocate memory
+ * once at startup.
+ * <p>
+ * Default chunk size is 16K, which should be good enough for most I/O buffers.
+ */
 public class ChunkedAllocator implements AutoCloseable {
     public static final int CHUNK_SIZE = 16 * _1KiB;
 

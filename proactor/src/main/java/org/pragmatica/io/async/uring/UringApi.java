@@ -129,7 +129,7 @@ public class UringApi implements AutoCloseable {
         return success(new UringApi(ioUring));
     }
 
-    private int register(RegisterOperation op, long arg1, long arg2) {
+    int register(RegisterOperation op, long arg1, long arg2) {
         return register(ioUring.fd(), op.ordinal(), arg1, arg2);
     }
 

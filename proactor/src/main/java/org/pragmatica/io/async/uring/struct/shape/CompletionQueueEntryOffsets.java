@@ -19,6 +19,9 @@ package org.pragmatica.io.async.uring.struct.shape;
 
 import org.pragmatica.io.async.util.raw.RawProperty;
 
+/**
+ * Offsets/Sizes of the fields of the {@link org.pragmatica.io.async.uring.struct.raw.CQEntry}
+ */
 public interface CompletionQueueEntryOffsets {
     int SIZE = 16;
     RawProperty user_data = RawProperty.raw(0, 8);

@@ -19,6 +19,9 @@ package org.pragmatica.io.async.uring.struct.shape;
 
 import org.pragmatica.io.async.util.raw.RawProperty;
 
+/**
+ * Offsets/Sizes of the fields of the {@link org.pragmatica.io.async.uring.struct.raw.RawStatx}
+ */
 public interface StatxOffsets {
     int SIZE = 256;
     RawProperty stx_mask = RawProperty.raw(0, 4);
