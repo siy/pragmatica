@@ -63,7 +63,7 @@ class FilesTest {
         promise.join().onFailureDo(Assertions::fail);
         assertNotNull(reference.get());
 
-        System.out.println(reference.get().substring(0, 1024));
+        // System.out.println(reference.get().substring(0, 1024));
     }
 
     @Test
