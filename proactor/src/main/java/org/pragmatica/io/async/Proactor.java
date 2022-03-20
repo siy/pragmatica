@@ -153,7 +153,7 @@ public interface Proactor {
     }
 
     default void read(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fd, OffHeapSlice buffer) {
-        read(completion, fd, buffer, OffsetT.ZERO, Option.empty());
+        read(completion, fd, buffer, OffsetT.ZERO, empty());
     }
 
     default void read(Consumer<Result<SizeT>> completion, FileDescriptor fd, OffHeapSlice buffer) {
@@ -187,7 +187,7 @@ public interface Proactor {
     }
 
     default void write(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fd, OffHeapSlice buffer) {
-        write(completion, fd, buffer, OffsetT.ZERO, Option.empty());
+        write(completion, fd, buffer, OffsetT.ZERO, empty());
     }
 
     default void write(Consumer<Result<SizeT>> completion, FileDescriptor fd, OffHeapSlice buffer) {
@@ -210,7 +210,7 @@ public interface Proactor {
     }
 
     default void close(Consumer<Result<Unit>> completion, FileDescriptor fd) {
-        close((result, __) -> completion.accept(result), fd, Option.empty());
+        close((result, __) -> completion.accept(result), fd, empty());
     }
 
     /**
@@ -408,21 +408,21 @@ public interface Proactor {
 
     default void readVector(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fileDescriptor, OffsetT offset,
                             OffHeapSlice... buffers) {
-        readVector(completion, fileDescriptor, offset, Option.empty(), buffers);
+        readVector(completion, fileDescriptor, offset, empty(), buffers);
     }
 
     default void readVector(Consumer<Result<SizeT>> completion, FileDescriptor fileDescriptor, OffsetT offset,
                             OffHeapSlice... buffers) {
-        readVector(completion, fileDescriptor, offset, Option.empty(), buffers);
+        readVector(completion, fileDescriptor, offset, empty(), buffers);
     }
 
     default void readVector(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fileDescriptor,
                             OffHeapSlice... buffers) {
-        readVector(completion, fileDescriptor, OffsetT.ZERO, Option.empty(), buffers);
+        readVector(completion, fileDescriptor, OffsetT.ZERO, empty(), buffers);
     }
 
     default void readVector(Consumer<Result<SizeT>> completion, FileDescriptor fileDescriptor, OffHeapSlice... buffers) {
-        readVector(completion, fileDescriptor, OffsetT.ZERO, Option.empty(), buffers);
+        readVector(completion, fileDescriptor, OffsetT.ZERO, empty(), buffers);
     }
 
     /**
@@ -458,21 +458,21 @@ public interface Proactor {
 
     default void writeVector(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fileDescriptor, OffsetT offset,
                              OffHeapSlice... buffers) {
-        writeVector(completion, fileDescriptor, offset, Option.empty(), buffers);
+        writeVector(completion, fileDescriptor, offset, empty(), buffers);
     }
 
     default void writeVector(Consumer<Result<SizeT>> completion, FileDescriptor fileDescriptor, OffsetT offset,
                              OffHeapSlice... buffers) {
-        writeVector(completion, fileDescriptor, offset, Option.empty(), buffers);
+        writeVector(completion, fileDescriptor, offset, empty(), buffers);
     }
 
     default void writeVector(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fileDescriptor,
                              OffHeapSlice... buffers) {
-        writeVector(completion, fileDescriptor, OffsetT.ZERO, Option.empty(), buffers);
+        writeVector(completion, fileDescriptor, OffsetT.ZERO, empty(), buffers);
     }
 
     default void writeVector(Consumer<Result<SizeT>> completion, FileDescriptor fileDescriptor, OffHeapSlice... buffers) {
-        writeVector(completion, fileDescriptor, OffsetT.ZERO, Option.empty(), buffers);
+        writeVector(completion, fileDescriptor, OffsetT.ZERO, empty(), buffers);
     }
 
     /**
@@ -545,7 +545,7 @@ public interface Proactor {
     }
 
     default void readFixed(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fd, FixedBuffer buffer) {
-        readFixed(completion, fd, buffer, OffsetT.ZERO, Option.empty());
+        readFixed(completion, fd, buffer, OffsetT.ZERO, empty());
     }
 
     default void readFixed(Consumer<Result<SizeT>> completion, FileDescriptor fd, FixedBuffer buffer) {
@@ -568,11 +568,40 @@ public interface Proactor {
     }
 
     default void writeFixed(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fd, FixedBuffer buffer) {
-        writeFixed(completion, fd, buffer, OffsetT.ZERO, Option.empty());
+        writeFixed(completion, fd, buffer, OffsetT.ZERO, empty());
     }
 
     default void writeFixed(Consumer<Result<SizeT>> completion, FileDescriptor fd, FixedBuffer buffer) {
         writeFixed((result, __) -> completion.accept(result), fd, buffer);
+    }
+
+
+    void send(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fd, OffHeapSlice buffer, Set<MessageFlags> msgFlags, Option<Timeout> timeout);
+
+    default void send(Consumer<Result<SizeT>> completion, FileDescriptor fd, OffHeapSlice buffer, Set<MessageFlags> msgFlags, Option<Timeout> timeout) {
+        send((result, __) -> completion.accept(result), fd, buffer, msgFlags, timeout);
+    }
+
+    default void send(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fd, OffHeapSlice buffer, Set<MessageFlags> msgFlags) {
+        send(completion, fd, buffer, msgFlags, empty());
+    }
+
+    default void send(Consumer<Result<SizeT>> completion, FileDescriptor fd, OffHeapSlice buffer, Set<MessageFlags> msgFlags) {
+        send((result, __) -> completion.accept(result), fd, buffer, msgFlags, empty());
+    }
+
+    void recv(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fd, OffHeapSlice buffer, Set<MessageFlags> msgFlags, Option<Timeout> timeout);
+
+    default void recv(Consumer<Result<SizeT>> completion, FileDescriptor fd, OffHeapSlice buffer, Set<MessageFlags> msgFlags, Option<Timeout> timeout) {
+        recv((result, __) -> completion.accept(result), fd, buffer, msgFlags, timeout);
+    }
+
+    default void recv(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fd, OffHeapSlice buffer, Set<MessageFlags> msgFlags) {
+        recv(completion, fd, buffer, msgFlags, empty());
+    }
+
+    default void recv(Consumer<Result<SizeT>> completion, FileDescriptor fd, OffHeapSlice buffer, Set<MessageFlags> msgFlags) {
+        recv((result, __) -> completion.accept(result), fd, buffer, msgFlags, empty());
     }
 
     //recvmsg, sendmsg, read_fixed, write_fixed

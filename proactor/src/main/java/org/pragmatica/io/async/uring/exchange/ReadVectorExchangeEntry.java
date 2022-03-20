@@ -27,21 +27,19 @@ import org.pragmatica.lang.Result;
 
 import java.util.function.BiConsumer;
 
-import static org.pragmatica.io.async.uring.AsyncOperation.IORING_OP_READV;
+import static org.pragmatica.io.async.uring.AsyncOperation.READV;
 
 /**
  * Exchange entry for {@code readVector} request.
  */
 public class ReadVectorExchangeEntry extends AbstractExchangeEntry<ReadVectorExchangeEntry, SizeT> {
-    private static final Result<SizeT> EOF_RESULT = SystemError.ENODATA.result();
-
     private OffHeapIoVector ioVector;
     private byte flags;
     private int descriptor;
     private long offset;
 
     protected ReadVectorExchangeEntry(PlainObjectPool<ReadVectorExchangeEntry> pool) {
-        super(IORING_OP_READV, pool);
+        super(READV, pool);
     }
 
     @Override
@@ -71,11 +69,5 @@ public class ReadVectorExchangeEntry extends AbstractExchangeEntry<ReadVectorExc
         this.flags = flags;
         this.ioVector = ioVector;
         return super.prepare(completion);
-    }
-
-    private Result<SizeT> bytesReadToResult(int res) {
-        return res == 0 ? EOF_RESULT
-                        : res > 0 ? sizeResult(res)
-                                  : SystemError.result(res);
     }
 }

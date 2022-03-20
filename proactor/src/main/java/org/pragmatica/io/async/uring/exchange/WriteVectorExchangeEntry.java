@@ -27,21 +27,19 @@ import org.pragmatica.lang.Result;
 
 import java.util.function.BiConsumer;
 
-import static org.pragmatica.io.async.uring.AsyncOperation.IORING_OP_WRITEV;
+import static org.pragmatica.io.async.uring.AsyncOperation.WRITEV;
 
 /**
  * Exchange entry for {@code writeVector} request.
  */
 public class WriteVectorExchangeEntry extends AbstractExchangeEntry<WriteVectorExchangeEntry, SizeT> {
-    private static final Result<SizeT> EOF_RESULT = SystemError.ENODATA.result();
-
     private OffHeapIoVector ioVector;
     private byte flags;
     private int descriptor;
     private long offset;
 
     protected WriteVectorExchangeEntry(PlainObjectPool<WriteVectorExchangeEntry> pool) {
-        super(IORING_OP_WRITEV, pool);
+        super(WRITEV, pool);
     }
 
     @Override
@@ -71,11 +69,5 @@ public class WriteVectorExchangeEntry extends AbstractExchangeEntry<WriteVectorE
         this.flags = flags;
         this.ioVector = ioVector;
         return super.prepare(completion);
-    }
-
-    private Result<SizeT> byteCountToResult(int res) {
-        return res > 0
-               ? sizeResult(res)
-               : SystemError.result(res);
     }
 }

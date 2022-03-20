@@ -28,7 +28,7 @@ import org.pragmatica.lang.Result;
 
 import java.util.function.BiConsumer;
 
-import static org.pragmatica.io.async.uring.AsyncOperation.IORING_OP_STATX;
+import static org.pragmatica.io.async.uring.AsyncOperation.STATX;
 import static org.pragmatica.lang.Result.success;
 
 /**
@@ -42,7 +42,7 @@ public class StatExchangeEntry extends AbstractExchangeEntry<StatExchangeEntry, 
     private int statMask;
 
     protected StatExchangeEntry(PlainObjectPool<StatExchangeEntry> pool) {
-        super(IORING_OP_STATX, pool);
+        super(STATX, pool);
     }
 
     @Override

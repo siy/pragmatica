@@ -28,7 +28,7 @@ import org.pragmatica.lang.Result;
 
 import java.util.function.BiConsumer;
 
-import static org.pragmatica.io.async.uring.AsyncOperation.IORING_OP_SPLICE;
+import static org.pragmatica.io.async.uring.AsyncOperation.SPLICE;
 
 /**
  * Exchange entry for {@code splice} request.
@@ -38,7 +38,7 @@ public class SpliceExchangeEntry extends AbstractExchangeEntry<SpliceExchangeEnt
     private byte flags;
 
     protected SpliceExchangeEntry(final PlainObjectPool<SpliceExchangeEntry> pool) {
-        super(IORING_OP_SPLICE, pool);
+        super(SPLICE, pool);
     }
 
     @Override
@@ -64,11 +64,5 @@ public class SpliceExchangeEntry extends AbstractExchangeEntry<SpliceExchangeEnt
         this.flags = flags;
         this.descriptor = descriptor;
         return super.prepare(completion);
-    }
-
-    private Result<SizeT> byteCountToResult(final int res) {
-        return res > 0
-               ? sizeResult(res)
-               : SystemError.result(res);
     }
 }

@@ -21,32 +21,29 @@ import org.pragmatica.io.async.Proactor;
 import org.pragmatica.io.async.common.SizeT;
 import org.pragmatica.io.async.uring.struct.raw.SQEntry;
 import org.pragmatica.io.async.uring.utils.PlainObjectPool;
-import org.pragmatica.io.async.util.allocator.FixedBuffer;
+import org.pragmatica.io.async.util.OffHeapSlice;
 import org.pragmatica.lang.Result;
 
 import java.util.function.BiConsumer;
 
-import static org.pragmatica.io.async.uring.AsyncOperation.READ_FIXED;
+import static org.pragmatica.io.async.uring.AsyncOperation.SEND;
 
 /**
- * Exchange entry for {@code readFixed} request.
+ * Exchange entry for {@code send} request.
  */
-public class ReadFixedExchangeEntry extends AbstractExchangeEntry<ReadFixedExchangeEntry, SizeT> {
-    private int descriptor;
+public class SendExchangeEntry extends AbstractExchangeEntry<SendExchangeEntry, SizeT> {
+    private int msgFlags;
     private byte flags;
-    private FixedBuffer buffer;
-    private long offset;
+    private int descriptor;
+    private OffHeapSlice buffer;
 
-    protected ReadFixedExchangeEntry(PlainObjectPool<ReadFixedExchangeEntry> pool) {
-        super(READ_FIXED, pool);
+    protected SendExchangeEntry(PlainObjectPool<SendExchangeEntry> pool) {
+        super(SEND, pool);
     }
 
     @Override
     protected void doAccept(int res, int flags, Proactor proactor) {
-        if (res > 0) {
-            buffer.used(res);
-        }
-        completion.accept(bytesReadToResult(res), proactor);
+        completion.accept(byteCountToResult(res), proactor);
     }
 
     @Override
@@ -54,21 +51,21 @@ public class ReadFixedExchangeEntry extends AbstractExchangeEntry<ReadFixedExcha
         return super.apply(entry)
                     .fd(descriptor)
                     .flags(flags)
+                    .msgFlags(msgFlags)
                     .addr(buffer.address())
-                    .len(buffer.size())
-                    .off(offset)
-                    .bufIndex((short) 0);
+                    .len(buffer.used());
     }
 
-    public ReadFixedExchangeEntry prepare(BiConsumer<Result<SizeT>, Proactor> completion,
-                                          int descriptor,
-                                          FixedBuffer buffer,
-                                          long offset,
-                                          byte flags) {
-        this.descriptor = descriptor;
-        this.flags = flags;
+    public SendExchangeEntry prepare(BiConsumer<Result<SizeT>, Proactor> completion,
+                                     int descriptor,
+                                     OffHeapSlice buffer,
+                                     int msgFlags,
+                                     byte flags) {
         this.buffer = buffer;
-        this.offset = offset;
+        this.descriptor = descriptor;
+        this.msgFlags = msgFlags;
+        this.flags = flags;
+
         return super.prepare(completion);
     }
 }

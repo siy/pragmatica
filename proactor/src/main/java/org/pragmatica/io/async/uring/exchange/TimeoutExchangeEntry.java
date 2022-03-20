@@ -24,7 +24,7 @@ import org.pragmatica.io.async.uring.struct.raw.SQEntry;
 import org.pragmatica.io.async.uring.utils.PlainObjectPool;
 import org.pragmatica.lang.Unit;
 
-import static org.pragmatica.io.async.uring.AsyncOperation.IORING_OP_LINK_TIMEOUT;
+import static org.pragmatica.io.async.uring.AsyncOperation.LINK_TIMEOUT;
 
 /**
  * Exchange entry for {@code timeout} request.
@@ -33,7 +33,7 @@ public class TimeoutExchangeEntry extends AbstractExchangeEntry<TimeoutExchangeE
     private final OffHeapTimeSpec timeSpec = OffHeapTimeSpec.uninitialized();
 
     protected TimeoutExchangeEntry(PlainObjectPool<TimeoutExchangeEntry> pool) {
-        super(IORING_OP_LINK_TIMEOUT, pool);
+        super(LINK_TIMEOUT, pool);
     }
 
     @Override

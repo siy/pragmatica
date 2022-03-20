@@ -26,7 +26,7 @@ import org.pragmatica.lang.Unit;
 
 import java.util.function.BiConsumer;
 
-import static org.pragmatica.io.async.uring.AsyncOperation.IORING_OP_FALLOCATE;
+import static org.pragmatica.io.async.uring.AsyncOperation.FALLOCATE;
 import static org.pragmatica.lang.Unit.unitResult;
 
 /**
@@ -40,7 +40,7 @@ public class FAllocExchangeEntry extends AbstractExchangeEntry<FAllocExchangeEnt
     private byte flags;
 
     protected FAllocExchangeEntry(final PlainObjectPool<FAllocExchangeEntry> pool) {
-        super(IORING_OP_FALLOCATE, pool);
+        super(FALLOCATE, pool);
     }
 
     @Override

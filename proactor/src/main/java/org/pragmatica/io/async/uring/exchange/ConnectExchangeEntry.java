@@ -27,7 +27,7 @@ import org.pragmatica.lang.Result;
 
 import java.util.function.BiConsumer;
 
-import static org.pragmatica.io.async.uring.AsyncOperation.IORING_OP_CONNECT;
+import static org.pragmatica.io.async.uring.AsyncOperation.CONNECT;
 import static org.pragmatica.lang.Result.success;
 
 /**
@@ -39,7 +39,7 @@ public class ConnectExchangeEntry extends AbstractExchangeEntry<ConnectExchangeE
     private FileDescriptor descriptor;
 
     protected ConnectExchangeEntry(PlainObjectPool<ConnectExchangeEntry> pool) {
-        super(IORING_OP_CONNECT, pool);
+        super(CONNECT, pool);
     }
 
     @Override

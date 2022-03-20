@@ -68,6 +68,8 @@ public class ExchangeEntryFactory {
     private final PlainObjectPool<ReadExchangeEntry> readPool;
     private final PlainObjectPool<ReadFixedExchangeEntry> readFixedPool;
     private final PlainObjectPool<ReadVectorExchangeEntry> readVectorPool;
+    private final PlainObjectPool<RecvExchangeEntry> recvPool;
+    private final PlainObjectPool<SendExchangeEntry> sendPool;
     private final PlainObjectPool<SocketExchangeEntry> socketPool;
     private final PlainObjectPool<SpliceExchangeEntry> splicePool;
     private final PlainObjectPool<StatExchangeEntry> statPool;
@@ -90,6 +92,8 @@ public class ExchangeEntryFactory {
         readPool = objectPool(ReadExchangeEntry::new, exchangeRegistry);
         readFixedPool = objectPool(ReadFixedExchangeEntry::new, exchangeRegistry);
         readVectorPool = objectPool(ReadVectorExchangeEntry::new, exchangeRegistry);
+        recvPool = objectPool(RecvExchangeEntry::new, exchangeRegistry);
+        sendPool = objectPool(SendExchangeEntry::new, exchangeRegistry);
         socketPool = objectPool(SocketExchangeEntry::new, exchangeRegistry);
         splicePool = objectPool(SpliceExchangeEntry::new, exchangeRegistry);
         statPool = objectPool(StatExchangeEntry::new, exchangeRegistry);
@@ -220,6 +224,17 @@ public class ExchangeEntryFactory {
                              .prepare(completion, fd.descriptor(), buffer, offset.value(), calculateFlags(timeout));
     }
 
+    public RecvExchangeEntry forRecv(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fd, OffHeapSlice buffer,
+                                     Set<MessageFlags> msgFlags, Option<Timeout> timeout) {
+        return recvPool.alloc()
+                       .prepare(completion, fd.descriptor(), buffer, Bitmask.combine(msgFlags), calculateFlags(timeout));
+    }
+
+    public SendExchangeEntry forSend(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fd, OffHeapSlice buffer,
+                                     Set<MessageFlags> msgFlags, Option<Timeout> timeout) {
+        return sendPool.alloc()
+                       .prepare(completion, fd.descriptor(), buffer, Bitmask.combine(msgFlags), calculateFlags(timeout));
+    }
 
     public void clear() {
         pools.forEach(PlainObjectPool::clear);

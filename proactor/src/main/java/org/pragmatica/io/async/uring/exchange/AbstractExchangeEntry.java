@@ -18,6 +18,7 @@
 package org.pragmatica.io.async.uring.exchange;
 
 import org.pragmatica.io.async.Proactor;
+import org.pragmatica.io.async.SystemError;
 import org.pragmatica.io.async.common.SizeT;
 import org.pragmatica.io.async.uring.AsyncOperation;
 import org.pragmatica.io.async.uring.CompletionHandler;
@@ -39,6 +40,7 @@ public abstract class AbstractExchangeEntry<T extends AbstractExchangeEntry<T, R
     private static final int RESULT_SIZET_POOL_SIZE = 65536;
     @SuppressWarnings("rawtypes")
     private static final Result[] RESULT_SIZET_POOL;
+    private static final Result<SizeT> EOF_RESULT = SystemError.ENODATA.result();
 
     static {
         RESULT_SIZET_POOL = new Result[RESULT_SIZET_POOL_SIZE];
@@ -98,6 +100,18 @@ public abstract class AbstractExchangeEntry<T extends AbstractExchangeEntry<T, R
     public T prepare(BiConsumer<Result<R>, Proactor> completion) {
         this.completion = completion;
         return (T) this;
+    }
+
+    protected static Result<SizeT> byteCountToResult(int res) {
+        return res > 0
+               ? sizeResult(res)
+               : SystemError.result(res);
+    }
+
+    protected static Result<SizeT> bytesReadToResult(int res) {
+        return res == 0 ? EOF_RESULT
+                        : res > 0 ? sizeResult(res)
+                                  : SystemError.result(res);
     }
 
     @SuppressWarnings("unchecked")

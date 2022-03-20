@@ -19,60 +19,59 @@ package org.pragmatica.io.async.uring.exchange;
 
 import org.pragmatica.io.async.Proactor;
 import org.pragmatica.io.async.SystemError;
+import org.pragmatica.io.async.common.SizeT;
 import org.pragmatica.io.async.file.FileDescriptor;
-import org.pragmatica.io.async.uring.struct.offheap.OffHeapCString;
+import org.pragmatica.io.async.uring.struct.offheap.OffHeapSocketAddress;
 import org.pragmatica.io.async.uring.struct.raw.SQEntry;
 import org.pragmatica.io.async.uring.utils.PlainObjectPool;
+import org.pragmatica.io.async.util.OffHeapSlice;
 import org.pragmatica.lang.Result;
 
-import java.nio.file.Path;
 import java.util.function.BiConsumer;
 
-import static org.pragmatica.io.async.uring.AsyncOperation.OPENAT;
+import static org.pragmatica.io.async.uring.AsyncOperation.RECV;
 import static org.pragmatica.lang.Result.success;
 
 /**
- * Exchange entry for {@code open} request.
+ * Exchange entry for {@code recv} request.
  */
-public class OpenExchangeEntry extends AbstractExchangeEntry<OpenExchangeEntry, FileDescriptor> {
-    private static final int AT_FDCWD = -100; // Special value used to indicate the openat/statx functions should use the current working directory.
-
-    private OffHeapCString rawPath;
+public class RecvExchangeEntry extends AbstractExchangeEntry<RecvExchangeEntry, SizeT> {
+    private int msgFlags;
     private byte flags;
-    private int openFlags;
-    private int mode;
+    private int descriptor;
+    private OffHeapSlice buffer;
 
-    protected OpenExchangeEntry(PlainObjectPool<OpenExchangeEntry> pool) {
-        super(OPENAT, pool);
+    protected RecvExchangeEntry(PlainObjectPool<RecvExchangeEntry> pool) {
+        super(RECV, pool);
     }
 
     @Override
     protected void doAccept(int res, int flags, Proactor proactor) {
-        rawPath.dispose();
-        rawPath = null;
-
-        var result = res < 0
-                     ? SystemError.<FileDescriptor>result(res)
-                     : success(FileDescriptor.file(res));
-        completion.accept(result, proactor);
+        if (res > 0) {
+            buffer.used(res);
+        }
+        completion.accept(bytesReadToResult(res), proactor);
     }
 
     @Override
     public SQEntry apply(SQEntry entry) {
         return super.apply(entry)
+                    .fd(descriptor)
                     .flags(flags)
-                    .fd(AT_FDCWD)
-                    .addr(rawPath.address())
-                    .len(mode)
-                    .openFlags(openFlags);
+                    .msgFlags(msgFlags)
+                    .addr(buffer.address())
+                    .len(buffer.size());
     }
 
-    public OpenExchangeEntry prepare(BiConsumer<Result<FileDescriptor>, Proactor> completion, Path path, int openFlags, int mode, byte flags) {
-        rawPath = OffHeapCString.cstring(path.toString());
-
+    public RecvExchangeEntry prepare(BiConsumer<Result<SizeT>, Proactor> completion,
+                                     int descriptor,
+                                     OffHeapSlice buffer,
+                                     int msgFlags,
+                                     byte flags) {
+        this.buffer = buffer;
+        this.descriptor = descriptor;
+        this.msgFlags = msgFlags;
         this.flags = flags;
-        this.openFlags = openFlags;
-        this.mode = mode;
 
         return super.prepare(completion);
     }

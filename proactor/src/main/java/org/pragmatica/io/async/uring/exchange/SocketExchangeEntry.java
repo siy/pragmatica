@@ -30,7 +30,7 @@ import org.pragmatica.lang.Result;
 import java.util.Set;
 import java.util.function.BiConsumer;
 
-import static org.pragmatica.io.async.uring.AsyncOperation.IORING_OP_NOP;
+import static org.pragmatica.io.async.uring.AsyncOperation.NOP;
 
 /**
  * Exchange entry for {@code socket} request.
@@ -42,7 +42,7 @@ public class SocketExchangeEntry extends AbstractExchangeEntry<SocketExchangeEnt
     private Set<SocketOption> options;
 
     protected SocketExchangeEntry(PlainObjectPool<SocketExchangeEntry> pool) {
-        super(IORING_OP_NOP, pool);
+        super(NOP, pool);
     }
 
     @Override

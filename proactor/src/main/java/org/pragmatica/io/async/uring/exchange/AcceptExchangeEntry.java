@@ -29,7 +29,7 @@ import org.pragmatica.lang.Result;
 import java.util.function.BiConsumer;
 
 import static org.pragmatica.io.async.net.ConnectionContext.connection;
-import static org.pragmatica.io.async.uring.AsyncOperation.IORING_OP_ACCEPT;
+import static org.pragmatica.io.async.uring.AsyncOperation.ACCEPT;
 
 /**
  * Exchange entry for {@code accept} request.
@@ -41,7 +41,7 @@ public class AcceptExchangeEntry<T extends InetAddress> extends AbstractExchange
 
     @SuppressWarnings("rawtypes")
     protected AcceptExchangeEntry(PlainObjectPool<AcceptExchangeEntry> pool) {
-        super(IORING_OP_ACCEPT, pool);
+        super(ACCEPT, pool);
     }
 
     @Override

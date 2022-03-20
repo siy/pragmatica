@@ -26,7 +26,7 @@ import org.pragmatica.lang.Unit;
 
 import java.util.function.BiConsumer;
 
-import static org.pragmatica.io.async.uring.AsyncOperation.IORING_OP_CLOSE;
+import static org.pragmatica.io.async.uring.AsyncOperation.CLOSE;
 import static org.pragmatica.lang.Unit.unitResult;
 
 /**
@@ -37,7 +37,7 @@ public class CloseExchangeEntry extends AbstractExchangeEntry<CloseExchangeEntry
     private byte flags;
 
     protected CloseExchangeEntry(final PlainObjectPool<CloseExchangeEntry> pool) {
-        super(IORING_OP_CLOSE, pool);
+        super(CLOSE, pool);
     }
 
     @Override

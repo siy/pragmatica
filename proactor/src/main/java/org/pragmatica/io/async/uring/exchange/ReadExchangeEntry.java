@@ -18,7 +18,6 @@
 package org.pragmatica.io.async.uring.exchange;
 
 import org.pragmatica.io.async.Proactor;
-import org.pragmatica.io.async.SystemError;
 import org.pragmatica.io.async.common.SizeT;
 import org.pragmatica.io.async.uring.struct.raw.SQEntry;
 import org.pragmatica.io.async.uring.utils.PlainObjectPool;
@@ -27,13 +26,12 @@ import org.pragmatica.lang.Result;
 
 import java.util.function.BiConsumer;
 
-import static org.pragmatica.io.async.uring.AsyncOperation.IORING_OP_READ;
+import static org.pragmatica.io.async.uring.AsyncOperation.READ;
 
 /**
  * Exchange entry for {@code read} request.
  */
 public class ReadExchangeEntry extends AbstractExchangeEntry<ReadExchangeEntry, SizeT> {
-    private static final Result<SizeT> EOF_RESULT = SystemError.ENODATA.result();
 
     private int descriptor;
     private byte flags;
@@ -41,7 +39,7 @@ public class ReadExchangeEntry extends AbstractExchangeEntry<ReadExchangeEntry, 
     private long offset;
 
     protected ReadExchangeEntry(PlainObjectPool<ReadExchangeEntry> pool) {
-        super(IORING_OP_READ, pool);
+        super(READ, pool);
     }
 
     @Override
@@ -70,9 +68,4 @@ public class ReadExchangeEntry extends AbstractExchangeEntry<ReadExchangeEntry, 
         return super.prepare(completion);
     }
 
-    private Result<SizeT> bytesReadToResult(int res) {
-        return res == 0 ? EOF_RESULT
-                        : res > 0 ? sizeResult(res)
-                                  : SystemError.result(res);
-    }
 }

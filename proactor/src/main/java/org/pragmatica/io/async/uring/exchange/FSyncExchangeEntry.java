@@ -26,7 +26,7 @@ import org.pragmatica.lang.Unit;
 
 import java.util.function.BiConsumer;
 
-import static org.pragmatica.io.async.uring.AsyncOperation.IORING_OP_FSYNC;
+import static org.pragmatica.io.async.uring.AsyncOperation.FSYNC;
 import static org.pragmatica.lang.Unit.unitResult;
 
 /**
@@ -38,7 +38,7 @@ public class FSyncExchangeEntry extends AbstractExchangeEntry<FSyncExchangeEntry
     private byte flags;
 
     protected FSyncExchangeEntry(final PlainObjectPool<FSyncExchangeEntry> pool) {
-        super(IORING_OP_FSYNC, pool);
+        super(FSYNC, pool);
     }
 
     @Override

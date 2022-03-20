@@ -142,13 +142,17 @@
 
                     <compilerStartOptions>
                         <compilerStartOption>-g</compilerStartOption>
-                        <compilerStartOption>-fomit-frame-pointer</compilerStartOption>
-                        <compilerStartOption>-D_GNU_SOURCE</compilerStartOption>
-                        <compilerStartOption>-fPIC</compilerStartOption>
-                        <compilerStartOption>-Wall</compilerStartOption>
                         <compilerStartOption>-O2</compilerStartOption>
-                        <compilerStartOption>-I ${project.basedir}/../liburing/src</compilerStartOption>
+                        <compilerStartOption>-Wall</compilerStartOption>
+                        <compilerStartOption>-Wextra</compilerStartOption>
+                        <compilerStartOption>-fno-stack-protector</compilerStartOption>
+                        <compilerStartOption>-fomit-frame-pointer</compilerStartOption>
+                        <compilerStartOption>-Wno-unused-parameter</compilerStartOption>
+                        <compilerStartOption>-Wno-sign-compare</compilerStartOption>
+                        <compilerStartOption>-DLIBURING_INTERNAL</compilerStartOption>
+                        <compilerStartOption>-fPIC</compilerStartOption>
                         <compilerStartOption>-I ${project.basedir}/../liburing/src/include</compilerStartOption>
+                        <compilerStartOption>-I ${project.basedir}/../liburing/src</compilerStartOption>
                         <compilerStartOption>-I ${java.home}/include</compilerStartOption>
                         <compilerStartOption>-I ${java.home}/include/linux</compilerStartOption>
                     </compilerStartOptions>

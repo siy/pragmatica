@@ -29,7 +29,7 @@ import java.time.Duration;
 import java.util.function.BiConsumer;
 
 import static org.pragmatica.io.async.Timeout.timeout;
-import static org.pragmatica.io.async.uring.AsyncOperation.IORING_OP_TIMEOUT;
+import static org.pragmatica.io.async.uring.AsyncOperation.TIMEOUT;
 import static org.pragmatica.lang.Result.success;
 
 /**
@@ -40,7 +40,7 @@ public class DelayExchangeEntry extends AbstractExchangeEntry<DelayExchangeEntry
     private long startNanos;
 
     protected DelayExchangeEntry(PlainObjectPool<DelayExchangeEntry> pool) {
-        super(IORING_OP_TIMEOUT, pool);
+        super(TIMEOUT, pool);
     }
 
     @Override

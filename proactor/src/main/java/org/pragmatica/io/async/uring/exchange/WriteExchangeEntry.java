@@ -18,7 +18,6 @@
 package org.pragmatica.io.async.uring.exchange;
 
 import org.pragmatica.io.async.Proactor;
-import org.pragmatica.io.async.SystemError;
 import org.pragmatica.io.async.common.SizeT;
 import org.pragmatica.io.async.uring.struct.raw.SQEntry;
 import org.pragmatica.io.async.uring.utils.PlainObjectPool;
@@ -27,7 +26,7 @@ import org.pragmatica.lang.Result;
 
 import java.util.function.BiConsumer;
 
-import static org.pragmatica.io.async.uring.AsyncOperation.IORING_OP_WRITE;
+import static org.pragmatica.io.async.uring.AsyncOperation.WRITE;
 
 /**
  * Exchange entry for {@code write} request.
@@ -39,7 +38,7 @@ public class WriteExchangeEntry extends AbstractExchangeEntry<WriteExchangeEntry
     private long offset;
 
     protected WriteExchangeEntry(PlainObjectPool<WriteExchangeEntry> pool) {
-        super(IORING_OP_WRITE, pool);
+        super(WRITE, pool);
     }
 
     @Override
@@ -69,9 +68,4 @@ public class WriteExchangeEntry extends AbstractExchangeEntry<WriteExchangeEntry
         return super.prepare(completion);
     }
 
-    private Result<SizeT> byteCountToResult(int res) {
-        return res > 0
-               ? sizeResult(res)
-               : SystemError.result(res);
-    }
 }

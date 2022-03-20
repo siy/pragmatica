@@ -27,7 +27,7 @@ import org.pragmatica.lang.Result;
 
 import java.util.function.BiConsumer;
 
-import static org.pragmatica.io.async.uring.AsyncOperation.IORING_OP_WRITE_FIXED;
+import static org.pragmatica.io.async.uring.AsyncOperation.WRITE_FIXED;
 
 /**
  * Exchange entry for {@code writeFixed} request.
@@ -39,7 +39,7 @@ public class WriteFixedExchangeEntry extends AbstractExchangeEntry<WriteFixedExc
     private long offset;
 
     protected WriteFixedExchangeEntry(PlainObjectPool<WriteFixedExchangeEntry> pool) {
-        super(IORING_OP_WRITE_FIXED, pool);
+        super(WRITE_FIXED, pool);
     }
 
     @Override
@@ -68,11 +68,5 @@ public class WriteFixedExchangeEntry extends AbstractExchangeEntry<WriteFixedExc
         this.buffer = buffer;
         this.offset = offset;
         return super.prepare(completion);
-    }
-
-    private Result<SizeT> byteCountToResult(int res) {
-        return res > 0
-               ? sizeResult(res)
-               : SystemError.result(res);
     }
 }

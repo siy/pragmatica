@@ -241,6 +241,20 @@ class ProactorImpl implements Proactor {
     }
 
     @Override
+    public void send(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fd, OffHeapSlice buffer,
+                     Set<MessageFlags> msgFlags, Option<Timeout> timeout) {
+        uringApi.submit(factory.forSend(completion, fd, buffer, msgFlags, timeout));
+        timeout.whenPresent(this::appendTimeout);
+    }
+
+    @Override
+    public void recv(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fd, OffHeapSlice buffer,
+                     Set<MessageFlags> msgFlags, Option<Timeout> timeout) {
+        uringApi.submit(factory.forRecv(completion, fd, buffer, msgFlags, timeout));
+        timeout.whenPresent(this::appendTimeout);
+    }
+
+    @Override
     public Result<FixedBuffer> allocateFixedBuffer(int size) {
         return sharedAllocator.allocate(size);
     }

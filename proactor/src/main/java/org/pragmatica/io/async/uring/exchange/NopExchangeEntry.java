@@ -21,7 +21,7 @@ import org.pragmatica.io.async.Proactor;
 import org.pragmatica.io.async.uring.utils.PlainObjectPool;
 import org.pragmatica.lang.Unit;
 
-import static org.pragmatica.io.async.uring.AsyncOperation.IORING_OP_NOP;
+import static org.pragmatica.io.async.uring.AsyncOperation.NOP;
 import static org.pragmatica.lang.Unit.unitResult;
 
 /**
@@ -29,7 +29,7 @@ import static org.pragmatica.lang.Unit.unitResult;
  */
 public class NopExchangeEntry extends AbstractExchangeEntry<NopExchangeEntry, Unit> {
     protected NopExchangeEntry(final PlainObjectPool<NopExchangeEntry> pool) {
-        super(IORING_OP_NOP, pool);
+        super(NOP, pool);
     }
 
     @Override

@@ -19,55 +19,56 @@ package org.pragmatica.io.async.uring;
 
 /**
  * Asynchronous operation opcodes.
- * <p>
- * WARNING: Always keep in sync with io_uring.h
- * <p>
- * Ordinals (by the means of .ordinal() call) of constants below must match actual Linux API codes (as defined in io_uring.h).
  */
 public enum AsyncOperation {
-    IORING_OP_NOP,                  //Implemented
-    IORING_OP_READV,                //Implemented
-    IORING_OP_WRITEV,               //Implemented
-    IORING_OP_FSYNC,                //Implemented
-    IORING_OP_READ_FIXED,
-    IORING_OP_WRITE_FIXED,
-    IORING_OP_POLL_ADD,
-    IORING_OP_POLL_REMOVE,
-    IORING_OP_SYNC_FILE_RANGE,
-    IORING_OP_SENDMSG,
-    IORING_OP_RECVMSG,
-    IORING_OP_TIMEOUT,              //Implemented
-    IORING_OP_TIMEOUT_REMOVE,
-    IORING_OP_ACCEPT,               //Implemented
-    IORING_OP_ASYNC_CANCEL,
-    IORING_OP_LINK_TIMEOUT,         //Implemented
-    IORING_OP_CONNECT,              //Implemented
-    IORING_OP_FALLOCATE,            //Implemented
-    IORING_OP_OPENAT,               //Implemented
-    IORING_OP_CLOSE,                //Implemented
-    IORING_OP_FILES_UPDATE,
-    IORING_OP_STATX,                //Implemented
-    IORING_OP_READ,                 //Implemented
-    IORING_OP_WRITE,                //Implemented
-    IORING_OP_FADVISE,
-    IORING_OP_MADVISE,
-    IORING_OP_SEND,
-    IORING_OP_RECV,
-    IORING_OP_OPENAT2,
-    IORING_OP_EPOLL_CTL,
-    IORING_OP_SPLICE,               //Implemented
-    IORING_OP_PROVIDE_BUFFERS,
-    IORING_OP_REMOVE_BUFFERS,
-    IORING_OP_TEE,
-    IORING_OP_SHUTDOWN,
-    IORING_OP_RENAMEAT,
-    IORING_OP_UNLINKAT,
-    IORING_OP_MKDIRAT,
-    IORING_OP_SYMLINKAT,
-    IORING_OP_LINKAT,
-    IORING_OP_LAST;
+    NOP(0),                  //Implemented
+    READV(1),                //Implemented
+    WRITEV(2),               //Implemented
+    FSYNC(3),                //Implemented
+    READ_FIXED(4),           //Implemented
+    WRITE_FIXED(5),          //Implemented
+    POLL_ADD(6),
+    POLL_REMOVE(7),
+    SYNC_FILE_RANGE(8),
+    SENDMSG(9),
+    RECVMSG(10),
+    TIMEOUT(11),              //Implemented
+    TIMEOUT_REMOVE(12),
+    ACCEPT(13),               //Implemented
+    ASYNC_CANCEL(14),
+    LINK_TIMEOUT(15),         //Implemented
+    CONNECT(16),              //Implemented
+    FALLOCATE(17),            //Implemented
+    OPENAT(18),               //Implemented
+    CLOSE(19),                //Implemented
+    FILES_UPDATE(20),
+    STATX(21),                //Implemented
+    READ(22),                 //Implemented
+    WRITE(23),                //Implemented
+    FADVISE(24),
+    MADVISE(25),
+    SEND(26),
+    RECV(27),
+    OPENAT2(28),
+    EPOLL_CTL(29),
+    SPLICE(30),               //Implemented
+    PROVIDE_BUFFERS(31),
+    REMOVE_BUFFERS(32),
+    TEE(33),
+    SHUTDOWN(34),
+    RENAMEAT(35),
+    UNLINKAT(36),
+    MKDIRAT(37),
+    SYMLINKAT(38),
+    LINKAT(39);
+
+    private final byte opcode;
+
+    AsyncOperation(int opcode) {
+        this.opcode = (byte) opcode;
+    }
 
     public byte opcode() {
-        return (byte) ordinal();
+        return opcode;
     }
 }

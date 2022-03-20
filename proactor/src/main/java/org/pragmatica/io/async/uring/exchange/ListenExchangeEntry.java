@@ -40,7 +40,7 @@ public class ListenExchangeEntry<T extends InetAddress> extends AbstractExchange
 
     @SuppressWarnings("rawtypes")
     protected ListenExchangeEntry(PlainObjectPool<ListenExchangeEntry> pool) {
-        super(AsyncOperation.IORING_OP_NOP, pool);
+        super(AsyncOperation.NOP, pool);
     }
 
     @Override
