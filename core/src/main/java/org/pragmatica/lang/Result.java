@@ -49,7 +49,28 @@ public sealed interface Result<T> permits Success, Failure {
      */
     @SuppressWarnings("unchecked")
     default <R> Result<R> map(FN1<R, ? super T> mapper) {
-        return fold(l -> (Result<R>) this, r -> success(mapper.apply(r)));
+        return fold(__ -> (Result<R>) this, r -> success(mapper.apply(r)));
+    }
+
+    /**
+     * Replace value stored in current instance with value of other type. Replacing takes place only if current instance (this) contains successful
+     * result, otherwise current instance remains unchanged.
+     *
+     * @param supplier Source of the replacement value.
+     *
+     * @return transformed value (in case of success) or current instance (in case of failure)
+     */
+    @SuppressWarnings("unchecked")
+    default <R> Result<R> map(Supplier<R> supplier) {
+        return fold(__ -> (Result<R>) this, __ -> success(supplier.get()));
+    }
+
+    default Result<T> mapError(FN1<Cause, ? super Cause> mapper) {
+        return fold(cause -> mapper.apply(cause).result(), __ -> this);
+    }
+
+    default Result<T> mapError(Supplier<Cause> supplier) {
+        return fold(__ -> supplier.get().result(), __ -> this);
     }
 
     /**
@@ -62,7 +83,20 @@ public sealed interface Result<T> permits Success, Failure {
      */
     @SuppressWarnings("unchecked")
     default <R> Result<R> flatMap(FN1<Result<R>, ? super T> mapper) {
-        return fold(t -> (Result<R>) this, mapper);
+        return fold(__ -> (Result<R>) this, mapper);
+    }
+
+    /**
+     * Replace current instance with the instance returned by provided {@link Supplier}. The replacement happens only if current instance contains
+     * successful result, otherwise current instance remains unchanged.
+     *
+     * @param mapper Source of the replacement result.
+     *
+     * @return replacement result (in case of success) or current instance (in case of failure)
+     */
+    @SuppressWarnings("unchecked")
+    default <R> Result<R> flatMap(Supplier<Result<R>> mapper) {
+        return fold(__ -> (Result<R>) this, __ -> mapper.get());
     }
 
     /**
@@ -98,12 +132,28 @@ public sealed interface Result<T> permits Success, Failure {
         return this;
     }
 
+    default Result<T> onOk(Consumer<T> consumer) {
+        fold(Functions::toNull, v -> {
+            consumer.accept(v);
+            return null;
+        });
+        return this;
+    }
+
     /**
      * Run provided action in case of success.
      *
      * @return current instance for fluent call chaining
      */
     default Result<T> onSuccessDo(Runnable action) {
+        fold(Functions::toNull, v -> {
+            action.run();
+            return null;
+        });
+        return this;
+    }
+
+    default Result<T> onOkDo(Runnable action) {
         fold(Functions::toNull, v -> {
             action.run();
             return null;
@@ -126,12 +176,28 @@ public sealed interface Result<T> permits Success, Failure {
         return this;
     }
 
+    default Result<T> onError(Consumer<? super Cause> consumer) {
+        fold(v -> {
+            consumer.accept(v);
+            return null;
+        }, Functions::toNull);
+        return this;
+    }
+
     /**
      * Run provided action in case of failure.
      *
      * @return current instance for fluent call chaining
      */
     default Result<T> onFailureDo(Runnable action) {
+        fold(v -> {
+            action.run();
+            return null;
+        }, Functions::toNull);
+        return this;
+    }
+
+    default Result<T> onErrorDo(Runnable action) {
         fold(v -> {
             action.run();
             return null;
@@ -178,8 +244,8 @@ public sealed interface Result<T> permits Success, Failure {
     }
 
     /**
-     * Filter instance against provided predicate. If predicate returns {@code true} then instance remains unchanged. If predicate returns {@code
-     * false}, then failure instance in created using given {@link Cause}.
+     * Filter instance against provided predicate. If predicate returns {@code true} then instance remains unchanged. If predicate returns
+     * {@code false}, then failure instance in created using given {@link Cause}.
      *
      * @param cause     failure to use in case if predicate returns {@code false}
      * @param predicate predicate to invoke
@@ -191,8 +257,8 @@ public sealed interface Result<T> permits Success, Failure {
     }
 
     /**
-     * Filter instance against provided predicate. If predicate returns {@code true} then instance remains unchanged. If predicate returns {@code
-     * false}, then failure instance in created using {@link Cause} created by provided function.
+     * Filter instance against provided predicate. If predicate returns {@code true} then instance remains unchanged. If predicate returns
+     * {@code false}, then failure instance in created using {@link Cause} created by provided function.
      *
      * @param causeMapper function which transforms the tested value into instance of {@link Cause} if predicate returns {@code false}
      * @param predicate   predicate to invoke
@@ -201,6 +267,64 @@ public sealed interface Result<T> permits Success, Failure {
      */
     default Result<T> filter(FN1<Cause, T> causeMapper, Predicate<T> predicate) {
         return fold(v -> this, v -> predicate.test(v) ? this : failure(causeMapper.apply(v)));
+    }
+
+    /**
+     * Return value store in the current instance (if this instance represents successful result) or provided replacement value.
+     *
+     * @param replacement replacement value returned if current instance represents failure.
+     *
+     * @return value stored in current instance (in case of success) or replacement value.
+     */
+    default T or(T replacement) {
+        return fold(__ -> replacement, Functions::id);
+    }
+
+    /**
+     * Return value store in the current instance (if this instance represents successful result) or value returned by provided supplier.
+     *
+     * @param supplier source of replacement value returned if current instance represents failure.
+     *
+     * @return value stored in current instance (in case of success) or replacement value.
+     */
+    default T or(Supplier<T> supplier) {
+        return fold(__ -> supplier.get(), Functions::id);
+    }
+
+    /**
+     * Return current instance if this instance represents successful result or replacement instance if current instance represents a failure.
+     *
+     * @param replacement replacement instance returned if current instance represents failure.
+     *
+     * @return current instance (in case of success) or replacement instance.
+     */
+    default Result<T> orElse(Result<T> replacement) {
+        return fold(__ -> replacement, __ -> this);
+    }
+
+    /**
+     * Return current instance if this instance represents successful result or instance returned by provided supplier if current instance represents
+     * a failure.
+     *
+     * @param supplier source of replacement instance returned if current instance represents failure.
+     *
+     * @return current instance (in case of success) or replacement instance.
+     */
+    default Result<T> orElse(Supplier<Result<T>> supplier) {
+        return fold(__ -> supplier.get(), __ -> this);
+    }
+
+    /**
+     * This method allows "unwrapping" the value stored inside the Result instance. If value is missing then {@link IllegalStateException} is thrown.
+     * <p>
+     * WARNING!!!<br> This method should be avoided in the production code. It's main intended use case - simplification of the tests. For this reason
+     * method is marked as {@link Deprecated}. This generates warning at compile time.
+     *
+     * @return value stored inside present instance.
+     */
+    @Deprecated
+    default T unwrap() {
+        return fold(v -> {throw new IllegalStateException("Unwrap error: " + v.message());}, Functions::id);
     }
 
     /**
@@ -233,6 +357,10 @@ public sealed interface Result<T> permits Success, Failure {
      * @return created instance
      */
     static <R> Result<R> success(R value) {
+        return new Success<>(value);
+    }
+
+    static <R> Result<R> ok(R value) {
         return new Success<>(value);
     }
 
@@ -276,6 +404,10 @@ public sealed interface Result<T> permits Success, Failure {
      * @return created instance
      */
     static <R> Result<R> failure(Cause value) {
+        return new Failure<>(value);
+    }
+
+    static <R> Result<R> err(Cause value) {
         return new Failure<>(value);
     }
 
@@ -334,7 +466,7 @@ public sealed interface Result<T> permits Success, Failure {
      *
      * @return success instance if all {@link Result} instances in list are successes or failure instance with any instances in list is a failure
      */
-    static <T> Result<List<T>> flatten(List<Result<T>> resultList) {
+    static <T> Result<List<T>> allOf(List<Result<T>> resultList) {
         var failure = new Cause[1];
         var values = new ArrayList<T>();
 
@@ -389,6 +521,16 @@ public sealed interface Result<T> permits Success, Failure {
         }
 
         return first;
+    }
+
+    @SafeVarargs
+    static Result<Unit> allOf(Result<Unit>... values) {
+        for (var value : values) {
+            if (value.isFailure()) {
+                return value;
+            }
+        }
+        return Unit.unitResult();
     }
 
     /**

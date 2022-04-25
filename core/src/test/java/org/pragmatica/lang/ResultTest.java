@@ -140,14 +140,14 @@ class ResultTest {
     @Test
     void resultCanBeConvertedToOption() {
         Result.success(123).toOption()
-              .whenPresent(value -> assertEquals(123, value))
-              .whenEmpty(Assertions::fail);
+              .onPresent(value -> assertEquals(123, value))
+              .onEmpty(Assertions::fail);
 
         var flag1 = new AtomicBoolean(false);
 
         Result.<Integer>failure(Causes.cause("123")).toOption()
-              .whenPresent(__ -> Assertions.fail("Should not happen"))
-              .whenEmpty(() -> flag1.set(true));
+              .onPresent(__ -> Assertions.fail("Should not happen"))
+              .onEmpty(() -> flag1.set(true));
 
         assertTrue(flag1.get());
     }

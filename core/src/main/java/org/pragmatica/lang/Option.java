@@ -21,6 +21,8 @@ import org.pragmatica.lang.Functions.*;
 import org.pragmatica.lang.Option.None;
 import org.pragmatica.lang.Option.Some;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -43,7 +45,18 @@ public sealed interface Option<T> permits Some, None {
      * @return transformed instance
      */
     default <U> Option<U> map(FN1<U, ? super T> mapper) {
-        return flatMap(t -> present(mapper.apply(t)));
+        return fold(Option::empty, t -> present(mapper.apply(t)));
+    }
+
+    /**
+     * Replace current instance with the value returned by provided supplier.
+     *
+     * @param supplier Source of replacement value.
+     *
+     * @return current instance if it is empty or the instance with the replacement value if current instance is preseent.
+     */
+    default <U> Option<U> map(Supplier<U> supplier) {
+        return fold(Option::empty, t -> present(supplier.get()));
     }
 
     /**
@@ -60,6 +73,17 @@ public sealed interface Option<T> permits Some, None {
     }
 
     /**
+     * Replace current instance with the instance returned by provided supplier.
+     *
+     * @param supplier Source of replacement value.
+     *
+     * @return current instance if it is empty or the instance with the replacement value if current instance is preseent.
+     */
+    default <U> Option<U> flatMap(Supplier<Option<U>> supplier) {
+        return fold(Option::empty, __ -> supplier.get());
+    }
+
+    /**
      * Transform instance according to results of testing of contained value with provided predicate. If instance is empty, it remains empty. If
      * instance contains value, this value is passed to predicate. If predicate returns <code>true</code> then instance remains untouched. If
      * predicate returns <code>false</code> then empty instance is returned instead.
@@ -69,7 +93,7 @@ public sealed interface Option<T> permits Some, None {
      * @return current instance if it is not empty and predicate returns <code>true</code> and empty instance otherwise
      */
     default Option<T> filter(Predicate<? super T> predicate) {
-        return flatMap(v -> predicate.test(v) ? this : empty());
+        return fold(Option::empty, v -> predicate.test(v) ? this : empty());
     }
 
     /**
@@ -81,7 +105,12 @@ public sealed interface Option<T> permits Some, None {
      *
      * @return this instance for fluent call chaining
      */
-    default Option<T> whenPresent(Consumer<? super T> consumer) {
+    default Option<T> onPresent(Consumer<? super T> consumer) {
+        apply(Functions::unitFn, consumer);
+        return this;
+    }
+
+    default Option<T> onSome(Consumer<? super T> consumer) {
         apply(Functions::unitFn, consumer);
         return this;
     }
@@ -93,7 +122,12 @@ public sealed interface Option<T> permits Some, None {
      *
      * @return this instance for fluent call chaining
      */
-    default Option<T> whenEmpty(Runnable action) {
+    default Option<T> onEmpty(Runnable action) {
+        apply(action, Functions::unitFn);
+        return this;
+    }
+
+    default Option<T> onNone(Runnable action) {
         apply(action, Functions::unitFn);
         return this;
     }
@@ -139,6 +173,29 @@ public sealed interface Option<T> permits Some, None {
      */
     default T or(Supplier<T> supplier) {
         return fold(supplier, Functions::id);
+    }
+
+    /**
+     * Return current instance if current instance is present. If current instance is empty then return provided replacement option instance.
+     *
+     * @param replacement Replacement option instance for case when current instance is empty
+     *
+     * @return either current instance or provided replacement instance if current instance is empty
+     */
+    default Option<T> orElse(Option<T> replacement) {
+        return fold(() -> replacement, __ -> this);
+    }
+
+    /**
+     * Return current instance if current instance is present. If current instance is empty then retrieve replacement Option instance from given
+     * {@link Supplier}.
+     *
+     * @param supplier Source if replacement option instance for case when current instance is empty
+     *
+     * @return either current instance or provided replacement instance if current instance is empty
+     */
+    default Option<T> orElse(Supplier<Option<T>> supplier) {
+        return fold(supplier, __ -> this);
     }
 
     /**
@@ -236,6 +293,16 @@ public sealed interface Option<T> permits Some, None {
     }
 
     /**
+     * Create empty instance.
+     *
+     * @return Created instance
+     */
+    @SuppressWarnings("unchecked")
+    static <R> Option<R> none() {
+        return (Option<R>) NONE;
+    }
+
+    /**
      * Create a present instance with the passed value.
      *
      * @param value Value to be stored in the created instance.
@@ -243,6 +310,17 @@ public sealed interface Option<T> permits Some, None {
      * @return Created instance
      */
     static <R> Option<R> present(R value) {
+        return new Some<>(value);
+    }
+
+    /**
+     * Create a present instance with the passed value.
+     *
+     * @param value Value to be stored in the created instance.
+     *
+     * @return Created instance
+     */
+    static <R> Option<R> some(R value) {
         return new Some<>(value);
     }
 
@@ -293,6 +371,20 @@ public sealed interface Option<T> permits Some, None {
     @SuppressWarnings({"rawtypes"})
     None NONE = new None();
 
+
+    /**
+     * This method allows "unwrapping" the value stored inside the Option instance. If value is missing then {@link IllegalStateException} is thrown.
+     * <p>
+     * WARNING!!!<br> This method should be avoided in the production code. It's main intended use case - simplification of the tests. For this reason
+     * method is marked as {@link Deprecated}. This generates warning at compile time.
+     *
+     * @return value stored inside present instance.
+     */
+    @Deprecated
+    default T unwrap() {
+        return fold(() -> {throw new IllegalStateException("Option is empty!!!");}, Functions::id);
+    }
+
     /**
      * Find first present option among ones passed as parameters.
      *
@@ -328,6 +420,38 @@ public sealed interface Option<T> permits Some, None {
     }
 
     /**
+     * Transform a number of Option values into Option instance containing list of values. Result is empty Option if any values in the input is empty.
+     * Otherwise, result is a present option with list of values which were stored inside input Option instances.
+     *
+     * @param values values to transform.
+     *
+     * @return Empty option if input list contains empty Option instances. Otherwise, returns Option containing list of values.
+     */
+    @SafeVarargs
+    static <T> Option<List<T>> allOf(Option<T>... values) {
+        return allOf(List.of(values));
+    }
+
+    /**
+     * Transform a list of Option values into Option instance containing list of values. Result is empty Option if any values in the list is empty.
+     * Otherwise, result is a present option with list of values which were stored inside input Option instances.
+     *
+     * @param values values to transform.
+     *
+     * @return Empty option if input list contains empty Option instances. Otherwise, returns Option containing list of values.
+     */
+    static <T> Option<List<T>> allOf(List<Option<T>> values) {
+        var result = new ArrayList<T>();
+        for (var value : values) {
+            if (value.isEmpty()) {
+                return empty();
+            }
+            value.onPresent(result::add);
+        }
+        return present(result);
+    }
+
+    /**
      * Transform option into option of tuple with single value. The result is empty if input option is empty. Otherwise, resulting instance contains
      * tuple with input option value.
      *
@@ -348,8 +472,8 @@ public sealed interface Option<T> permits Some, None {
     }
 
     /**
-     * Transform options into option of tuple of three values. The result is empty if any input option is empty. Otherwise, resulting instance contains
-     * tuple with values from input options.
+     * Transform options into option of tuple of three values. The result is empty if any input option is empty. Otherwise, resulting instance
+     * contains tuple with values from input options.
      *
      * @return {@link Mapper3} prepared for further transformation.
      */
@@ -410,8 +534,8 @@ public sealed interface Option<T> permits Some, None {
     }
 
     /**
-     * Transform options into option of tuple of seven values. The result is empty if any input option is empty. Otherwise, resulting instance contains
-     * tuple with values from input options.
+     * Transform options into option of tuple of seven values. The result is empty if any input option is empty. Otherwise, resulting instance
+     * contains tuple with values from input options.
      *
      * @return {@link Mapper7} prepared for further transformation.
      */
@@ -430,8 +554,8 @@ public sealed interface Option<T> permits Some, None {
     }
 
     /**
-     * Transform options into option of tuple of eight values. The result is empty if any input option is empty. Otherwise, resulting instance contains
-     * tuple with values from input options.
+     * Transform options into option of tuple of eight values. The result is empty if any input option is empty. Otherwise, resulting instance
+     * contains tuple with values from input options.
      *
      * @return {@link Mapper8} prepared for further transformation.
      */
@@ -473,8 +597,8 @@ public sealed interface Option<T> permits Some, None {
     }
 
     /**
-     * Helper interface for convenient {@link Tuple.Tuple1} transformation. In case if you need to return a tuple, it might be more convenient to return
-     * this interface instead. For example, instead of this:
+     * Helper interface for convenient {@link Tuple.Tuple1} transformation. In case if you need to return a tuple, it might be more convenient to
+     * return this interface instead. For example, instead of this:
      * <blockquote><pre>
      *     return tuple(value, ...);
      * </pre></blockquote>
@@ -497,8 +621,8 @@ public sealed interface Option<T> permits Some, None {
     }
 
     /**
-     * Helper interface for convenient {@link Tuple.Tuple2} transformation. In case if you need to return a tuple, it might be more convenient to return
-     * this interface instead. For example, instead of this:
+     * Helper interface for convenient {@link Tuple.Tuple2} transformation. In case if you need to return a tuple, it might be more convenient to
+     * return this interface instead. For example, instead of this:
      * <blockquote><pre>
      *     return tuple(value, ...);
      * </pre></blockquote>
@@ -521,8 +645,8 @@ public sealed interface Option<T> permits Some, None {
     }
 
     /**
-     * Helper interface for convenient {@link Tuple.Tuple3} transformation. In case if you need to return a tuple, it might be more convenient to return
-     * this interface instead. For example, instead of this:
+     * Helper interface for convenient {@link Tuple.Tuple3} transformation. In case if you need to return a tuple, it might be more convenient to
+     * return this interface instead. For example, instead of this:
      * <blockquote><pre>
      *     return tuple(value, ...);
      * </pre></blockquote>
@@ -545,8 +669,8 @@ public sealed interface Option<T> permits Some, None {
     }
 
     /**
-     * Helper interface for convenient {@link Tuple.Tuple4} transformation. In case if you need to return a tuple, it might be more convenient to return
-     * this interface instead. For example, instead of this:
+     * Helper interface for convenient {@link Tuple.Tuple4} transformation. In case if you need to return a tuple, it might be more convenient to
+     * return this interface instead. For example, instead of this:
      * <blockquote><pre>
      *     return tuple(value, ...);
      * </pre></blockquote>
@@ -569,8 +693,8 @@ public sealed interface Option<T> permits Some, None {
     }
 
     /**
-     * Helper interface for convenient {@link Tuple.Tuple5} transformation. In case if you need to return a tuple, it might be more convenient to return
-     * this interface instead. For example, instead of this:
+     * Helper interface for convenient {@link Tuple.Tuple5} transformation. In case if you need to return a tuple, it might be more convenient to
+     * return this interface instead. For example, instead of this:
      * <blockquote><pre>
      *     return tuple(value, ...);
      * </pre></blockquote>
@@ -593,8 +717,8 @@ public sealed interface Option<T> permits Some, None {
     }
 
     /**
-     * Helper interface for convenient {@link Tuple.Tuple6} transformation. In case if you need to return a tuple, it might be more convenient to return
-     * this interface instead. For example, instead of this:
+     * Helper interface for convenient {@link Tuple.Tuple6} transformation. In case if you need to return a tuple, it might be more convenient to
+     * return this interface instead. For example, instead of this:
      * <blockquote><pre>
      *     return tuple(value, ...);
      * </pre></blockquote>
@@ -617,8 +741,8 @@ public sealed interface Option<T> permits Some, None {
     }
 
     /**
-     * Helper interface for convenient {@link Tuple.Tuple7} transformation. In case if you need to return a tuple, it might be more convenient to return
-     * this interface instead. For example, instead of this:
+     * Helper interface for convenient {@link Tuple.Tuple7} transformation. In case if you need to return a tuple, it might be more convenient to
+     * return this interface instead. For example, instead of this:
      * <blockquote><pre>
      *     return tuple(value, ...);
      * </pre></blockquote>
@@ -641,8 +765,8 @@ public sealed interface Option<T> permits Some, None {
     }
 
     /**
-     * Helper interface for convenient {@link Tuple.Tuple8} transformation. In case if you need to return a tuple, it might be more convenient to return
-     * this interface instead. For example, instead of this:
+     * Helper interface for convenient {@link Tuple.Tuple8} transformation. In case if you need to return a tuple, it might be more convenient to
+     * return this interface instead. For example, instead of this:
      * <blockquote><pre>
      *     return tuple(value, ...);
      * </pre></blockquote>
@@ -665,8 +789,8 @@ public sealed interface Option<T> permits Some, None {
     }
 
     /**
-     * Helper interface for convenient {@link Tuple.Tuple9} transformation. In case if you need to return a tuple, it might be more convenient to return
-     * this interface instead. For example, instead of this:
+     * Helper interface for convenient {@link Tuple.Tuple9} transformation. In case if you need to return a tuple, it might be more convenient to
+     * return this interface instead. For example, instead of this:
      * <blockquote><pre>
      *     return tuple(value, ...);
      * </pre></blockquote>

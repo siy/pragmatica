@@ -319,6 +319,14 @@ public interface Promise<T> {
         return new PromiseImpl<>(value);
     }
 
+    static <R> Promise<R> successful(R value) {
+        return new PromiseImpl<>(Result.success(value));
+    }
+
+    static <R> Promise<R> failed(Cause failure) {
+        return new PromiseImpl<>(Result.failure(failure));
+    }
+
     /**
      * Return promise which will be resolved when any of the provided promises will be resolved. Remaining promises will be cancelled.
      *

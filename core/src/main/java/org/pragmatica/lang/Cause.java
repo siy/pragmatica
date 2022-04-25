@@ -27,6 +27,13 @@ public interface Cause {
     String message();
 
     /**
+     * The original cause (if any) of the error.
+     */
+    default Option<Cause> source() {
+        return Option.empty();
+    }
+
+    /**
      * Represent cause as a failure {@link Result} instance.
      *
      * @return cause converted into {@link Result} with necessary type.

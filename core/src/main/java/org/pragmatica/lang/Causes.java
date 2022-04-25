@@ -24,11 +24,13 @@ import java.io.StringWriter;
 import java.text.MessageFormat;
 import java.util.function.Predicate;
 
+import static org.pragmatica.lang.Option.*;
+
 /**
  * Frequently used variants of {@link Cause}.
  */
 public final class Causes {
-    public static final Cause IRRELEVANT = new SimpleCause("irrelevant");
+    public static final Cause IRRELEVANT = new SimpleCause("irrelevant", none());
 
     private Causes() {
     }
@@ -36,7 +38,7 @@ public final class Causes {
     /**
      * Simplest possible variant of {@link Cause} which contains only message describing the cause
      */
-    record SimpleCause(String message) implements Cause {
+    record SimpleCause(String message, Option<Cause> source) implements Cause {
     }
 
     /**
@@ -47,7 +49,11 @@ public final class Causes {
      * @return created instance
      */
     public static Cause cause(String message) {
-        return new SimpleCause(message);
+        return new SimpleCause(message, none());
+    }
+
+    public static Cause cause(String message, Cause source) {
+        return new SimpleCause(message, some(source));
     }
 
     /**
@@ -61,7 +67,7 @@ public final class Causes {
         var sw = new StringWriter();
         throwable.printStackTrace(new PrintWriter(sw));
 
-        return new SimpleCause(sw.toString());
+        return cause(sw.toString());
     }
 
     /**

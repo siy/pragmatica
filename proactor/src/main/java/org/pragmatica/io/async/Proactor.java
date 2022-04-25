@@ -118,7 +118,6 @@ public interface Proactor {
      * @param descriptor Splice operation details container
      * @param timeout    Optional operation timeout.
      */
-
     void splice(BiConsumer<Result<SizeT>, Proactor> completion, SpliceDescriptor descriptor, Option<Timeout> timeout);
 
     default void splice(Consumer<Result<SizeT>> completion, SpliceDescriptor descriptor, Option<Timeout> timeout) {

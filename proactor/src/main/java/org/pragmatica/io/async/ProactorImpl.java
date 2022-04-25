@@ -109,34 +109,34 @@ class ProactorImpl implements Proactor {
     @Override
     public void close(BiConsumer<Result<Unit>, Proactor> completion, FileDescriptor fd, Option<Timeout> timeout) {
         uringApi.submit(factory.forClose(completion, fd, timeout));
-        timeout.whenPresent(this::appendTimeout);
+        timeout.onPresent(this::appendTimeout);
     }
 
     @Override
     public void read(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fd, OffHeapSlice buffer,
                      OffsetT offset, Option<Timeout> timeout) {
         uringApi.submit(factory.forRead(completion, fd, buffer, offset, timeout));
-        timeout.whenPresent(this::appendTimeout);
+        timeout.onPresent(this::appendTimeout);
     }
 
     @Override
     public void write(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fd, OffHeapSlice buffer,
                       OffsetT offset, Option<Timeout> timeout) {
         uringApi.submit(factory.forWrite(completion, fd, buffer, offset, timeout));
-        timeout.whenPresent(this::appendTimeout);
+        timeout.onPresent(this::appendTimeout);
     }
 
     @Override
     public void splice(BiConsumer<Result<SizeT>, Proactor> completion, SpliceDescriptor descriptor, Option<Timeout> timeout) {
         uringApi.submit(factory.forSplice(completion, descriptor, timeout));
-        timeout.whenPresent(this::appendTimeout);
+        timeout.onPresent(this::appendTimeout);
     }
 
     @Override
     public void open(BiConsumer<Result<FileDescriptor>, Proactor> completion, Path path, Set<OpenFlags> flags,
                      Set<FilePermission> mode, Option<Timeout> timeout) {
         uringApi.submit(factory.forOpen(completion, path, flags, mode, timeout));
-        timeout.whenPresent(this::appendTimeout);
+        timeout.onPresent(this::appendTimeout);
     }
 
     @Override
@@ -169,7 +169,7 @@ class ProactorImpl implements Proactor {
         }
 
         uringApi.submit(factory.forConnect(completion, socket, clientAddress, timeout));
-        timeout.whenPresent(this::appendTimeout);
+        timeout.onPresent(this::appendTimeout);
     }
 
     @Override
@@ -181,7 +181,7 @@ class ProactorImpl implements Proactor {
                                         Bitmask.combine(flags) & ~StatFlag.EMPTY_PATH.mask(),
                                         Bitmask.combine(mask),
                                         OffHeapCString.cstring(path.toString())));
-        timeout.whenPresent(this::appendTimeout);
+        timeout.onPresent(this::appendTimeout);
     }
 
     @Override
@@ -193,7 +193,7 @@ class ProactorImpl implements Proactor {
                                         Bitmask.combine(flags) | StatFlag.EMPTY_PATH.mask(),
                                         Bitmask.combine(mask),
                                         OffHeapCString.cstring("")));
-        timeout.whenPresent(this::appendTimeout);
+        timeout.onPresent(this::appendTimeout);
     }
 
     @Override
@@ -202,56 +202,56 @@ class ProactorImpl implements Proactor {
         uringApi.submit(factory.forReadVector(completion, fileDescriptor, offset, timeout, withReadBuffers(buffers))
                                .register(exchangeRegistry));
 
-        timeout.whenPresent(this::appendTimeout);
+        timeout.onPresent(this::appendTimeout);
     }
 
     @Override
     public void writeVector(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fileDescriptor, OffsetT offset,
                             Option<Timeout> timeout, OffHeapSlice... buffers) {
         uringApi.submit(factory.forWriteVector(completion, fileDescriptor, offset, timeout, withWriteBuffers(buffers)));
-        timeout.whenPresent(this::appendTimeout);
+        timeout.onPresent(this::appendTimeout);
     }
 
     @Override
     public void fsync(BiConsumer<Result<Unit>, Proactor> completion, FileDescriptor fileDescriptor,
                       boolean syncMetadata, Option<Timeout> timeout) {
         uringApi.submit(factory.forFSync(completion, fileDescriptor, syncMetadata, timeout));
-        timeout.whenPresent(this::appendTimeout);
+        timeout.onPresent(this::appendTimeout);
     }
 
     @Override
     public void falloc(BiConsumer<Result<Unit>, Proactor> completion, FileDescriptor fileDescriptor,
                        Set<FileAllocFlags> allocFlags, long offset, long len, Option<Timeout> timeout) {
         uringApi.submit(factory.forFAlloc(completion, fileDescriptor, allocFlags, offset, len, timeout));
-        timeout.whenPresent(this::appendTimeout);
+        timeout.onPresent(this::appendTimeout);
     }
 
     @Override
     public void readFixed(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fd, FixedBuffer buffer,
                           OffsetT offset, Option<Timeout> timeout) {
         uringApi.submit(factory.forReadFixed(completion, fd, buffer, offset, timeout));
-        timeout.whenPresent(this::appendTimeout);
+        timeout.onPresent(this::appendTimeout);
     }
 
     @Override
     public void writeFixed(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fd, FixedBuffer buffer,
                            OffsetT offset, Option<Timeout> timeout) {
         uringApi.submit(factory.forWriteFixed(completion, fd, buffer, offset, timeout));
-        timeout.whenPresent(this::appendTimeout);
+        timeout.onPresent(this::appendTimeout);
     }
 
     @Override
     public void send(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fd, OffHeapSlice buffer,
                      Set<MessageFlags> msgFlags, Option<Timeout> timeout) {
         uringApi.submit(factory.forSend(completion, fd, buffer, msgFlags, timeout));
-        timeout.whenPresent(this::appendTimeout);
+        timeout.onPresent(this::appendTimeout);
     }
 
     @Override
     public void recv(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fd, OffHeapSlice buffer,
                      Set<MessageFlags> msgFlags, Option<Timeout> timeout) {
         uringApi.submit(factory.forRecv(completion, fd, buffer, msgFlags, timeout));
-        timeout.whenPresent(this::appendTimeout);
+        timeout.onPresent(this::appendTimeout);
     }
 
     @Override

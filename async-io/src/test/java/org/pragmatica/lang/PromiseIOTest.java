@@ -18,12 +18,15 @@
 package org.pragmatica.lang;
 
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.pragmatica.io.async.common.OffsetT;
 import org.pragmatica.io.async.common.SizeT;
 import org.pragmatica.io.async.file.FileDescriptor;
+import org.pragmatica.io.async.net.*;
 import org.pragmatica.io.async.util.OffHeapSlice;
 
+import java.net.UnknownHostException;
 import java.nio.file.Path;
 import java.time.Duration;
 
@@ -78,7 +81,33 @@ public class PromiseIOTest {
                   .onFailure(PromiseIOTest::fail);
     }
 
-    private static void fail(Cause cause) {
+    @Test
+    @Disabled("Incomplete")
+    void udpCanBeSentAndReceived() throws UnknownHostException {
+        var address = InetAddress.inet4Address(java.net.Inet4Address.getByName("www.google.com").getAddress())
+                                 .fold(PromiseIOTest::fail,
+                                       inetAddress -> SocketAddress.socketAddress(InetPort.inetPort(80), inetAddress));
+
+        PromiseIO.socket(AddressFamily.INET, SocketType.DGRAM, SocketFlag.closeOnExec(), SocketOption.reuseAll())
+                 .flatMap(socket -> PromiseIO.connect(socket, address))
+                 .flatMap(socket -> {
+                     try (var buffer = OffHeapSlice.fixedSize(512)) {
+
+
+                         return PromiseIO.write(socket, buffer)
+                                         .onFailure(PromiseIOTest::fail)
+                                         .flatMap(size -> PromiseIO.read(socket, buffer))
+                                         .onFailure(PromiseIOTest::fail)
+                                         .flatMap(__ -> Promise.successful(socket))
+                                         .onFailure(PromiseIOTest::fail);
+                     }
+
+                 })
+                 .flatMap(PromiseIO::close);
+    }
+
+    private static <T> T fail(Cause cause) {
         Assertions.fail(cause.message());
+        return null;
     }
 }

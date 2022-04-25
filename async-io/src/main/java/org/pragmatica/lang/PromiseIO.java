@@ -379,4 +379,28 @@ public interface PromiseIO {
     static Promise<Unit> falloc(FileDescriptor fd, Set<FileAllocFlags> flags, long offset, long len) {
         return falloc(fd, flags, offset, len, empty());
     }
+
+    static Promise<FixedBuffer> fixedBuffer(int size) {
+        return Promise.promise((promise, proactor) -> promise.resolve(proactor.allocateFixedBuffer(size)));
+    }
+
+    static Promise<SizeT> send(FileDescriptor fd, OffHeapSlice buffer, Set<MessageFlags> msgFlags, Option<Timeout> timeout) {
+        return Promise.promise((promise, proactor) -> proactor.send(promise::resolve, fd, buffer, msgFlags, timeout));
+    }
+
+    default Promise<SizeT> send(FileDescriptor fd, OffHeapSlice buffer, Set<MessageFlags> msgFlags) {
+        return send(fd, buffer, msgFlags, empty());
+    }
+
+    default Promise<SizeT> recv(FileDescriptor fd, OffHeapSlice buffer, Set<MessageFlags> msgFlags, Option<Timeout> timeout) {
+        return Promise.promise((promise, proactor) -> proactor.recv(promise::resolve, fd, buffer, msgFlags, timeout));
+    }
+
+    default Promise<SizeT> recv(FileDescriptor fd, OffHeapSlice buffer, Set<MessageFlags> msgFlags) {
+        return recv(fd, buffer, msgFlags, empty());
+    }
+//---------------------------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------------------------
+
 }

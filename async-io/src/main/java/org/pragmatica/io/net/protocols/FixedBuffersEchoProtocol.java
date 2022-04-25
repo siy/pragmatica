@@ -88,7 +88,7 @@ public sealed interface FixedBuffersEchoProtocol<T extends InetAddress> extends 
                 LOG.info("I/O error: {}", failure);
             }
 
-            option(buffer).whenPresent(FixedBuffer::dispose);
+            option(buffer).onPresent(FixedBuffer::dispose);
             proactor.close(this::logClosing, socket);
 
             return Unit.unit();

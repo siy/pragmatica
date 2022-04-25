@@ -46,57 +46,57 @@ class OptionTest {
     @Test
     void presentOptionCanBeTransformed() {
         Option.present(123L)
-              .whenPresent(value -> assertEquals(123L, value))
-              .whenEmpty(Assertions::fail)
+              .onPresent(value -> assertEquals(123L, value))
+              .onEmpty(Assertions::fail)
               .map(Object::toString)
-              .whenPresent(value -> assertEquals("123", value))
-              .whenEmpty(Assertions::fail);
+              .onPresent(value -> assertEquals("123", value))
+              .onEmpty(Assertions::fail);
     }
 
     @Test
     void emptyOptionRemainsEmptyAfterTransformation() {
         Option.empty()
-              .whenPresent(v -> fail())
+              .onPresent(v -> fail())
               .map(Object::toString)
-              .whenPresent(v -> fail());
+              .onPresent(v -> fail());
     }
 
     @Test
     void presentOptionCanBeFlatMapped() {
         Option.present(123L)
-              .whenPresent(value -> assertEquals(123L, value))
-              .whenEmpty(Assertions::fail)
+              .onPresent(value -> assertEquals(123L, value))
+              .onEmpty(Assertions::fail)
               .flatMap(value -> Option.present(value.toString()))
-              .whenPresent(value -> assertEquals("123", value))
-              .whenEmpty(Assertions::fail);
+              .onPresent(value -> assertEquals("123", value))
+              .onEmpty(Assertions::fail);
     }
 
     @Test
     void emptyOptionRemainsEmptyAfterFlatMap() {
         Option.empty()
-              .whenPresent(v -> fail())
+              .onPresent(v -> fail())
               .flatMap(value -> Option.present(value.toString()))
-              .whenPresent(v -> fail());
+              .onPresent(v -> fail());
     }
 
     @Test
     void presentOptionCanBeFilteredToPresentOption() {
         Option.present(123L)
-              .whenPresent(value -> assertEquals(123L, value))
-              .whenEmpty(Assertions::fail)
+              .onPresent(value -> assertEquals(123L, value))
+              .onEmpty(Assertions::fail)
               .filter(value -> value > 120L)
-              .whenPresent(value -> assertEquals(123L, value))
-              .whenEmpty(Assertions::fail);
+              .onPresent(value -> assertEquals(123L, value))
+              .onEmpty(Assertions::fail);
 
     }
 
     @Test
     void presentOptionCanBeFilteredToEmptyOption() {
         Option.present(123L)
-              .whenPresent(value -> assertEquals(123L, value))
-              .whenEmpty(Assertions::fail)
+              .onPresent(value -> assertEquals(123L, value))
+              .onEmpty(Assertions::fail)
               .filter(value -> value < 120L)
-              .whenPresent(value -> fail());
+              .onPresent(value -> fail());
     }
 
     @Test
@@ -104,7 +104,7 @@ class OptionTest {
         var flag = new AtomicBoolean(false);
 
         Option.present(123L)
-              .whenPresent(value -> flag.set(true));
+              .onPresent(value -> flag.set(true));
 
         assertTrue(flag.get());
     }
@@ -114,7 +114,7 @@ class OptionTest {
         var flag = new AtomicBoolean(false);
 
         Option.empty()
-              .whenPresent(value -> flag.set(true));
+              .onPresent(value -> flag.set(true));
 
         assertFalse(flag.get());
     }
@@ -124,7 +124,7 @@ class OptionTest {
         var flag = new AtomicBoolean(false);
 
         Option.empty()
-              .whenEmpty(() -> flag.set(true));
+              .onEmpty(() -> flag.set(true));
 
         assertTrue(flag.get());
     }
@@ -134,7 +134,7 @@ class OptionTest {
         var flag = new AtomicBoolean(false);
 
         Option.present(123L)
-              .whenEmpty(() -> flag.set(true));
+              .onEmpty(() -> flag.set(true));
 
         assertFalse(flag.get());
     }
@@ -224,12 +224,12 @@ class OptionTest {
     @Test
     void anyReturnsFirstPresentOption() {
         Option.any(Option.present(1), Option.present(2))
-              .whenEmpty(Assertions::fail)
-              .whenPresent(value -> assertEquals(1, value));
+              .onEmpty(Assertions::fail)
+              .onPresent(value -> assertEquals(1, value));
 
         Option.any(Option.empty(), Option.present(2))
-              .whenEmpty(Assertions::fail)
-              .whenPresent(value -> assertEquals(2, value));
+              .onEmpty(Assertions::fail)
+              .onPresent(value -> assertEquals(2, value));
     }
 
     @Test
@@ -241,8 +241,8 @@ class OptionTest {
                 flag.set(true);
                 return Option.present(2);
             })
-              .whenEmpty(Assertions::fail)
-              .whenPresent(value -> assertEquals(1, value));
+              .onEmpty(Assertions::fail)
+              .onPresent(value -> assertEquals(1, value));
 
         assertFalse(flag.get());
 
@@ -251,8 +251,8 @@ class OptionTest {
                 flag.set(true);
                 return Option.present(2);
             })
-              .whenEmpty(Assertions::fail)
-              .whenPresent(value -> assertEquals(2, value));
+              .onEmpty(Assertions::fail)
+              .onPresent(value -> assertEquals(2, value));
 
         assertTrue(flag.get());
     }
@@ -260,236 +260,236 @@ class OptionTest {
     @Test
     void anyFindsFirstNonEmptyOption() {
         Option.any(Option.empty(), Option.present(2))
-              .whenEmpty(Assertions::fail)
-              .whenPresent(value -> assertEquals(2, value));
+              .onEmpty(Assertions::fail)
+              .onPresent(value -> assertEquals(2, value));
 
         Option.any(Option.empty(), Option.empty(), Option.present(3))
-              .whenEmpty(Assertions::fail)
-              .whenPresent(value -> assertEquals(3, value));
+              .onEmpty(Assertions::fail)
+              .onPresent(value -> assertEquals(3, value));
 
         Option.any(Option.empty(), Option.empty(), Option.empty(), Option.present(4))
-              .whenEmpty(Assertions::fail)
-              .whenPresent(value -> assertEquals(4, value));
+              .onEmpty(Assertions::fail)
+              .onPresent(value -> assertEquals(4, value));
 
         Option.any(Option.empty(), Option.empty(), Option.empty(), Option.empty(), Option.present(5))
-              .whenEmpty(Assertions::fail)
-              .whenPresent(value -> assertEquals(5, value));
+              .onEmpty(Assertions::fail)
+              .onPresent(value -> assertEquals(5, value));
 
         Option.any(Option.empty(), Option.empty(), Option.empty(), Option.empty(), Option.empty(), Option.present(6))
-              .whenEmpty(Assertions::fail)
-              .whenPresent(value -> assertEquals(6, value));
+              .onEmpty(Assertions::fail)
+              .onPresent(value -> assertEquals(6, value));
 
         Option.any(Option.empty(), Option.empty(), Option.empty(), Option.empty(), Option.empty(), Option.empty(), Option.present(7))
-              .whenEmpty(Assertions::fail)
-              .whenPresent(value -> assertEquals(7, value));
+              .onEmpty(Assertions::fail)
+              .onPresent(value -> assertEquals(7, value));
 
         Option.any(Option.empty(), Option.empty(), Option.empty(), Option.empty(), Option.empty(), Option.empty(), Option.empty(), Option.present(8))
-              .whenEmpty(Assertions::fail)
-              .whenPresent(value -> assertEquals(8, value));
+              .onEmpty(Assertions::fail)
+              .onPresent(value -> assertEquals(8, value));
 
         Option.any(Option.empty(), Option.empty(), Option.empty(), Option.empty(), Option.empty(), Option.empty(), Option.empty(), Option.empty(), Option.present(9))
-              .whenEmpty(Assertions::fail)
-              .whenPresent(value -> assertEquals(9, value));
+              .onEmpty(Assertions::fail)
+              .onPresent(value -> assertEquals(9, value));
     }
 
     @Test
     void allIsPresentIfAllInputsArePresent() {
         Option.all(Option.present(1))
               .map(v1 -> v1)
-              .whenPresent(value -> assertEquals(1, value))
-              .whenEmpty(Assertions::fail);
+              .onPresent(value -> assertEquals(1, value))
+              .onEmpty(Assertions::fail);
 
         Option.all(Option.present(1), Option.present(1))
               .map((v1, v2) -> v1 + v2)
-              .whenPresent(value -> assertEquals(2, value))
-              .whenEmpty(Assertions::fail);
+              .onPresent(value -> assertEquals(2, value))
+              .onEmpty(Assertions::fail);
 
         Option.all(Option.present(1), Option.present(1), Option.present(1))
               .map((v1, v2, v3) -> v1 + v2 + v3)
-              .whenPresent(value -> assertEquals(3, value))
-              .whenEmpty(Assertions::fail);
+              .onPresent(value -> assertEquals(3, value))
+              .onEmpty(Assertions::fail);
 
         Option.all(Option.present(1), Option.present(1), Option.present(1), Option.present(1))
               .map((v1, v2, v3, v4) -> v1 + v2 + v3 + v4)
-              .whenPresent(value -> assertEquals(4, value))
-              .whenEmpty(Assertions::fail);
+              .onPresent(value -> assertEquals(4, value))
+              .onEmpty(Assertions::fail);
 
         Option.all(Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1))
               .map((v1, v2, v3, v4, v5) -> v1 + v2 + v3 + v4 + v5)
-              .whenPresent(value -> assertEquals(5, value))
-              .whenEmpty(Assertions::fail);
+              .onPresent(value -> assertEquals(5, value))
+              .onEmpty(Assertions::fail);
 
         Option.all(Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1))
               .map((v1, v2, v3, v4, v5, v6) -> v1 + v2 + v3 + v4 + v5 + v6)
-              .whenPresent(value -> assertEquals(6, value))
-              .whenEmpty(Assertions::fail);
+              .onPresent(value -> assertEquals(6, value))
+              .onEmpty(Assertions::fail);
 
         Option.all(Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1))
               .map((v1, v2, v3, v4, v5, v6, v7) -> v1 + v2 + v3 + v4 + v5 + v6 + v7)
-              .whenPresent(value -> assertEquals(7, value))
-              .whenEmpty(Assertions::fail);
+              .onPresent(value -> assertEquals(7, value))
+              .onEmpty(Assertions::fail);
 
         Option.all(Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1))
               .map((v1, v2, v3, v4, v5, v6, v7, v8) -> v1 + v2 + v3 + v4 + v5 + v6 + v7 + v8)
-              .whenPresent(value -> assertEquals(8, value))
-              .whenEmpty(Assertions::fail);
+              .onPresent(value -> assertEquals(8, value))
+              .onEmpty(Assertions::fail);
 
         Option.all(Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1))
               .map((v1, v2, v3, v4, v5, v6, v7, v8, v9) -> v1 + v2 + v3 + v4 + v5 + v6 + v7 + v8 + v9)
-              .whenPresent(value -> assertEquals(9, value))
-              .whenEmpty(Assertions::fail);
+              .onPresent(value -> assertEquals(9, value))
+              .onEmpty(Assertions::fail);
     }
 
     @Test
     void allCanBeFlatMappedIfAllInputsArePresent() {
         Option.all(Option.present(1))
               .flatMap(v1 -> Option.present(v1))
-              .whenPresent(value -> assertEquals(1, value))
-              .whenEmpty(Assertions::fail);
+              .onPresent(value -> assertEquals(1, value))
+              .onEmpty(Assertions::fail);
 
         Option.all(Option.present(1), Option.present(1))
               .flatMap((v1, v2) -> Option.present(v1 + v2))
-              .whenPresent(value -> assertEquals(2, value))
-              .whenEmpty(Assertions::fail);
+              .onPresent(value -> assertEquals(2, value))
+              .onEmpty(Assertions::fail);
 
         Option.all(Option.present(1), Option.present(1), Option.present(1))
               .flatMap((v1, v2, v3) -> Option.present(v1 + v2 + v3))
-              .whenPresent(value -> assertEquals(3, value))
-              .whenEmpty(Assertions::fail);
+              .onPresent(value -> assertEquals(3, value))
+              .onEmpty(Assertions::fail);
 
         Option.all(Option.present(1), Option.present(1), Option.present(1), Option.present(1))
               .flatMap((v1, v2, v3, v4) -> Option.present(v1 + v2 + v3 + v4))
-              .whenPresent(value -> assertEquals(4, value))
-              .whenEmpty(Assertions::fail);
+              .onPresent(value -> assertEquals(4, value))
+              .onEmpty(Assertions::fail);
 
         Option.all(Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1))
               .flatMap((v1, v2, v3, v4, v5) -> Option.present(v1 + v2 + v3 + v4 + v5))
-              .whenPresent(value -> assertEquals(5, value))
-              .whenEmpty(Assertions::fail);
+              .onPresent(value -> assertEquals(5, value))
+              .onEmpty(Assertions::fail);
 
         Option.all(Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1))
               .flatMap((v1, v2, v3, v4, v5, v6) -> Option.present(v1 + v2 + v3 + v4 + v5 + v6))
-              .whenPresent(value -> assertEquals(6, value))
-              .whenEmpty(Assertions::fail);
+              .onPresent(value -> assertEquals(6, value))
+              .onEmpty(Assertions::fail);
 
         Option.all(Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1))
               .flatMap((v1, v2, v3, v4, v5, v6, v7) -> Option.present(v1 + v2 + v3 + v4 + v5 + v6 + v7))
-              .whenPresent(value -> assertEquals(7, value))
-              .whenEmpty(Assertions::fail);
+              .onPresent(value -> assertEquals(7, value))
+              .onEmpty(Assertions::fail);
 
         Option.all(Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1))
               .flatMap((v1, v2, v3, v4, v5, v6, v7, v8) -> Option.present(v1 + v2 + v3 + v4 + v5 + v6 + v7 + v8))
-              .whenPresent(value -> assertEquals(8, value))
-              .whenEmpty(Assertions::fail);
+              .onPresent(value -> assertEquals(8, value))
+              .onEmpty(Assertions::fail);
 
         Option.all(Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1))
               .flatMap((v1, v2, v3, v4, v5, v6, v7, v8, v9) -> Option.present(v1 + v2 + v3 + v4 + v5 + v6 + v7 + v8 + v9))
-              .whenPresent(value -> assertEquals(9, value))
-              .whenEmpty(Assertions::fail);
+              .onPresent(value -> assertEquals(9, value))
+              .onEmpty(Assertions::fail);
     }
 
     @Test
     void allIsMissingIfAnyInputIsMissing1() {
-        Option.all(Option.empty()).id().whenPresent(__ -> fail());
+        Option.all(Option.empty()).id().onPresent(__ -> fail());
     }
 
     @Test
     void allIsMissingIfAnyInputIsMissing2() {
-        Option.all(Option.empty(), Option.present(1)).id().whenPresent(__ -> fail());
-        Option.all(Option.present(1), Option.empty()).id().whenPresent(__ -> fail());
+        Option.all(Option.empty(), Option.present(1)).id().onPresent(__ -> fail());
+        Option.all(Option.present(1), Option.empty()).id().onPresent(__ -> fail());
     }
 
     @Test
     void allIsMissingIfAnyInputIsMissing3() {
-        Option.all(Option.empty(), Option.present(1), Option.present(1)).id().whenPresent(__ -> fail());
-        Option.all(Option.present(1), Option.empty(), Option.present(1)).id().whenPresent(__ -> fail());
-        Option.all(Option.present(1), Option.present(1), Option.empty()).id().whenPresent(__ -> fail());
+        Option.all(Option.empty(), Option.present(1), Option.present(1)).id().onPresent(__ -> fail());
+        Option.all(Option.present(1), Option.empty(), Option.present(1)).id().onPresent(__ -> fail());
+        Option.all(Option.present(1), Option.present(1), Option.empty()).id().onPresent(__ -> fail());
     }
 
     @Test
     void allIsMissingIfAnyInputIsMissing4() {
-        Option.all(Option.empty(), Option.present(1), Option.present(1), Option.present(1)).id().whenPresent(__ -> fail());
-        Option.all(Option.present(1), Option.empty(), Option.present(1), Option.present(1)).id().whenPresent(__ -> fail());
-        Option.all(Option.present(1), Option.present(1), Option.empty(), Option.present(1)).id().whenPresent(__ -> fail());
-        Option.all(Option.present(1), Option.present(1), Option.present(1), Option.empty()).id().whenPresent(__ -> fail());
+        Option.all(Option.empty(), Option.present(1), Option.present(1), Option.present(1)).id().onPresent(__ -> fail());
+        Option.all(Option.present(1), Option.empty(), Option.present(1), Option.present(1)).id().onPresent(__ -> fail());
+        Option.all(Option.present(1), Option.present(1), Option.empty(), Option.present(1)).id().onPresent(__ -> fail());
+        Option.all(Option.present(1), Option.present(1), Option.present(1), Option.empty()).id().onPresent(__ -> fail());
     }
 
     @Test
     void allIsMissingIfAnyInputIsMissing5() {
-        Option.all(Option.empty(), Option.present(1), Option.present(1), Option.present(1), Option.present(1)).id().whenPresent(__ -> fail());
-        Option.all(Option.present(1), Option.empty(), Option.present(1), Option.present(1), Option.present(1)).id().whenPresent(__ -> fail());
-        Option.all(Option.present(1), Option.present(1), Option.empty(), Option.present(1), Option.present(1)).id().whenPresent(__ -> fail());
-        Option.all(Option.present(1), Option.present(1), Option.present(1), Option.empty(), Option.present(1)).id().whenPresent(__ -> fail());
-        Option.all(Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.empty()).id().whenPresent(__ -> fail());
+        Option.all(Option.empty(), Option.present(1), Option.present(1), Option.present(1), Option.present(1)).id().onPresent(__ -> fail());
+        Option.all(Option.present(1), Option.empty(), Option.present(1), Option.present(1), Option.present(1)).id().onPresent(__ -> fail());
+        Option.all(Option.present(1), Option.present(1), Option.empty(), Option.present(1), Option.present(1)).id().onPresent(__ -> fail());
+        Option.all(Option.present(1), Option.present(1), Option.present(1), Option.empty(), Option.present(1)).id().onPresent(__ -> fail());
+        Option.all(Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.empty()).id().onPresent(__ -> fail());
     }
 
     @Test
     void allIsMissingIfAnyInputIsMissing6() {
-        Option.all(Option.empty(), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1)).id().whenPresent(__ -> fail());
-        Option.all(Option.present(1), Option.empty(), Option.present(1), Option.present(1), Option.present(1), Option.present(1)).id().whenPresent(__ -> fail());
-        Option.all(Option.present(1), Option.present(1), Option.empty(), Option.present(1), Option.present(1), Option.present(1)).id().whenPresent(__ -> fail());
-        Option.all(Option.present(1), Option.present(1), Option.present(1), Option.empty(), Option.present(1), Option.present(1)).id().whenPresent(__ -> fail());
-        Option.all(Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.empty(), Option.present(1)).id().whenPresent(__ -> fail());
-        Option.all(Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.empty()).id().whenPresent(__ -> fail());
+        Option.all(Option.empty(), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1)).id().onPresent(__ -> fail());
+        Option.all(Option.present(1), Option.empty(), Option.present(1), Option.present(1), Option.present(1), Option.present(1)).id().onPresent(__ -> fail());
+        Option.all(Option.present(1), Option.present(1), Option.empty(), Option.present(1), Option.present(1), Option.present(1)).id().onPresent(__ -> fail());
+        Option.all(Option.present(1), Option.present(1), Option.present(1), Option.empty(), Option.present(1), Option.present(1)).id().onPresent(__ -> fail());
+        Option.all(Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.empty(), Option.present(1)).id().onPresent(__ -> fail());
+        Option.all(Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.empty()).id().onPresent(__ -> fail());
     }
 
     @Test
     void allIsMissingIfAnyInputIsMissing7() {
         Option
-            .all(Option.empty(), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1)).id().whenPresent(__ -> fail());
+            .all(Option.empty(), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1)).id().onPresent(__ -> fail());
         Option
-            .all(Option.present(1), Option.empty(), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1)).id().whenPresent(__ -> fail());
+            .all(Option.present(1), Option.empty(), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1)).id().onPresent(__ -> fail());
         Option
-            .all(Option.present(1), Option.present(1), Option.empty(), Option.present(1), Option.present(1), Option.present(1), Option.present(1)).id().whenPresent(__ -> fail());
+            .all(Option.present(1), Option.present(1), Option.empty(), Option.present(1), Option.present(1), Option.present(1), Option.present(1)).id().onPresent(__ -> fail());
         Option
-            .all(Option.present(1), Option.present(1), Option.present(1), Option.empty(), Option.present(1), Option.present(1), Option.present(1)).id().whenPresent(__ -> fail());
+            .all(Option.present(1), Option.present(1), Option.present(1), Option.empty(), Option.present(1), Option.present(1), Option.present(1)).id().onPresent(__ -> fail());
         Option
-            .all(Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.empty(), Option.present(1), Option.present(1)).id().whenPresent(__ -> fail());
+            .all(Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.empty(), Option.present(1), Option.present(1)).id().onPresent(__ -> fail());
         Option
-            .all(Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.empty(), Option.present(1)).id().whenPresent(__ -> fail());
+            .all(Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.empty(), Option.present(1)).id().onPresent(__ -> fail());
         Option
-            .all(Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.empty()).id().whenPresent(__ -> fail());
+            .all(Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.empty()).id().onPresent(__ -> fail());
     }
 
     @Test
     void allIsMissingIfAnyInputIsMissing8() {
         Option
-            .all(Option.empty(), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1)).id().whenPresent(__ -> fail());
+            .all(Option.empty(), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1)).id().onPresent(__ -> fail());
         Option
-            .all(Option.present(1), Option.empty(), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1)).id().whenPresent(__ -> fail());
+            .all(Option.present(1), Option.empty(), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1)).id().onPresent(__ -> fail());
         Option
-            .all(Option.present(1), Option.present(1), Option.empty(), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1)).id().whenPresent(__ -> fail());
+            .all(Option.present(1), Option.present(1), Option.empty(), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1)).id().onPresent(__ -> fail());
         Option
-            .all(Option.present(1), Option.present(1), Option.present(1), Option.empty(), Option.present(1), Option.present(1), Option.present(1), Option.present(1)).id().whenPresent(__ -> fail());
+            .all(Option.present(1), Option.present(1), Option.present(1), Option.empty(), Option.present(1), Option.present(1), Option.present(1), Option.present(1)).id().onPresent(__ -> fail());
         Option
-            .all(Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.empty(), Option.present(1), Option.present(1), Option.present(1)).id().whenPresent(__ -> fail());
+            .all(Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.empty(), Option.present(1), Option.present(1), Option.present(1)).id().onPresent(__ -> fail());
         Option
-            .all(Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.empty(), Option.present(1), Option.present(1)).id().whenPresent(__ -> fail());
+            .all(Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.empty(), Option.present(1), Option.present(1)).id().onPresent(__ -> fail());
         Option
-            .all(Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.empty(), Option.present(1)).id().whenPresent(__ -> fail());
+            .all(Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.empty(), Option.present(1)).id().onPresent(__ -> fail());
         Option
-            .all(Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.empty()).id().whenPresent(__ -> fail());
+            .all(Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.empty()).id().onPresent(__ -> fail());
     }
 
     @Test
     void allIsMissingIfAnyInputIsMissing9() {
         Option
-            .all(Option.empty(), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1)).id().whenPresent(__ -> fail());
+            .all(Option.empty(), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1)).id().onPresent(__ -> fail());
         Option
-            .all(Option.present(1), Option.empty(), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1)).id().whenPresent(__ -> fail());
+            .all(Option.present(1), Option.empty(), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1)).id().onPresent(__ -> fail());
         Option
-            .all(Option.present(1), Option.present(1), Option.empty(), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1)).id().whenPresent(__ -> fail());
+            .all(Option.present(1), Option.present(1), Option.empty(), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1)).id().onPresent(__ -> fail());
         Option
-            .all(Option.present(1), Option.present(1), Option.present(1), Option.empty(), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1)).id().whenPresent(__ -> fail());
+            .all(Option.present(1), Option.present(1), Option.present(1), Option.empty(), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1)).id().onPresent(__ -> fail());
         Option
-            .all(Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.empty(), Option.present(1), Option.present(1), Option.present(1), Option.present(1)).id().whenPresent(__ -> fail());
+            .all(Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.empty(), Option.present(1), Option.present(1), Option.present(1), Option.present(1)).id().onPresent(__ -> fail());
         Option
-            .all(Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.empty(), Option.present(1), Option.present(1), Option.present(1)).id().whenPresent(__ -> fail());
+            .all(Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.empty(), Option.present(1), Option.present(1), Option.present(1)).id().onPresent(__ -> fail());
         Option
-            .all(Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.empty(), Option.present(1), Option.present(1)).id().whenPresent(__ -> fail());
+            .all(Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.empty(), Option.present(1), Option.present(1)).id().onPresent(__ -> fail());
         Option
-            .all(Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.empty(), Option.present(1)).id().whenPresent(__ -> fail());
+            .all(Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.empty(), Option.present(1)).id().onPresent(__ -> fail());
         Option
-            .all(Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.empty()).id().whenPresent(__ -> fail());
+            .all(Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.empty()).id().onPresent(__ -> fail());
     }
 }
