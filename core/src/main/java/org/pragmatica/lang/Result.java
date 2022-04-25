@@ -459,6 +459,10 @@ public sealed interface Result<T> permits Success, Failure {
         }
     }
 
+    static <R> Result<R> lift(Cause cause, ThrowingSupplier<R> supplier) {
+        return lift(__ -> cause, supplier);
+    }
+
     /**
      * Transform list of {@link Result} instances into {@link Result} with list of values.
      *
