@@ -1,7 +1,6 @@
 package org.pragmatica.example.calculator;
 
 import org.pragmatica.lang.Cause;
-import org.pragmatica.lang.Result;
 
 public enum EvalErrors implements Cause {
     INTEGER_OVERFLOW("Result is too big to fit into long"),
