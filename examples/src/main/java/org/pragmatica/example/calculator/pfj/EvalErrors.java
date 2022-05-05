@@ -1,4 +1,4 @@
-package org.pragmatica.example.calculator;
+package org.pragmatica.example.calculator.pfj;
 
 import org.pragmatica.lang.Cause;
 
