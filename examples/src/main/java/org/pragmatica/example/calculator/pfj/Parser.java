@@ -2,19 +2,40 @@ package org.pragmatica.example.calculator.pfj;
 
 import org.pragmatica.lang.Result;
 
+import java.util.ArrayDeque;
+import java.util.Deque;
+
+import static org.pragmatica.lang.Option.option;
 import static org.pragmatica.lang.Result.all;
 
 class Parser {
-    private final Stack<Expr> stack = new Stack<>();
+    private final Deque<Expr> stack = new ArrayDeque<>();
 
-    Result<Expr> parse(String token) {
+    public Result<Expr> parse(String token) {
         return switch (token) {
-            case "sqr" -> pop().map(Expr.Sqr::new).onSuccess(stack::push).map(Expr.class::cast);
-            case "*" -> all(pop(), pop()).map(Expr.Mul::new).onSuccess(stack::push).map(Expr.class::cast);
-            case "/" -> all(pop(), pop()).map(Expr.Div::new).onSuccess(stack::push).map(Expr.class::cast);
-            case "+" -> all(pop(), pop()).map(Expr.Add::new).onSuccess(stack::push).map(Expr.class::cast);
-            case "-" -> all(pop(), pop()).map(Expr.Sub::new).onSuccess(stack::push).map(Expr.class::cast);
-            default -> parseLong(token).map(Expr.Number::new).onSuccess(stack::push).map(Expr.class::cast);
+            case "sqr" -> pop()
+                .map(Expr.Sqr::new)
+                .map(this::push);
+
+            case "*" -> all(pop(), pop())
+                .map(Expr.Mul::new)
+                .map(this::push);
+
+            case "/" -> all(pop(), pop())
+                .map(Expr.Div::new)
+                .map(this::push);
+
+            case "+" -> all(pop(), pop())
+                .map(Expr.Add::new)
+                .map(this::push);
+
+            case "-" -> all(pop(), pop())
+                .map(Expr.Sub::new)
+                .map(this::push);
+
+            default -> parseLong(token)
+                .map(Expr.Number::new)
+                .map(this::push);
         };
     }
 
@@ -31,6 +52,12 @@ class Parser {
     }
 
     private Result<Expr> pop() {
-        return stack.pop().toResult(ParseErrors.PARSING_STACK_IS_EMPTY);
+        return option(stack.pollFirst())
+            .toResult(ParseErrors.PARSING_STACK_IS_EMPTY);
+    }
+
+    public Expr push(Expr expr) {
+        stack.addFirst(expr);
+        return expr;
     }
 }
