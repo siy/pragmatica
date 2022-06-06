@@ -19,7 +19,6 @@
  */
 package org.pragmatica.protocol.http.parser;
 
-import org.pragmatica.lang.Option;
 import org.pragmatica.lang.Option.Some;
 import org.pragmatica.lang.Result;
 import org.pragmatica.protocol.http.parser.ParsingState.Continue;
@@ -33,6 +32,21 @@ import static org.pragmatica.protocol.http.parser.ParserConstants.*;
 import static org.pragmatica.protocol.http.parser.HttpMessage.HttpParserState.*;
 
 public class HttpMessage {
+    enum HttpParserState {
+        START,
+        METHOD,
+        URI,
+        VERSION,
+        STATUS,
+        MESSAGE,
+        NAME,
+        COLON,
+        VALUE,
+        CR,
+        LF1,
+        LF2,
+    }
+
     private int index;
     private int lookup;
     private int status;
@@ -40,10 +54,11 @@ public class HttpMessage {
     private ParserType type;
     private HttpMethod method;
     private int version;
-    private final Slice header = new Slice(0, 0);
-    private final Slice uri = new Slice(0, 0);
-    private final Slice message = new Slice(0, 0);
+    private final Slice header = new Slice();
+    private final AttachedSlice uri = new AttachedSlice();
+    private final AttachedSlice message = new AttachedSlice();
     private final List<HttpHeader> headers = new ArrayList<>();
+
     private final Slice xmethod = new Slice(0, 0);
 
     private HttpMessage(ParserType type) {
@@ -58,6 +73,18 @@ public class HttpMessage {
         return new HttpMessage(ParserType.RESPONSE);
     }
 
+    public List<HttpHeader> headers() {
+        return headers;
+    }
+
+    public AttachedSlice uri() {
+        return uri;
+    }
+
+    public AttachedSlice message() {
+        return message;
+    }
+
     public String text() {
         var builder = new StringBuilder();
 
@@ -65,8 +92,14 @@ public class HttpMessage {
             .append("Method: ")
             .append(method)
             .append("\n")
+            .append("URI: ")
+            .append(uri.text())
+            .append("\n")
             .append("Version: ")
             .append(version)
+            .append("\n")
+            .append("Message: ")
+            .append(message.text())
             .append("\n")
             .append("Headers: ")
             .append(headers.size())
@@ -80,12 +113,12 @@ public class HttpMessage {
         return builder.toString();
     }
 
-    public Result<ParsingState> parse(byte[] p) {
+    public Result<ParsingState> parse(byte[] input) {
         int c, i;
-        int n = p.length;
+        int n = input.length;
 
         for (; index < n; ++index) {
-            c = p[index] & 0xff;
+            c = input[index] & 0xff;
 
             switch (parserState) {
                 case START:
@@ -97,17 +130,20 @@ public class HttpMessage {
                     }
                     parserState = type == ParserType.REQUEST ? METHOD : VERSION;
                     lookup = index;
+                    uri.data = input;
+                    message.data = input;
                     break;
                 case METHOD:
                     for (; ; ) {
                         if (c == ' ') {
-                            var httpMethod = HttpMethod.lookup(p, lookup, index - lookup);
+                            var httpMethod = HttpMethod.lookup(input, lookup, index - lookup);
 
-//                            switch (httpMethod) {
-//                                case Some some -> method = some.value();
-//                            }
+                            if (httpMethod instanceof Some<HttpMethod> some) {
+                                method = some.value();
+                            } else {
+                                return BAD_MSG;
+                            }
 
-//                            method = httpMethod;
                             xmethod.start = lookup;
                             xmethod.end = index;
 
@@ -120,7 +156,7 @@ public class HttpMessage {
                         if (++index == n) {
                             break;
                         }
-                        c = p[index] & 0xff;
+                        c = input[index] & 0xff;
                     }
                     break;
                 case URI:
@@ -145,17 +181,17 @@ public class HttpMessage {
                             return BAD_MSG;
                         }
                         if (++index == n) {break;}
-                        c = p[index] & 0xff;
+                        c = input[index] & 0xff;
                     }
                     break;
                 case VERSION:
                     if (c == ' ' || c == '\r' || c == '\n') {
                         if (index - lookup == 8 &&
-                            (READ64BE(p, lookup) & 0xFFFFFFFFFF00FF00L) == 0x485454502F002E00L
-                            && isDigit(p[lookup + 5])
-                            && isDigit(p[lookup + 7])) {
+                            (READ64BE(input, lookup) & 0xFFFFFFFFFF00FF00L) == 0x485454502F002E00L
+                            && isDigit(input[lookup + 5])
+                            && isDigit(input[lookup + 7])) {
 
-                            version = (p[lookup + 5] - '0') * 10 + (p[lookup + 7] - '0');
+                            version = (input[lookup + 5] - '0') * 10 + (input[lookup + 7] - '0');
                             if (type == ParserType.REQUEST) {
                                 parserState = c == '\r' ? CR : LF1;
                             } else {
@@ -191,7 +227,7 @@ public class HttpMessage {
                         if (++index == n) {
                             break;
                         }
-                        c = p[index] & 0xff;
+                        c = input[index] & 0xff;
                     }
                     break;
 
@@ -206,7 +242,7 @@ public class HttpMessage {
                             return BAD_MSG;
                         }
                         if (++index == n) {break;}
-                        c = p[index] & 0xff;
+                        c = input[index] & 0xff;
                     }
                     break;
 
@@ -244,7 +280,7 @@ public class HttpMessage {
                             return BAD_MSG;
                         }
                         if (++index == n) {break;}
-                        c = p[index] & 0xff;
+                        c = input[index] & 0xff;
                     }
                     break;
 
@@ -257,17 +293,17 @@ public class HttpMessage {
                     for (; ; ) {
                         if (c == '\r' || c == '\n') {
                             i = index;
-                            while (i > lookup && (p[i - 1] == ' ' || p[i - 1] == '\t')) {
+                            while (i > lookup && (input[i - 1] == ' ' || input[i - 1] == '\t')) {
                                 --i;
                             }
-                            headers.add(new HttpHeader(p, new Slice(header), new Slice(lookup, i)));
+                            headers.add(new HttpHeader(input, new Slice(header), new Slice(lookup, i)));
                             parserState = c == '\r' ? CR : LF1;
                             break;
                         } else if ((c < 0x20 && c != '\t') || (0x7F <= c && c < 0xA0)) {
                             return BAD_MSG;
                         }
                         if (++index == n) {break;}
-                        c = p[index] & 0xff;
+                        c = input[index] & 0xff;
                     }
                     break;
 
@@ -285,40 +321,36 @@ public class HttpMessage {
         }
     }
 
-    enum HttpParserState {
-        START,
-        METHOD,
-        URI,
-        VERSION,
-        STATUS,
-        MESSAGE,
-        NAME,
-        COLON,
-        VALUE,
-        CR,
-        LF1,
-        LF2,
-    }
+    private static class Slice {
+        protected int start;
+        protected int end;
 
-    public static final class Slice {
-        private int start;
-        private int end;
+        Slice() {
+            this(0, 0);
+        }
 
-        public Slice(int start, int end) {
+        Slice(int start, int end) {
             this.start = start;
             this.end = end;
         }
 
-        public Slice(Slice other) {
+        Slice(Slice other) {
             this(other.start, other.end);
         }
 
         public String text(byte[] data) {
-            return new String(data, start, end - start, StandardCharsets.ISO_8859_1);
+            return new String(data, start, len(), StandardCharsets.ISO_8859_1);
         }
 
         public int len() {
             return end - start;
+        }
+    }
+
+    private static final class AttachedSlice extends Slice {
+        private byte[] data;
+        public String text() {
+            return new String(data, start, len(), StandardCharsets.ISO_8859_1);
         }
     }
 
@@ -341,6 +373,10 @@ public class HttpMessage {
 
         public HttpHeaderName name() {
             return headerName;
+        }
+
+        public String value() {
+            return valueSlice.text(source);
         }
     }
 }
