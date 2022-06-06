@@ -324,39 +324,19 @@ public sealed interface Option<T> permits Some, None {
         return new Some<>(value);
     }
 
-    final class Some<T> implements Option<T> {
-        private final T value;
-
-        private Some(T value) {
-            this.value = value;
-        }
-
+    record Some<T>(T value) implements Option<T> {
         @Override
         public <R> R fold(Supplier<? extends R> emptyMapper, FN1<? extends R, ? super T> presentMapper) {
             return presentMapper.apply(value);
         }
 
         @Override
-        public boolean equals(Object o) {
-            if (this == o) {
-                return true;
-            }
-
-            return o instanceof Some<?> some && value.equals(some.value);
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(value);
-        }
-
-        @Override
         public String toString() {
-            return "Some(" + value.toString() + ")";
+            return "Some(" + value + ")";
         }
     }
 
-    final class None<T> implements Option<T> {
+    record None<T>() implements Option<T> {
         @Override
         public <R> R fold(Supplier<? extends R> emptyMapper, FN1<? extends R, ? super T> presentMapper) {
             return emptyMapper.get();
@@ -371,7 +351,6 @@ public sealed interface Option<T> permits Some, None {
     @SuppressWarnings({"rawtypes"})
     None NONE = new None();
 
-
     /**
      * This method allows "unwrapping" the value stored inside the Option instance. If value is missing then {@link IllegalStateException} is thrown.
      * <p>
@@ -382,7 +361,7 @@ public sealed interface Option<T> permits Some, None {
      */
     @Deprecated
     default T unwrap() {
-        return fold(() -> {throw new IllegalStateException("Option is empty!!!");}, Functions::id);
+        return fold(() -> { throw new IllegalStateException("Option is empty!!!"); }, Functions::id);
     }
 
     /**

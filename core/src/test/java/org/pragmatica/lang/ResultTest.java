@@ -19,6 +19,8 @@ package org.pragmatica.lang;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.pragmatica.lang.Result.Failure;
+import org.pragmatica.lang.Result.Success;
 
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -28,14 +30,34 @@ import static org.junit.jupiter.api.Assertions.*;
 class ResultTest {
     @Test
     void successResultsAreEqualIfValueEqual() {
-        Assertions.assertEquals(Result.success("123"), Result.success(123).map(Objects::toString));
-        Assertions.assertNotEquals(Result.success("321"), Result.success(123).map(Objects::toString));
+        assertEquals(Result.success("123"), Result.success(123).map(Objects::toString));
+        assertNotEquals(Result.success("321"), Result.success(123).map(Objects::toString));
     }
 
     @Test
     void failureResultsAreEqualIfFailureIsEqual() {
-        Assertions.assertEquals(Result.failure(Causes.cause("123")), Result.success(123).filter(Causes.with1("{0}"), v -> v < 0));
-        Assertions.assertNotEquals(Result.failure(Causes.cause("321")), Result.success(123).filter(Causes.with1("{0}"), v -> v < 0));
+        assertEquals(Result.failure(Causes.cause("123")), Result.success(123).filter(Causes.with1("{0}"), v -> v < 0));
+        assertNotEquals(Result.failure(Causes.cause("321")), Result.success(123).filter(Causes.with1("{0}"), v -> v < 0));
+    }
+
+    @Test
+    void patterMatchingIsSupportedForSuccess() {
+        var resultValue = Result.success(123);
+
+        switch (resultValue) {
+            case Success success -> assertEquals(123, success.value());
+            case Failure failure -> Assertions.fail("Unexpected failure: " + failure.cause());
+        }
+    }
+
+    @Test
+    void patterMatchingIsSupportedForFailure() {
+        var resultValue = Result.failure(Causes.cause("123"));
+
+        switch (resultValue) {
+            case Success success -> Assertions.fail("Unexpected success: " + success.value());
+            case Failure failure -> assertEquals(Causes.cause("123"), failure.cause());
+        }
     }
 
     @Test
@@ -146,7 +168,7 @@ class ResultTest {
         var flag1 = new AtomicBoolean(false);
 
         Result.<Integer>failure(Causes.cause("123")).toOption()
-              .onPresent(__ -> Assertions.fail("Should not happen"))
+              .onPresent(__ -> fail("Should not happen"))
               .onEmpty(() -> flag1.set(true));
 
         assertTrue(flag1.get());
@@ -154,8 +176,8 @@ class ResultTest {
 
     @Test
     void resultStatusCanBeChecked() {
-        Assertions.assertTrue(Result.success(321).isSuccess());
-        Assertions.assertFalse(Result.success(321).isFailure());
+        assertTrue(Result.success(321).isSuccess());
+        assertFalse(Result.success(321).isFailure());
         assertFalse(Result.failure(Causes.cause("321")).isSuccess());
         assertTrue(Result.failure(Causes.cause("321")).isFailure());
     }

@@ -364,30 +364,10 @@ public sealed interface Result<T> permits Success, Failure {
         return new Success<>(value);
     }
 
-    final class Success<T> implements Result<T> {
-        private final T value;
-
-        private Success(T value) {
-            this.value = value;
-        }
-
+    record Success<T>(T value) implements Result<T> {
         @Override
         public <R> R fold(FN1<? extends R, ? super Cause> failureMapper, FN1<? extends R, ? super T> successMapper) {
             return successMapper.apply(value);
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) {
-                return true;
-            }
-
-            return o instanceof Success<?> success && value.equals(success.value);
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(value);
         }
 
         @Override
@@ -411,35 +391,15 @@ public sealed interface Result<T> permits Success, Failure {
         return new Failure<>(value);
     }
 
-    final class Failure<T> implements Result<T> {
-        private final Cause value;
-
-        private Failure(Cause value) {
-            this.value = value;
-        }
-
+    record Failure<T>(Cause cause) implements Result<T> {
         @Override
         public <R> R fold(FN1<? extends R, ? super Cause> failureMapper, FN1<? extends R, ? super T> successMapper) {
-            return failureMapper.apply(value);
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) {
-                return true;
-            }
-
-            return o instanceof Failure<?> failure && value.equals(failure.value);
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(value);
+            return failureMapper.apply(cause);
         }
 
         @Override
         public String toString() {
-            return "Failure(" + value + ")";
+            return "Failure(" + cause + ")";
         }
     }
 
