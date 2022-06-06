@@ -1,0 +1,74 @@
+#ifndef COSMOPOLITAN_LIBC_HTTP_HTTP_H_
+#define COSMOPOLITAN_LIBC_HTTP_HTTP_H_
+#include "libc/time/struct/tm.h"
+
+
+#if !(__ASSEMBLER__ + __LINKER__ + 0)
+COSMOPOLITAN_C_START_
+
+struct HttpSlice {
+  short a, b;
+};
+
+struct HttpHeader {
+  struct HttpSlice k;
+  struct HttpSlice v;
+};
+
+struct HttpHeaders {
+  unsigned n;
+  struct HttpHeader *p;
+};
+
+struct HttpMessage {
+  int i, a, status;
+  unsigned char t;
+  unsigned char type;
+  unsigned char method;
+  unsigned char version;
+  struct HttpSlice k;
+  struct HttpSlice uri;
+  struct HttpSlice scratch;
+  struct HttpSlice message;
+  struct HttpSlice headers[kHttpHeadersMax];
+  struct HttpSlice xmethod;
+  struct HttpHeaders xheaders;
+};
+
+struct HttpUnchunker {
+  int t;
+  size_t i;
+  size_t j;
+  ssize_t m;
+};
+
+extern const char kHttpToken[256];
+extern const char kHttpMethod[18][8];
+extern const bool kHttpRepeatable[kHttpHeadersMax];
+
+const char *GetHttpReason(int);
+const char *GetHttpHeaderName(int);
+int GetHttpHeader(const char *, size_t);
+int GetHttpMethod(const char *, size_t);
+void InitHttpMessage(struct HttpMessage *, int);
+void DestroyHttpMessage(struct HttpMessage *);
+int ParseHttpMessage(struct HttpMessage *, const char *, size_t);
+bool HeaderHas(struct HttpMessage *, const char *, int, const char *, size_t);
+int64_t ParseContentLength(const char *, size_t);
+char *FormatHttpDateTime(char[hasatleast 30], struct tm *);
+bool ParseHttpRange(const char *, size_t, long, long *, long *);
+int64_t ParseHttpDateTime(const char *, size_t);
+bool IsValidHttpToken(const char *, size_t);
+bool IsAcceptablePath(const char *, size_t);
+bool IsAcceptableHost(const char *, size_t);
+bool IsAcceptablePort(const char *, size_t);
+bool IsReasonablePath(const char *, size_t);
+int64_t ParseIp(const char *, size_t);
+int ParseForwarded(const char *, size_t, uint32_t *, uint16_t *);
+bool IsMimeType(const char *, size_t, const char *);
+ssize_t Unchunk(struct HttpUnchunker *, char *, size_t, size_t *);
+const char *FindContentType(const char *, size_t);
+
+COSMOPOLITAN_C_END_
+#endif /* !(__ASSEMBLER__ + __LINKER__ + 0) */
+#endif /* COSMOPOLITAN_LIBC_HTTP_HTTP_H_ */
