@@ -1,15 +1,17 @@
 package org.pragmatica.protocol.http.parser;
 
 import org.junit.jupiter.api.Test;
+import org.pragmatica.protocol.http.parser.ParsingState.Done;
 
 import java.nio.charset.StandardCharsets;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.pragmatica.lang.Result.success;
 
-class HttpParserTest {
+class HttpMessageTest {
     @Test
     void simpleRequestIsParsedSuccessfully() {
-        var message = HttpParser.HttpMessage.forRequest();
+        var message = HttpMessage.forRequest();
         var buf =
 """
 GET /hello.htm HTTP/1.1
@@ -21,10 +23,10 @@ Connection: Keep-Alive
 """;
 
         var bytes = buf.getBytes(StandardCharsets.ISO_8859_1);
-        var rc = HttpParser.parse(message, bytes);
+        var rc = message.parse(bytes);
 
-        assertEquals(0, rc);
+        assertEquals(success(new Done()), rc);
 
-        System.out.println(message.text(bytes));
+        System.out.println(message.text());
     }
 }
