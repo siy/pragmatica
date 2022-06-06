@@ -19,6 +19,8 @@ package org.pragmatica.lang;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.pragmatica.lang.Option.None;
+import org.pragmatica.lang.Option.Some;
 
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -30,17 +32,27 @@ import static org.junit.jupiter.api.Assertions.*;
 class OptionTest {
     @Test
     void emptyOptionsAreEqual() {
-        Assertions.assertEquals(Option.empty(), Option.empty());
-        Assertions.assertEquals("None()", Option.empty().toString());
+        assertEquals(Option.empty(), Option.empty());
+        assertEquals("None()", Option.empty().toString());
+    }
+
+    @Test
+    void patternMatchingIsSupported() {
+        var optionValue = Option.present(123);
+
+        switch (optionValue) {
+            case Some some -> assertEquals(123, some.value());
+            case None none -> fail("Unexpected value: " + none);
+        }
     }
 
     @Test
     void presentOptionsAreEqualIfContentEqual() {
-        Assertions.assertEquals(Option.present(123), Option.present(123));
-        Assertions.assertNotEquals(Option.present(321), Option.present(123));
-        Assertions.assertNotEquals(Option.empty(), Option.present(1));
-        Assertions.assertNotEquals(Option.present(1), Option.empty());
-        Assertions.assertEquals("Some(1)", Option.present(1).toString());
+        assertEquals(Option.present(123), Option.present(123));
+        assertNotEquals(Option.present(321), Option.present(123));
+        assertNotEquals(Option.empty(), Option.present(1));
+        assertNotEquals(Option.present(1), Option.empty());
+        assertEquals("Some(1)", Option.present(1).toString());
     }
 
     @Test
@@ -165,20 +177,20 @@ class OptionTest {
 
     @Test
     void valueCanBeObtainedFromOption() {
-        Assertions.assertEquals(321L, Option.present(321L).or(123L));
-        Assertions.assertEquals(123L, Option.empty().or(123L));
+        assertEquals(321L, Option.present(321L).or(123L));
+        assertEquals(123L, Option.empty().or(123L));
     }
 
     @Test
     void valueCanBeLazilyObtainedFromOption() {
         var flag = new AtomicBoolean(false);
-        Assertions.assertEquals(321L, Option.present(321L).or(() -> {
+        assertEquals(321L, Option.present(321L).or(() -> {
             flag.set(true);
             return 123L;
         }));
         assertFalse(flag.get());
 
-        Assertions.assertEquals(123L, Option.empty().or(() -> {
+        assertEquals(123L, Option.empty().or(() -> {
             flag.set(true);
             return 123L;
         }));
@@ -187,12 +199,12 @@ class OptionTest {
 
     @Test
     void presentOptionCanBeStreamed() {
-        Assertions.assertEquals(1L, Option.present(1).stream().collect(Collectors.summarizingInt(Integer::intValue)).getSum());
+        assertEquals(1L, Option.present(1).stream().collect(Collectors.summarizingInt(Integer::intValue)).getSum());
     }
 
     @Test
     void emptyOptionCanBeStreamedToEmptyStream() {
-        Assertions.assertEquals(0L, Option.empty().stream().count());
+        assertEquals(0L, Option.empty().stream().count());
     }
 
     @Test
@@ -211,14 +223,14 @@ class OptionTest {
 
     @Test
     void optionCanBeConvertedToOptional() {
-        Assertions.assertEquals(Optional.of(321), Option.present(321).toOptional());
-        Assertions.assertEquals(Optional.empty(), Option.empty().toOptional());
+        assertEquals(Optional.of(321), Option.present(321).toOptional());
+        assertEquals(Optional.empty(), Option.empty().toOptional());
     }
 
     @Test
     void optionalCanBeConvertedToOption() {
-        Assertions.assertEquals(Option.option(123), Option.from(Optional.of(123)));
-        Assertions.assertEquals(Option.empty(), Option.from(Optional.empty()));
+        assertEquals(Option.option(123), Option.from(Optional.of(123)));
+        assertEquals(Option.empty(), Option.from(Optional.empty()));
     }
 
     @Test
