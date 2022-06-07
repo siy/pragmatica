@@ -18,12 +18,14 @@
 package org.pragmatica.protocol.http.parser;
 
 import org.junit.jupiter.api.Test;
+import org.pragmatica.protocol.http.parser.header.StandardHttpHeaderNames;
 
 import java.util.EnumSet;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.pragmatica.protocol.http.parser.StandardHttpHeaderNames.*;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.pragmatica.protocol.http.parser.header.StandardHttpHeaderNames.*;
 
 class StandardHttpHeaderNamesTest {
     private static final StandardHttpHeaderNames REPEATABLE[] = {

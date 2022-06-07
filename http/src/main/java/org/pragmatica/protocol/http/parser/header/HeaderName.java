@@ -15,16 +15,16 @@
  *
  */
 
-package org.pragmatica.protocol.http.parser;
+package org.pragmatica.protocol.http.parser.header;
 
-public interface HttpHeaderName {
-    String headerName();
+public interface HeaderName {
+    String canonicalName();
 
     boolean repeatable();
 
-    static HttpHeaderName custom(String headerName) {
-        record custom(String headerName, boolean repeatable) implements HttpHeaderName {};
+    static HeaderName custom(String name) {
+        record custom(String canonicalName, boolean repeatable) implements HeaderName {};
 
-        return new custom(headerName, true);
+        return new custom(name, true);
     }
 }

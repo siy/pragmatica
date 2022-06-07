@@ -18,10 +18,7 @@
 package org.pragmatica.io.async.uring.exchange;
 
 import org.pragmatica.io.async.Proactor;
-import org.pragmatica.io.async.SystemError;
 import org.pragmatica.io.async.common.SizeT;
-import org.pragmatica.io.async.file.FileDescriptor;
-import org.pragmatica.io.async.uring.struct.offheap.OffHeapSocketAddress;
 import org.pragmatica.io.async.uring.struct.raw.SQEntry;
 import org.pragmatica.io.async.uring.utils.PlainObjectPool;
 import org.pragmatica.io.async.util.OffHeapSlice;
@@ -30,7 +27,6 @@ import org.pragmatica.lang.Result;
 import java.util.function.BiConsumer;
 
 import static org.pragmatica.io.async.uring.AsyncOperation.RECV;
-import static org.pragmatica.lang.Result.success;
 
 /**
  * Exchange entry for {@code recv} request.

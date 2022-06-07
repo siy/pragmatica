@@ -4,6 +4,8 @@ import org.pragmatica.lang.Option;
 
 import java.nio.charset.StandardCharsets;
 
+import static org.pragmatica.protocol.http.parser.util.ParserHelper.isSame;
+
 public enum HttpMethod {
     DELETE,
     GET,
@@ -69,8 +71,9 @@ public enum HttpMethod {
             if (key <= 25) {
                 var method = MAP[key];
                 var name = method.nameBytes;
+                var sameFirstCharIgnoreCase = ((str[offset] & 0xFF) ^ (name[0] & 0xFF) & ~32) == 0;
 
-                if (((str[offset] & 0xFF) ^ (name[0] & 0xFF) & ~32) == 0 && ParserConstants.compare(str, offset, name, len) == 0 && name.length == len) {
+                if (sameFirstCharIgnoreCase && name.length == len && isSame(str, offset, name, len)) {
                     return method.option();
                 }
             }

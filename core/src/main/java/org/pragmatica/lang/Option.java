@@ -23,7 +23,6 @@ import org.pragmatica.lang.Option.Some;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -53,7 +52,7 @@ public sealed interface Option<T> permits Some, None {
      *
      * @param supplier Source of replacement value.
      *
-     * @return current instance if it is empty or the instance with the replacement value if current instance is preseent.
+     * @return current instance if it is empty or the instance with the replacement value if current instance is present.
      */
     default <U> Option<U> map(Supplier<U> supplier) {
         return fold(Option::empty, t -> present(supplier.get()));
@@ -77,7 +76,7 @@ public sealed interface Option<T> permits Some, None {
      *
      * @param supplier Source of replacement value.
      *
-     * @return current instance if it is empty or the instance with the replacement value if current instance is preseent.
+     * @return current instance if it is empty or the instance with the replacement value if current instance is present.
      */
     default <U> Option<U> flatMap(Supplier<Option<U>> supplier) {
         return fold(Option::empty, __ -> supplier.get());

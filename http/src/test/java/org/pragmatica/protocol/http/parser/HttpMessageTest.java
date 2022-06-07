@@ -2,12 +2,12 @@ package org.pragmatica.protocol.http.parser;
 
 import org.junit.jupiter.api.Test;
 import org.pragmatica.lang.Result;
-import org.pragmatica.protocol.http.parser.ParsingState.Continue;
-import org.pragmatica.protocol.http.parser.ParsingState.Done;
+import org.pragmatica.protocol.http.parser.ParsingResult.Continue;
+import org.pragmatica.protocol.http.parser.ParsingResult.Done;
 
 import java.nio.charset.StandardCharsets;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.pragmatica.lang.Result.success;
 
 class HttpMessageTest {
@@ -45,7 +45,7 @@ class HttpMessageTest {
         parseRequest(request, success(new Continue(272)));
     }
 
-    void parseRequest(String request, Result<ParsingState> expected) {
+    void parseRequest(String request, Result<ParsingResult> expected) {
         var message = HttpMessage.forRequest();
 
         assertEquals(expected, message.parse(request.getBytes(StandardCharsets.ISO_8859_1)));

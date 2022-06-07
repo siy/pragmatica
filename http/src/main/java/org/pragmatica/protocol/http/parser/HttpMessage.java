@@ -21,17 +21,24 @@ package org.pragmatica.protocol.http.parser;
 
 import org.pragmatica.lang.Option.Some;
 import org.pragmatica.lang.Result;
-import org.pragmatica.protocol.http.parser.ParsingState.Continue;
+import org.pragmatica.protocol.http.parser.ParsingResult.Continue;
+import org.pragmatica.protocol.http.parser.header.HttpHeader;
+import org.pragmatica.protocol.http.parser.header.StandardHttpHeaderNames;
+import org.pragmatica.protocol.http.parser.util.Slice;
+import org.pragmatica.protocol.http.parser.util.DetachedSlice;
 
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
 import static org.pragmatica.lang.Result.success;
-import static org.pragmatica.protocol.http.parser.ParserConstants.*;
 import static org.pragmatica.protocol.http.parser.HttpMessage.HttpParserState.*;
+import static org.pragmatica.protocol.http.parser.util.ParserHelper.*;
+import static org.pragmatica.protocol.http.parser.ParsingErrors.*;
 
 public class HttpMessage {
+    private static final int LIMIT = 0x7fff;
+    private static final Result<ParsingResult> DONE = success(new ParsingResult.Done());
+
     enum HttpParserState {
         START,
         METHOD,
@@ -51,15 +58,13 @@ public class HttpMessage {
     private int lookup;
     private int status;
     private HttpParserState parserState = START;
-    private ParserType type;
     private HttpMethod method;
     private int version;
-    private final Slice header = new Slice();
-    private final AttachedSlice uri = new AttachedSlice();
-    private final AttachedSlice message = new AttachedSlice();
+    private final DetachedSlice uri = new DetachedSlice();
+    private final DetachedSlice message = new DetachedSlice();
+    private final ParserType type;
+    private final DetachedSlice header = new DetachedSlice();
     private final List<HttpHeader> headers = new ArrayList<>();
-
-    private final Slice xmethod = new Slice(0, 0);
 
     private HttpMessage(ParserType type) {
         this.type = type;
@@ -77,43 +82,25 @@ public class HttpMessage {
         return headers;
     }
 
-    public AttachedSlice uri() {
-        return uri;
-    }
-
-    public AttachedSlice message() {
-        return message;
-    }
-
     public String text() {
         var builder = new StringBuilder();
 
         builder
-            .append("Method: ")
-            .append(method)
-            .append("\n")
-            .append("URI: ")
-            .append(uri.text())
-            .append("\n")
-            .append("Version: ")
-            .append(version)
-            .append("\n")
-            .append("Message: ")
-            .append(message.text())
-            .append("\n")
-            .append("Headers: ")
-            .append(headers.size())
-            .append("\n");
+            .append("Method: ").append(method).append('\n')
+            .append("URI: ").append(uri).append('\n')
+            .append("Version: ").append(version).append('\n')
+            .append("Message: ").append(message).append('\n')
+            .append("Headers (").append(headers.size()).append("): ").append('\n');
 
 
         for (var h : headers) {
-            builder.append("  ").append(h.text()).append("\n");
+            builder.append(' ').append(h).append('\n');
         }
 
         return builder.toString();
     }
 
-    public Result<ParsingState> parse(byte[] input) {
+    public Result<ParsingResult> parse(byte[] input) {
         int c, i;
         int n = input.length;
 
@@ -125,13 +112,13 @@ public class HttpMessage {
                     if (c == '\r' || c == '\n') {
                         break; /* RFC7230 § 3.5 */
                     }
-                    if (kHttpToken[c] == 0) {
-                        return BAD_MSG;
+
+                    if (isNotToken(c)) {
+                        return INVALID_REQUEST_HEADER.result();
                     }
                     parserState = type == ParserType.REQUEST ? METHOD : VERSION;
                     lookup = index;
-                    uri.data = input;
-                    message.data = input;
+
                     break;
                 case METHOD:
                     for (; ; ) {
@@ -141,17 +128,14 @@ public class HttpMessage {
                             if (httpMethod instanceof Some<HttpMethod> some) {
                                 method = some.value();
                             } else {
-                                return BAD_MSG;
+                                return UNKNOWN_METHOD.result();
                             }
-
-                            xmethod.start = lookup;
-                            xmethod.end = index;
 
                             lookup = index + 1;
                             parserState = URI;
                             break;
-                        } else if (kHttpToken[c] == 0) {
-                            return BAD_MSG;
+                        } else if (isNotToken(c)) {
+                            return INVALID_REQUEST_HEADER.result();
                         }
                         if (++index == n) {
                             break;
@@ -163,11 +147,11 @@ public class HttpMessage {
                     for (; ; ) {
                         if (c == ' ' || c == '\r' || c == '\n') {
                             if (index == lookup) {
-                                return BAD_MSG;
+                                return INVALID_URI.result();
                             }
 
-                            uri.start = lookup;
-                            uri.end = index;
+                            uri.start(lookup);
+                            uri.end(index);
 
                             if (c == ' ') {
                                 lookup = index + 1;
@@ -178,9 +162,11 @@ public class HttpMessage {
                             }
                             break;
                         } else if (c < 0x20 || (0x7F <= c && c < 0xA0)) {
-                            return BAD_MSG;
+                            return INVALID_CHARACTER_IN_HEADER.result();
                         }
-                        if (++index == n) {break;}
+                        if (++index == n) {
+                            break;
+                        }
                         c = input[index] & 0xff;
                     }
                     break;
@@ -192,13 +178,14 @@ public class HttpMessage {
                             && isDigit(input[lookup + 7])) {
 
                             version = (input[lookup + 5] - '0') * 10 + (input[lookup + 7] - '0');
+
                             if (type == ParserType.REQUEST) {
                                 parserState = c == '\r' ? CR : LF1;
                             } else {
                                 parserState = STATUS;
                             }
                         } else {
-                            return BAD_MSG;
+                            return INVALID_HTTP_VERSION.result();
                         }
                     }
                     break;
@@ -206,7 +193,7 @@ public class HttpMessage {
                     for (; ; ) {
                         if (c == ' ' || c == '\r' || c == '\n') {
                             if (status < 100) {
-                                return BAD_MSG;
+                                return INVALID_STATUS_CODE.result();
                             }
                             if (c == ' ') {
                                 lookup = index + 1;
@@ -219,10 +206,10 @@ public class HttpMessage {
                             status *= 10;
                             status += c - '0';
                             if (status > 999) {
-                                return BAD_MSG;
+                                return INVALID_STATUS_CODE.result();
                             }
                         } else {
-                            return BAD_MSG;
+                            return INVALID_STATUS_CODE.result();
                         }
                         if (++index == n) {
                             break;
@@ -234,21 +221,23 @@ public class HttpMessage {
                 case MESSAGE:
                     for (; ; ) {
                         if (c == '\r' || c == '\n') {
-                            message.start = lookup;
-                            message.end = index;
+                            message.start(lookup);
+                            message.end(index);
                             parserState = c == '\r' ? CR : LF1;
                             break;
                         } else if (c < 0x20 || (0x7F <= c && c < 0xA0)) {
-                            return BAD_MSG;
+                            return INVALID_CHARACTER_IN_HEADER.result();
                         }
-                        if (++index == n) {break;}
+                        if (++index == n) {
+                            break;
+                        }
                         c = input[index] & 0xff;
                     }
                     break;
 
                 case CR:
                     if (c != '\n') {
-                        return BAD_MSG;
+                        return INVALID_REQUEST_HEADER.result();
                     }
                     parserState = LF1;
                     break;
@@ -259,27 +248,29 @@ public class HttpMessage {
                         break;
                     } else if (c == '\n') {
                         return success(new Continue(++index));
-                    } else if (kHttpToken[c] == 0) {
+                    } else if (isNotToken(c)) {
                         /*
                          * 1. Forbid empty header name (RFC2616 §2.2)
                          * 2. Forbid line folding (RFC7230 §3.2.4)
                          */
-                        return BAD_MSG;
+                        return INVALID_REQUEST_HEADER.result();
                     }
-                    header.start = index;
+                    header.start(index);
                     parserState = NAME;
                     break;
 
                 case NAME:
                     for (; ; ) {
                         if (c == ':') {
-                            header.end = index;
+                            header.end(index);
                             parserState = COLON;
                             break;
-                        } else if (kHttpToken[c] == 0) {
-                            return BAD_MSG;
+                        } else if (isNotToken(c)) {
+                            return INVALID_REQUEST_HEADER_NAME.result();
                         }
-                        if (++index == n) {break;}
+                        if (++index == n) {
+                            break;
+                        }
                         c = input[index] & 0xff;
                     }
                     break;
@@ -296,13 +287,17 @@ public class HttpMessage {
                             while (i > lookup && (input[i - 1] == ' ' || input[i - 1] == '\t')) {
                                 --i;
                             }
-                            headers.add(new HttpHeader(input, new Slice(header), new Slice(lookup, i)));
+
+                            var headerName = StandardHttpHeaderNames.lookup(input, header.start(), header.len());
+                            headers.add(HttpHeader.createParsed(headerName, Slice.fromBytes(input, lookup, i)));
                             parserState = c == '\r' ? CR : LF1;
                             break;
                         } else if ((c < 0x20 && c != '\t') || (0x7F <= c && c < 0xA0)) {
-                            return BAD_MSG;
+                            return INVALID_REQUEST_HEADER_VALUE.result();
                         }
-                        if (++index == n) {break;}
+                        if (++index == n) {
+                            break;
+                        }
                         c = input[index] & 0xff;
                     }
                     break;
@@ -311,72 +306,13 @@ public class HttpMessage {
                     if (c == '\n') {
                         return success(new Continue(++index));
                     }
-                    return BAD_MSG;
+                    return INVALID_REQUEST_HEADER.result();
             }
         }
         if (index < LIMIT) {
             return DONE;
         } else {
-            return BAD_MSG;
-        }
-    }
-
-    private static class Slice {
-        protected int start;
-        protected int end;
-
-        Slice() {
-            this(0, 0);
-        }
-
-        Slice(int start, int end) {
-            this.start = start;
-            this.end = end;
-        }
-
-        Slice(Slice other) {
-            this(other.start, other.end);
-        }
-
-        public String text(byte[] data) {
-            return new String(data, start, len(), StandardCharsets.ISO_8859_1);
-        }
-
-        public int len() {
-            return end - start;
-        }
-    }
-
-    private static final class AttachedSlice extends Slice {
-        private byte[] data;
-        public String text() {
-            return new String(data, start, len(), StandardCharsets.ISO_8859_1);
-        }
-    }
-
-    public static final class HttpHeader {
-        private final HttpHeaderName headerName;
-        private final byte[] source;
-        private final Slice nameSlice;
-        private final Slice valueSlice;
-
-        public HttpHeader(byte[] source, Slice nameSlice, Slice valueSlice) {
-            this.source = source;
-            this.nameSlice = nameSlice;
-            this.valueSlice = valueSlice;
-            this.headerName = StandardHttpHeaderNames.lookup(source, nameSlice.start, nameSlice.len());
-        }
-
-        public String text() {
-            return nameSlice.text(source) + ": " + valueSlice.text(source);
-        }
-
-        public HttpHeaderName name() {
-            return headerName;
-        }
-
-        public String value() {
-            return valueSlice.text(source);
+            return REQUEST_HEADER_TOO_LONG.result();
         }
     }
 }

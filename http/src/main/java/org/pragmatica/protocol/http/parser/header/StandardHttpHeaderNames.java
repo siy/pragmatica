@@ -15,11 +15,13 @@
  *
  */
 
-package org.pragmatica.protocol.http.parser;
+package org.pragmatica.protocol.http.parser.header;
 
 import java.nio.charset.StandardCharsets;
 
-public enum StandardHttpHeaderNames implements HttpHeaderName {
+import static org.pragmatica.protocol.http.parser.util.ParserHelper.isSame;
+
+public enum StandardHttpHeaderNames implements HeaderName {
     HOST("Host", false),
     CACHE_CONTROL("Cache-Control", true),
     CONNECTION("Connection", false),
@@ -119,7 +121,7 @@ public enum StandardHttpHeaderNames implements HttpHeaderName {
     }
 
     @Override
-    public String headerName() {
+    public String canonicalName() {
         return headerName;
     }
 
@@ -129,32 +131,19 @@ public enum StandardHttpHeaderNames implements HttpHeaderName {
     }
 
     private static final int[] HASH_VALUES = {
-        199, 199, 199, 199, 199, 199, 199, 199, 199, 199,
-        199, 199, 199, 199, 199, 199, 199, 199, 199, 199,
-        199, 199, 199, 199, 199, 199, 199, 199, 199, 199,
-        199, 199, 199, 199, 199, 199, 199, 199, 199, 199,
-        199, 199, 199, 199, 199, 55, 199, 199, 199, 199,
-        199, 199, 199, 20, 199, 199, 199, 199, 199, 199,
-        199, 199, 199, 199, 199, 15, 199, 30, 35, 10,
-        25, 15, 0, 70, 199, 55, 25, 40, 0, 45,
-        15, 20, 50, 0, 0, 5, 199, 0, 199, 20,
-        199, 199, 199, 199, 199, 199, 199, 15, 199, 30,
-        35, 10, 25, 15, 0, 70, 199, 55, 25, 40,
-        0, 45, 15, 20, 50, 0, 0, 5, 199, 0,
-        199, 20, 199, 199, 199, 199, 199, 199, 199, 199,
-        199, 199, 199, 199, 199, 199, 199, 199, 199, 199,
-        199, 199, 199, 199, 199, 199, 199, 199, 199, 199,
-        199, 199, 199, 199, 199, 199, 199, 199, 199, 199,
-        199, 199, 199, 199, 199, 199, 199, 199, 199, 199,
-        199, 199, 199, 199, 199, 199, 199, 199, 199, 199,
-        199, 199, 199, 199, 199, 199, 199, 199, 199, 199,
-        199, 199, 199, 199, 199, 199, 199, 199, 199, 199,
-        199, 199, 199, 199, 199, 199, 199, 199, 199, 199,
-        199, 199, 199, 199, 199, 199, 199, 199, 199, 199,
-        199, 199, 199, 199, 199, 199, 199, 199, 199, 199,
-        199, 199, 199, 199, 199, 199, 199, 199, 199, 199,
-        199, 199, 199, 199, 199, 199, 199, 199, 199, 199,
-        199, 199, 199, 199, 199, 199
+        199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199,
+        199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199,
+        199, 199, 199, 199, 199, 55, 199, 199, 199, 199, 199, 199, 199, 20, 199, 199, 199, 199, 199, 199,
+        199, 199, 199, 199, 199, 15, 199, 30, 35, 10, 25, 15, 0, 70, 199, 55, 25, 40, 0, 45,
+        15, 20, 50, 0, 0, 5, 199, 0, 199, 20, 199, 199, 199, 199, 199, 199, 199, 15, 199, 30,
+        35, 10, 25, 15, 0, 70, 199, 55, 25, 40, 0, 45, 15, 20, 50, 0, 0, 5, 199, 0,
+        199, 20, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199,
+        199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199,
+        199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199,
+        199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199,
+        199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199,
+        199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199,
+        199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199, 199
     };
 
     private static int hash(byte[] str, int offset, int len) {
@@ -165,32 +154,17 @@ public enum StandardHttpHeaderNames implements HttpHeaderName {
             default:
                 hashValue += HASH_VALUES[str[offset + 21] & 0xFF];
                 /*FALLTHROUGH*/
-            case 21:
-            case 20:
-            case 19:
-            case 18:
-            case 17:
-            case 16:
-            case 15:
-            case 14:
-            case 13:
-            case 12:
-            case 11:
+            case 21: case 20: case 19: case 18: case 17: case 16:
+            case 15: case 14: case 13: case 12: case 11:
                 hashValue += HASH_VALUES[str[offset + 10] & 0xFF];
                 /*FALLTHROUGH*/
             case 10:
                 hashValue += HASH_VALUES[str[offset + 9] & 0xFF];
                 /*FALLTHROUGH*/
-            case 9:
-            case 8:
-            case 7:
-            case 6:
-            case 5:
+            case 9: case 8: case 7: case 6: case 5:
                 hashValue += HASH_VALUES[str[offset + 4] & 0xFF];
                 /*FALLTHROUGH*/
-            case 4:
-            case 3:
-            case 2:
+            case 4: case 3: case 2:
                 break;
         }
         
@@ -219,7 +193,7 @@ public enum StandardHttpHeaderNames implements HttpHeaderName {
         null, null, null, null, null, null, null, null, null, LAST_MODIFIED,
     };
     
-    public static HttpHeaderName lookup(byte[] str, int offset, int len) {
+    public static HeaderName lookup(byte[] str, int offset, int len) {
         if (len <= 32 && len >= 2)
         {
             var key = hash(str, offset, len);
@@ -228,13 +202,14 @@ public enum StandardHttpHeaderNames implements HttpHeaderName {
             {
                 var header = MAP[key];
                 var name = header.nameBytes;
+                var sameFirstCharIgnoreCase = ((str[offset] & 0xFF) ^ (name[0] & 0xFF) & ~32) == 0;
 
-                if (((str[offset] & 0xFF) ^ (name[0] & 0xFF) & ~32) == 0 && ParserConstants.compare(str, offset, name, len) == 0 && name.length == len) {
+                if (name.length == len && sameFirstCharIgnoreCase && isSame(str, offset, name, len)) {
                     return header;
                 }
             }
         }
 
-        return HttpHeaderName.custom(new String(str, 0, len, StandardCharsets.ISO_8859_1));
+        return HeaderName.custom(new String(str, 0, len, StandardCharsets.ISO_8859_1));
     }
 }

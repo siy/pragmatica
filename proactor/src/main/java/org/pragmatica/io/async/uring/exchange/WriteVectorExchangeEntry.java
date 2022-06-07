@@ -18,7 +18,6 @@
 package org.pragmatica.io.async.uring.exchange;
 
 import org.pragmatica.io.async.Proactor;
-import org.pragmatica.io.async.SystemError;
 import org.pragmatica.io.async.common.SizeT;
 import org.pragmatica.io.async.uring.struct.offheap.OffHeapIoVector;
 import org.pragmatica.io.async.uring.struct.raw.SQEntry;

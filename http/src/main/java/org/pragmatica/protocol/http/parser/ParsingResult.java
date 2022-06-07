@@ -17,7 +17,7 @@
 
 package org.pragmatica.protocol.http.parser;
 
-public sealed interface ParsingState {
-    record Done() implements ParsingState {}
-    record Continue(int index) implements ParsingState {}
+public sealed interface ParsingResult {
+    record Done() implements ParsingResult {}
+    record Continue(int index) implements ParsingResult {}
 }

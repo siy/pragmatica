@@ -24,7 +24,8 @@ import java.io.StringWriter;
 import java.text.MessageFormat;
 import java.util.function.Predicate;
 
-import static org.pragmatica.lang.Option.*;
+import static org.pragmatica.lang.Option.none;
+import static org.pragmatica.lang.Option.some;
 
 /**
  * Frequently used variants of {@link Cause}.
