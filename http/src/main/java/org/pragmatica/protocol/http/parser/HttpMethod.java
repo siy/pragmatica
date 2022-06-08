@@ -4,6 +4,7 @@ import org.pragmatica.lang.Option;
 
 import java.nio.charset.StandardCharsets;
 
+import static org.pragmatica.lang.Option.none;
 import static org.pragmatica.protocol.http.parser.util.ParserHelper.isSame;
 
 public enum HttpMethod {
@@ -70,6 +71,11 @@ public enum HttpMethod {
 
             if (key <= 25) {
                 var method = MAP[key];
+
+                if (method == null) {
+                    return none();
+                }
+
                 var name = method.nameBytes;
                 var sameFirstCharIgnoreCase = ((str[offset] & 0xFF) ^ (name[0] & 0xFF) & ~32) == 0;
 
@@ -79,7 +85,7 @@ public enum HttpMethod {
             }
         }
 
-        return Option.none();
+        return none();
     }
 
 }

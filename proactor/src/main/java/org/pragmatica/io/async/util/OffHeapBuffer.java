@@ -74,4 +74,9 @@ class OffHeapBuffer extends AbstractOffHeapStructure<OffHeapSlice> implements Of
     public String hexDump() {
         return HexFormat.of().withUpperCase().formatHex(export());
     }
+
+    @Override
+    public String toString() {
+        return "OffHeapBuffer(size = " + size() + ", used = " + used() + ')';
+    }
 }

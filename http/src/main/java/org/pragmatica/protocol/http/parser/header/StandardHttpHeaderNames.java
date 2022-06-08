@@ -201,6 +201,11 @@ public enum StandardHttpHeaderNames implements HeaderName {
             if (key <= 198)
             {
                 var header = MAP[key];
+
+                if (header == null) {
+                    return makeCustomHeaderName(str, len);
+                }
+
                 var name = header.nameBytes;
                 var sameFirstCharIgnoreCase = ((str[offset] & 0xFF) ^ (name[0] & 0xFF) & ~32) == 0;
 
@@ -210,6 +215,10 @@ public enum StandardHttpHeaderNames implements HeaderName {
             }
         }
 
+        return makeCustomHeaderName(str, len);
+    }
+
+    private static HeaderName makeCustomHeaderName(byte[] str, int len) {
         return HeaderName.custom(new String(str, 0, len, StandardCharsets.ISO_8859_1));
     }
 }

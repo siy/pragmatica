@@ -27,17 +27,21 @@ import org.pragmatica.protocol.http.parser.header.StandardHttpHeaderNames;
 import org.pragmatica.protocol.http.parser.util.Slice;
 import org.pragmatica.protocol.http.parser.util.DetachedSlice;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.pragmatica.lang.Result.success;
 import static org.pragmatica.protocol.http.parser.HttpMessage.HttpParserState.*;
+import static org.pragmatica.protocol.http.parser.ParserType.REQUEST;
 import static org.pragmatica.protocol.http.parser.util.ParserHelper.*;
 import static org.pragmatica.protocol.http.parser.ParsingErrors.*;
 
 public class HttpMessage {
     private static final int LIMIT = 0x7fff;
     private static final Result<ParsingResult> DONE = success(new ParsingResult.Done());
+    private byte[] source;
 
     enum HttpParserState {
         START,
@@ -71,7 +75,7 @@ public class HttpMessage {
     }
 
     public static HttpMessage forRequest() {
-        return new HttpMessage(ParserType.REQUEST);
+        return new HttpMessage(REQUEST);
     }
 
     public static HttpMessage forResponse() {
@@ -83,13 +87,17 @@ public class HttpMessage {
     }
 
     public String text() {
-        var builder = new StringBuilder();
+        var builder = new StringBuilder().append("Protocol Version: ").append(version).append('\n');
+
+        if (type == REQUEST) {
+            builder.append("Method: ").append(method).append('\n')
+                   .append("URI: ").append(uri.text(source, UTF_8)).append('\n');
+        } else {
+            builder.append("Status: ").append(status).append('\n')
+                   .append("Message: ").append(message.text(source, UTF_8)).append('\n');
+        }
 
         builder
-            .append("Method: ").append(method).append('\n')
-            .append("URI: ").append(uri).append('\n')
-            .append("Version: ").append(version).append('\n')
-            .append("Message: ").append(message).append('\n')
             .append("Headers (").append(headers.size()).append("): ").append('\n');
 
 
@@ -101,8 +109,13 @@ public class HttpMessage {
     }
 
     public Result<ParsingResult> parse(byte[] input) {
+        if (parserState != START) {
+            throw new IllegalStateException("HttpMessage.parse() can be invoked only once");
+        }
+
         int c, i;
         int n = input.length;
+        this.source = input;
 
         for (; index < n; ++index) {
             c = input[index] & 0xff;
@@ -116,7 +129,7 @@ public class HttpMessage {
                     if (isNotToken(c)) {
                         return INVALID_REQUEST_HEADER.result();
                     }
-                    parserState = type == ParserType.REQUEST ? METHOD : VERSION;
+                    parserState = type == REQUEST ? METHOD : VERSION;
                     lookup = index;
 
                     break;
@@ -179,7 +192,7 @@ public class HttpMessage {
 
                             version = (input[lookup + 5] - '0') * 10 + (input[lookup + 7] - '0');
 
-                            if (type == ParserType.REQUEST) {
+                            if (type == REQUEST) {
                                 parserState = c == '\r' ? CR : LF1;
                             } else {
                                 parserState = STATUS;
