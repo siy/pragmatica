@@ -44,6 +44,8 @@ class OffHeapSliceImpl implements OffHeapSlice {
 
     @Override
     public OffHeapSlice clear() {
+        RawMemory.clear(address, size);
+        used = 0;
         return this;
     }
 

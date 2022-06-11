@@ -12,7 +12,8 @@
         <module>proactor</module>
         <module>async-io</module>
         <module>examples</module>
-        <module>http</module>
+        <module>protocol-http</module>
+        <module>protocol-dns</module>
     </modules>
 
     <packaging>pom</packaging>
