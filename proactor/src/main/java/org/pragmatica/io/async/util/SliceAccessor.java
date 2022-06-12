@@ -95,6 +95,10 @@ public final class SliceAccessor {
         return (short)(getByte() & 0xFF);
     }
 
+    public int availableForRead() {
+        return slice.used() - position;
+    }
+
     public byte peekByte() {
         return RawMemory.getByte(validateAddressFor(Byte.BYTES));
     }
@@ -152,5 +156,25 @@ public final class SliceAccessor {
     public SliceAccessor updateSlice() {
         slice.used(position);
         return this;
+    }
+
+    public boolean availableByte() {
+        return availableForRead() >= Byte.BYTES;
+    }
+
+    public boolean availableShort() {
+        return availableForRead() >= Short.BYTES;
+    }
+
+    public boolean availableInt() {
+        return availableForRead() >= Integer.BYTES;
+    }
+
+    public boolean availableLong() {
+        return availableForRead() >= Integer.BYTES;
+    }
+
+    public boolean availableBytes(int len) {
+        return availableForRead() >= len;
     }
 }

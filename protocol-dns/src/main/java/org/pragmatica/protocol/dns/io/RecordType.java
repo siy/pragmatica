@@ -21,8 +21,11 @@
 package org.pragmatica.protocol.dns.io;
 
 
+import org.pragmatica.io.async.net.InetAddress;
 import org.pragmatica.io.async.net.InetAddress.Inet4Address;
+import org.pragmatica.io.async.net.InetAddress.Inet6Address;
 import org.pragmatica.io.async.util.SliceAccessor;
+import org.pragmatica.lang.Result;
 import org.pragmatica.protocol.dns.ResourceRecord;
 
 import java.util.Arrays;
@@ -30,14 +33,20 @@ import java.util.Comparator;
 
 import static org.pragmatica.io.async.net.InetAddress.inet4Address;
 import static org.pragmatica.io.async.net.InetAddress.inet6Address;
+import static org.pragmatica.lang.Option.option;
+import static org.pragmatica.lang.Result.all;
+import static org.pragmatica.lang.Result.success;
 import static org.pragmatica.protocol.dns.io.Decoding.decodeDomainName;
+import static org.pragmatica.protocol.dns.io.DnsIoErrors.INVALID_RECORD_TYPE;
+import static org.pragmatica.protocol.dns.io.DnsIoErrors.TOO_SHORT_INPUT;
 import static org.pragmatica.protocol.dns.io.Encoding.*;
 
 public enum RecordType implements RecordEncoder, RecordDecoder {
     A(1, true) {
         @Override
-        public AttributeBuilder decode(SliceAccessor sliceAccessor, AttributeBuilder attributeBuilder, int length) {
-            return attributeBuilder.ip(inet4Address(sliceAccessor.getBytes(length)));
+        public Result<AttributeBuilder> decode(SliceAccessor sliceAccessor, AttributeBuilder attributeBuilder, int length) {
+            return inet4Address(sliceAccessor.getBytes(length))
+                .map(attributeBuilder::ip);
         }
 
         @Override
@@ -58,8 +67,9 @@ public enum RecordType implements RecordEncoder, RecordDecoder {
     },
     NS(2, true) {
         @Override
-        public AttributeBuilder decode(SliceAccessor sliceAccessor, AttributeBuilder attributeBuilder, int length) {
-            return attributeBuilder.domainName(decodeDomainName(sliceAccessor));
+        public Result<AttributeBuilder> decode(SliceAccessor sliceAccessor, AttributeBuilder attributeBuilder, int length) {
+            return decodeDomainName(sliceAccessor)
+                .map(attributeBuilder::domainName);
         }
 
         @Override
@@ -124,10 +134,13 @@ public enum RecordType implements RecordEncoder, RecordDecoder {
     MINFO(14, true),
     MX(15, true) {
         @Override
-        public AttributeBuilder decode(SliceAccessor sliceAccessor, AttributeBuilder attributeBuilder, int length) {
-            return attributeBuilder
-                .mxReference(sliceAccessor.getShortInNetOrder())
-                .domainName(decodeDomainName(sliceAccessor));
+        public Result<AttributeBuilder> decode(SliceAccessor sliceAccessor, AttributeBuilder attributeBuilder, int length) {
+            var mxRef = !sliceAccessor.availableShort()
+                        ? TOO_SHORT_INPUT.<Integer>result()
+                        : success((int) sliceAccessor.getShortInNetOrder());
+
+            return all(mxRef, decodeDomainName(sliceAccessor))
+                .map(attributeBuilder::fromMX);
         }
 
         @Override
@@ -137,7 +150,7 @@ public enum RecordType implements RecordEncoder, RecordDecoder {
 
         @Override
         public void encodeData(SliceAccessor buffer, ResourceRecord record) {
-            buffer.putShortInNetOrder(record.domainData().mxReference());
+            buffer.putShortInNetOrder((short) record.domainData().mxReference());
             encodeDomainName(buffer, record.domainName());
         }
     },
@@ -165,8 +178,11 @@ public enum RecordType implements RecordEncoder, RecordDecoder {
     GPOS(27, true),
     AAAA(28, true) {
         @Override
-        public AttributeBuilder decode(SliceAccessor sliceAccessor, AttributeBuilder attributeBuilder, int length) {
-            return attributeBuilder.ip(inet6Address(sliceAccessor.getBytes(length)));
+        public Result<AttributeBuilder> decode(SliceAccessor sliceAccessor, AttributeBuilder attributeBuilder, int length) {
+            return !sliceAccessor.availableBytes(length)
+                     ? TOO_SHORT_INPUT.result()
+                     : inet6Address(sliceAccessor.getBytes(length))
+                       .map(attributeBuilder::ip);
         }
     },
     LOC(29, true),
@@ -238,8 +254,12 @@ public enum RecordType implements RecordEncoder, RecordDecoder {
         return resource;
     }
 
-    public static RecordType toRecordType(short value) {
-        return RECORD_TYPES[value];
+    public static Result<RecordType> toRecordType(short value) {
+        if (value < 0 || value >= RECORD_TYPES.length) {
+            return INVALID_RECORD_TYPE.result();
+        }
+
+        return option(RECORD_TYPES[value]).toResult(INVALID_RECORD_TYPE);
     }
 
     public boolean isAddress() {

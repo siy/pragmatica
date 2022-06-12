@@ -19,9 +19,12 @@ package org.pragmatica.protocol.dns.io;
 
 
 import org.pragmatica.io.async.util.SliceAccessor;
+import org.pragmatica.lang.Result;
+
+import static org.pragmatica.lang.Result.success;
 
 public interface RecordDecoder {
-    default AttributeBuilder decode(SliceAccessor sliceAccessor, AttributeBuilder attributeBuilder, int length) {
-        return attributeBuilder;
+    default Result<AttributeBuilder> decode(SliceAccessor sliceAccessor, AttributeBuilder attributeBuilder, int length) {
+        return success(attributeBuilder);
     }
 }

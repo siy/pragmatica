@@ -20,6 +20,11 @@
 
 package org.pragmatica.protocol.dns.io;
 
+import org.pragmatica.lang.Result;
+
+import static org.pragmatica.lang.Result.success;
+import static org.pragmatica.protocol.dns.io.DnsIoErrors.INVALID_RECORD_CLASS;
+
 public enum RecordClass {
     IN(1),
     CS(2),
@@ -38,15 +43,15 @@ public enum RecordClass {
         return this.value;
     }
 
-    public static RecordClass toRecordClass(short value) {
+    public static Result<RecordClass> toRecordClass(short value) {
         return switch (value) {
-            case 1 -> IN;
-            case 2 -> CS;
-            case 3 -> CH;
-            case 4 -> HS;
-            case 254 -> NONE;
-            case 255 -> ANY;
-            default -> throw new IllegalArgumentException("Attempt to convert " + value + " to RecordClass");
+            case 1 -> success(IN);
+            case 2 -> success(CS);
+            case 3 -> success(CH);
+            case 4 -> success(HS);
+            case 254 -> success(NONE);
+            case 255 -> success(ANY);
+            default -> INVALID_RECORD_CLASS.result();
         };
     }
 }

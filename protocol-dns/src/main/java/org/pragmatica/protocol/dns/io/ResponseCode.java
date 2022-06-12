@@ -20,6 +20,11 @@
 
 package org.pragmatica.protocol.dns.io;
 
+import org.pragmatica.lang.Result;
+
+import static org.pragmatica.lang.Result.success;
+import static org.pragmatica.protocol.dns.io.DnsIoErrors.INVALID_RESPONSE_CODE;
+
 public enum ResponseCode {
     NO_ERROR(0),
     FORMAT_ERROR(1),
@@ -37,15 +42,15 @@ public enum ResponseCode {
     public byte toByte() {
         return this.value;
     }
-    public static ResponseCode fromByte(byte value) {
+    public static Result<ResponseCode> fromByte(byte value) {
         return switch (value) {
-            case 0 -> NO_ERROR;
-            case 1 -> FORMAT_ERROR;
-            case 2 -> SERVER_FAILURE;
-            case 3 -> NAME_ERROR;
-            case 4 -> NOT_IMPLEMENTED;
-            case 5 -> REFUSED;
-            default -> throw new IllegalArgumentException("Attempt to convert " + value + " to ResponseCode");
+            case 0 -> success(NO_ERROR);
+            case 1 -> success(FORMAT_ERROR);
+            case 2 -> success(SERVER_FAILURE);
+            case 3 -> success(NAME_ERROR);
+            case 4 -> success(NOT_IMPLEMENTED);
+            case 5 -> success(REFUSED);
+            default -> INVALID_RESPONSE_CODE.result();
         };
     }
 }

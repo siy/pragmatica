@@ -20,6 +20,11 @@
 
 package org.pragmatica.protocol.dns.io;
 
+import org.pragmatica.lang.Result;
+
+import static org.pragmatica.lang.Result.success;
+import static org.pragmatica.protocol.dns.io.DnsIoErrors.INVALID_MESSAGE_TYPE;
+
 public enum MessageType {
     QUERY(0),
     RESPONSE(1);
@@ -34,11 +39,11 @@ public enum MessageType {
         return this.value;
     }
 
-    public static MessageType fromByte(byte value) {
+    public static Result<MessageType> fromByte(byte value) {
         return switch (value) {
-            case 0 -> QUERY;
-            case 1 -> RESPONSE;
-            default -> throw new IllegalArgumentException("Attempt to convert " + value + " to MessageType");
+            case 0 -> success(QUERY);
+            case 1 -> success(RESPONSE);
+            default -> INVALID_MESSAGE_TYPE.result();
         };
     }
 }

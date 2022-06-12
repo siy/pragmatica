@@ -20,6 +20,11 @@
 
 package org.pragmatica.protocol.dns.io;
 
+import org.pragmatica.lang.Result;
+
+import static org.pragmatica.lang.Result.success;
+import static org.pragmatica.protocol.dns.io.DnsIoErrors.INVALID_OPCODE;
+
 public enum OpCode {
     QUERY(0),
     IQUERY(1),
@@ -37,14 +42,14 @@ public enum OpCode {
         return this.value;
     }
 
-    public static OpCode fromByte(byte value) {
+    public static Result<OpCode> fromByte(byte value) {
         return switch (value) {
-            case 0 -> QUERY;
-            case 1 -> IQUERY;
-            case 2 -> STATUS;
-            case 4 -> NOTIFY;
-            case 5 -> UPDATE;
-            default -> throw new IllegalArgumentException("Attempt to convert " + value + " to OpCode");
+            case 0 -> success(QUERY);
+            case 1 -> success(IQUERY);
+            case 2 -> success(STATUS);
+            case 4 -> success(NOTIFY);
+            case 5 -> success(UPDATE);
+            default -> INVALID_OPCODE.result();
         };
     }
 }

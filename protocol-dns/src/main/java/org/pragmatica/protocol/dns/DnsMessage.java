@@ -20,11 +20,13 @@ package org.pragmatica.protocol.dns;
 
 import org.pragmatica.io.async.util.OffHeapSlice;
 import org.pragmatica.io.async.util.SliceAccessor;
+import org.pragmatica.lang.Result;
 import org.pragmatica.protocol.dns.io.*;
 
 import java.util.List;
 
 import static org.pragmatica.protocol.dns.io.Decoding.*;
+import static org.pragmatica.protocol.dns.io.DnsIoErrors.TOO_SHORT_INPUT;
 import static org.pragmatica.protocol.dns.io.Encoding.encodeQuestionRecords;
 import static org.pragmatica.protocol.dns.io.Encoding.encodeResourceRecords;
 
@@ -44,37 +46,39 @@ public record DnsMessage(
     List<ResourceRecord> authorityRecords,
     List<ResourceRecord> additionalRecords) {
 
-    public static DnsMessage decode(OffHeapSlice buffer) {
-        return decode(SliceAccessor.forSlice(buffer));
+    // TxID, header, header, question count, answer count, authority count, additional count
+    public static final int MIN_MESSAGE_LENGTH = Short.BYTES + Byte.BYTES + Byte.BYTES + Short.BYTES + Short.BYTES + Short.BYTES + Short.BYTES;
+
+    public static Result<DnsMessage> decode(OffHeapSlice offHeapSlice) {
+        return decode(SliceAccessor.forSlice(offHeapSlice));
     }
 
-    public static DnsMessage decode(SliceAccessor buffer) {
-        var builder = DnsMessageBuilder.create();
+    public static Result<DnsMessage> decode(SliceAccessor sliceAccessor) {
+        if (!sliceAccessor.availableBytes(MIN_MESSAGE_LENGTH)) {
+            return TOO_SHORT_INPUT.result();
+        }
 
-        builder.transactionId(buffer.getUnsignedShortInNetOrder());
+        var builder = DnsMessageBuilder.create().transactionId(sliceAccessor.getUnsignedShortInNetOrder());
 
-        byte header = buffer.getByte();
-        builder.messageType(decodeMessageType(header));
-        builder.opCode(decodeOpCode(header));
-        builder.authoritativeAnswer(decodeAuthoritativeAnswer(header));
-        builder.truncated(decodeTruncated(header));
-        builder.recursionDesired(decodeRecursionDesired(header));
+        var headerByte1 = sliceAccessor.getByte();
+        var headerByte2 = sliceAccessor.getByte();
+        var questionCount = sliceAccessor.getShortInNetOrder();
+        var answerCount = sliceAccessor.getShortInNetOrder();
+        var authorityCount = sliceAccessor.getShortInNetOrder();
+        var additionalCount = sliceAccessor.getShortInNetOrder();
 
-        header = buffer.getByte();
-        builder.recursionAvailable(decodeRecursionAvailable(header));
-        builder.responseCode(decodeResponseCode(header));
-
-        short questionCount = buffer.getShortInNetOrder();
-        short answerCount = buffer.getShortInNetOrder();
-        short authorityCount = buffer.getShortInNetOrder();
-        short additionalCount = buffer.getShortInNetOrder();
-
-        builder.questionRecords(decodeQuestions(buffer, questionCount));
-        builder.answerRecords(decodeRecords(buffer, answerCount));
-        builder.authorityRecords(decodeRecords(buffer, authorityCount));
-        builder.additionalRecords(decodeRecords(buffer, additionalCount));
-
-        return builder.build();
+        return decodeMessageType(headerByte1).map(builder::messageType)
+            .flatMap(__ -> decodeOpCode(headerByte1)).map(builder::opCode)
+            .flatMap(__ -> decodeAuthoritativeAnswer(headerByte1)).map(builder::authoritativeAnswer)
+            .flatMap(__ -> decodeTruncated(headerByte1)).map(builder::truncated)
+            .flatMap(__ -> decodeRecursionDesired(headerByte1)).map(builder::recursionDesired)
+            .flatMap(__ -> decodeRecursionAvailable(headerByte2)).map(builder::recursionAvailable)
+            .flatMap(__ -> decodeResponseCode(headerByte2)).map(builder::responseCode)
+            .flatMap(__ -> decodeQuestions(sliceAccessor, questionCount)).map(builder::questionRecords)
+            .flatMap(__ -> decodeRecords(sliceAccessor, answerCount)).map(builder::answerRecords)
+            .flatMap(__ -> decodeRecords(sliceAccessor, authorityCount)).map(builder::authorityRecords)
+            .flatMap(__ -> decodeRecords(sliceAccessor, additionalCount)).map(builder::additionalRecords)
+            .map(DnsMessageBuilder::build);
     }
 
     private static final byte AUTHORITATIVE_ANSWER = (byte) ((byte) 0x01 << 2);

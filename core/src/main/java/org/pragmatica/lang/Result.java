@@ -313,6 +313,11 @@ public sealed interface Result<T> permits Success, Failure {
         return fold(__ -> supplier.get(), __ -> this);
     }
 
+    default Result<T> onResultDo(Runnable runnable) {
+        runnable.run();
+        return this;
+    }
+
     /**
      * This method allows "unwrapping" the value stored inside the Result instance. If value is missing then {@link IllegalStateException} is thrown.
      * <p>

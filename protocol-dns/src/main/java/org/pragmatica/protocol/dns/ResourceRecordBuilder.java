@@ -16,7 +16,6 @@
  */
 package org.pragmatica.protocol.dns;
 
-import org.pragmatica.lang.Functions.FN1;
 import org.pragmatica.protocol.dns.io.RecordClass;
 import org.pragmatica.protocol.dns.io.RecordType;
 
@@ -36,7 +35,7 @@ public final class ResourceRecordBuilder {
     }
 
     public interface ResourceRecordBuilderStage4 {
-        ResourceRecordBuilderStage5 attributes(FN1<DnsAttributes, RecordType> attributes);
+        ResourceRecordBuilderStage5 attributes(DnsAttributes attributes);
     }
 
     public interface ResourceRecordBuilderStage5 {
@@ -49,6 +48,6 @@ public final class ResourceRecordBuilder {
                                      recordType,
                                      recordClass,
                                      ttl,
-                                     attributes.apply(recordType));
+                                     attributes);
     }
 }

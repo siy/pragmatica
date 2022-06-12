@@ -19,4 +19,4 @@ package org.pragmatica.protocol.dns;
 
 import org.pragmatica.io.async.net.InetAddress;
 
-public record DomainData(String domainName, InetAddress ip, short mxReference, String characterString) {}
+public record DomainData(String domainName, InetAddress ip, int mxReference, String characterString) {}

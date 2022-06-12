@@ -46,7 +46,6 @@ public class RequestTest {
 
         var dnsQuery = DnsMessageBuilder.create()
                                         .messageType(MessageType.QUERY)
-//                                        .questionRecord(QuestionRecord.addressV4ByName("www.ibm.com"))
                                         .questionRecord(QuestionRecord.addressV4ByName("www.google.com"))
                                         .build();
 
@@ -66,11 +65,12 @@ public class RequestTest {
             record answer(String domainName, InetAddress inetAddress, int ttl) {}
 
             var domainIpAnswer = DnsMessage.decode(buffer)
-                                           .answerRecords().stream()
-                                           .filter(record -> record.recordClass() == RecordClass.IN)
-                                           .filter(record -> record.recordType().isAddress())
-                                           .map(record -> new answer(record.domainName(), record.domainData().ip(), record.ttl()))
-                                           .toList();
+                                           .map(message -> message
+                                               .answerRecords().stream()
+                                               .filter(record -> record.recordClass() == RecordClass.IN)
+                                               .filter(record -> record.recordType().isAddress())
+                                               .map(record -> new answer(record.domainName(), record.domainData().ip(), record.ttl()))
+                                               .toList());
 
             System.out.println(result);
             System.out.println(domainIpAnswer);

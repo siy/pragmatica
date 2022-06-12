@@ -28,7 +28,7 @@ import org.pragmatica.protocol.dns.SoaData;
 public class AttributeBuilder {
     private InetAddress ip = Inet4Address.INADDR_ANY;
     private String domainName = "";
-    private short mxReference = (short) 0;
+    private int mxReference = 0;
 
     private AttributeBuilder() {}
 
@@ -36,8 +36,8 @@ public class AttributeBuilder {
         return new AttributeBuilder();
     }
 
-    public AttributeBuilder ip(Result<? extends InetAddress> inet4Address) {
-        inet4Address.onSuccess(inetAddress -> ip = inetAddress);
+    public AttributeBuilder ip(InetAddress inetAddress) {
+        ip = inetAddress;
         return this;
     }
     public AttributeBuilder domainName(String domainName) {
@@ -45,7 +45,11 @@ public class AttributeBuilder {
         return this;
     }
 
-    public AttributeBuilder mxReference(short mxReference) {
+    public AttributeBuilder fromMX(int mxReference, String domainName) {
+        return mxReference(mxReference).domainName(domainName);
+    }
+
+    public AttributeBuilder mxReference(int mxReference) {
         this.mxReference = mxReference;
         return this;
     }
