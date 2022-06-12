@@ -18,28 +18,27 @@
 package org.pragmatica.protocol.dns.io;
 
 import org.pragmatica.io.async.util.SliceAccessor;
-import org.pragmatica.lang.Functions;
 import org.pragmatica.lang.Functions.FN1;
 import org.pragmatica.protocol.dns.DnsAttributes;
 import org.pragmatica.protocol.dns.ResourceRecord;
 import org.pragmatica.protocol.dns.ResourceRecordBuilder;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.IntStream;
 
 import static org.pragmatica.protocol.dns.io.RecordClass.toRecordClass;
 import static org.pragmatica.protocol.dns.io.RecordType.toRecordType;
 
+//TODO: switch to Result<T>, more error checking
 public final class Decoding {
     private Decoding() {}
 
     public static String decodeDomainName(SliceAccessor sliceAccessor) {
-        return recurseDomainName(sliceAccessor, new StringBuilder()).toString();
+        return decodeDomainName(sliceAccessor, new StringBuilder()).toString();
     }
 
-    private static StringBuilder recurseDomainName(SliceAccessor sliceAccessor, StringBuilder domainName) {
-        int length = sliceAccessor.getUnsignedByte();
+    private static StringBuilder decodeDomainName(SliceAccessor sliceAccessor, StringBuilder domainName) {
+        var length = sliceAccessor.getUnsignedByte();
 
         if (isOffset(length)) {
             int position = sliceAccessor.getUnsignedByte();
@@ -48,12 +47,12 @@ public final class Decoding {
 
             sliceAccessor.position(position + offset);
 
-            recurseDomainName(sliceAccessor, domainName);
+            decodeDomainName(sliceAccessor, domainName);
 
             sliceAccessor.position(originalPosition);
         } else if (isLabel(length)) {
-            getLabel(sliceAccessor, domainName, length);
-            recurseDomainName(sliceAccessor, domainName);
+            decideLabel(sliceAccessor, domainName, length);
+            decodeDomainName(sliceAccessor, domainName);
         }
 
         return domainName;
@@ -67,12 +66,8 @@ public final class Decoding {
         return (length != 0 && (length & 0xc0) == 0);
     }
 
-    private static void getLabel(SliceAccessor sliceAccessor, StringBuilder domainName, int labelLength) {
+    private static void decideLabel(SliceAccessor sliceAccessor, StringBuilder domainName, int labelLength) {
         domainName.append(new ByteArrayCharSequence(sliceAccessor.getBytes(labelLength)));
-
-//        for (int jj = 0; jj < labelLength; jj++) {
-//            domainName.append((char) sliceAccessor.getByte());
-//        }
 
         if (sliceAccessor.peekByte() != 0) {
             domainName.append(".");
@@ -109,19 +104,37 @@ public final class Decoding {
     }
 
     private static ResourceRecord decodeRecord(SliceAccessor sliceAccessor) {
-        return ResourceRecordBuilder.create(decodeDomainName(sliceAccessor))
-                                    .recordType(toRecordType(sliceAccessor.getShortInNetOrder()))
-                                    .recordClass(toRecordClass(sliceAccessor.getShortInNetOrder()))
-                                    .ttl(sliceAccessor.getIntInNetOrder())
-                                    .attributes(readAttributes(sliceAccessor))
-                                    .build();
+        var builder = ResourceRecordBuilder.create(decodeDomainName(sliceAccessor));
+
+        int pos = sliceAccessor.position();
+        var bytes = sliceAccessor.getBytes(4);
+        sliceAccessor.position(pos);
+
+        var recordType = toRecordType(sliceAccessor.getShortInNetOrder());
+        var recordClass = toRecordClass(sliceAccessor.getShortInNetOrder());
+        var ttl = sliceAccessor.getIntInNetOrder();
+        var attributes = readAttributes(sliceAccessor);
+
+        return builder.recordType(recordType)
+                      .recordClass(recordClass)
+                      .ttl(ttl)
+                      .attributes(attributes)
+                      .build();
+
     }
 
     private static FN1<DnsAttributes, RecordType> readAttributes(SliceAccessor sliceAccessor) {
-        return recordType -> recordType.decode(sliceAccessor,
+        int length = sliceAccessor.getUnsignedShortInNetOrder();
+        int pos = sliceAccessor.position();
+
+        return recordType -> {
+            var attributes = recordType.decode(sliceAccessor,
                                                AttributeBuilder.create(),
-                                               sliceAccessor.getShortInNetOrder())
+                                               length)
                                        .build();
+            sliceAccessor.position(pos + length);
+            return attributes;
+        };
     }
 
     public static List<QuestionRecord> decodeQuestions(SliceAccessor sliceAccessor, short questionCount) {

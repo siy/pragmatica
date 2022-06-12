@@ -148,4 +148,9 @@ public final class SliceAccessor {
         position = 0;
         return this;
     }
+
+    public SliceAccessor updateSlice() {
+        slice.used(position);
+        return this;
+    }
 }

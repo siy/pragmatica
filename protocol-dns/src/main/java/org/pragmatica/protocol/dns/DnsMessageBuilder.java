@@ -22,15 +22,19 @@ import org.pragmatica.protocol.dns.io.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 //TODO: make a fluent builder
 public final class DnsMessageBuilder {
+    private static final AtomicInteger txId = new AtomicInteger(0);
+
+
     private int transactionId;
     private MessageType messageType = MessageType.QUERY;
     private OpCode opCode = OpCode.QUERY;
     private boolean authoritativeAnswer;
     private boolean truncated;
-    private boolean recursionDesired;
+    private boolean recursionDesired = true;
     private boolean recursionAvailable;
     private boolean reserved;
     private boolean acceptNonAuthenticatedData;
@@ -43,7 +47,7 @@ public final class DnsMessageBuilder {
     private DnsMessageBuilder() {}
 
     public static DnsMessageBuilder create() {
-        return new DnsMessageBuilder();
+        return new DnsMessageBuilder().transactionId(txId.incrementAndGet());
     }
 
     public DnsMessage build() {
@@ -99,6 +103,11 @@ public final class DnsMessageBuilder {
 
     public DnsMessageBuilder responseCode(ResponseCode responseCode) {
         this.responseCode = responseCode;
+        return this;
+    }
+
+    public DnsMessageBuilder questionRecord(QuestionRecord questionRecord) {
+        this.questionRecords.add(questionRecord);
         return this;
     }
 

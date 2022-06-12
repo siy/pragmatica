@@ -18,6 +18,7 @@
 package org.pragmatica.protocol.dns;
 
 
+import org.pragmatica.io.async.util.OffHeapSlice;
 import org.pragmatica.io.async.util.SliceAccessor;
 import org.pragmatica.protocol.dns.io.*;
 
@@ -42,6 +43,10 @@ public record DnsMessage(
     List<ResourceRecord> answerRecords,
     List<ResourceRecord> authorityRecords,
     List<ResourceRecord> additionalRecords) {
+
+    public static DnsMessage decode(OffHeapSlice buffer) {
+        return decode(SliceAccessor.forSlice(buffer));
+    }
 
     public static DnsMessage decode(SliceAccessor buffer) {
         var builder = DnsMessageBuilder.create();
@@ -77,6 +82,10 @@ public record DnsMessage(
     private static final byte RECURSION_DESIRED = (byte) 0x01;
     private static final byte RECURSION_AVAILABLE = (byte) ((byte) 0x01 << 7);
 
+    public void encode(OffHeapSlice offHeapSlice) {
+        encode(SliceAccessor.forSlice(offHeapSlice));
+    }
+
     public void encode(SliceAccessor sliceAccessor) {
         sliceAccessor.putShortInNetOrder((short) transactionId());
 
@@ -102,5 +111,7 @@ public record DnsMessage(
         encodeResourceRecords(sliceAccessor, answerRecords());
         encodeResourceRecords(sliceAccessor, authorityRecords());
         encodeResourceRecords(sliceAccessor, additionalRecords());
+
+        sliceAccessor.updateSlice();
     }
 }

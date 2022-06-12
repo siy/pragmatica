@@ -20,4 +20,12 @@
 
 package org.pragmatica.protocol.dns.io;
 
-public record QuestionRecord(String domainName, RecordType recordType, RecordClass recordClass) {}
+public record QuestionRecord(String domainName, RecordType recordType, RecordClass recordClass) {
+    public static QuestionRecord addressV4ByName(String domainName) {
+        return new QuestionRecord(domainName, RecordType.A, RecordClass.IN);
+    }
+
+    public static QuestionRecord addressV6ByName(String domainName) {
+        return new QuestionRecord(domainName, RecordType.AAAA, RecordClass.IN);
+    }
+}

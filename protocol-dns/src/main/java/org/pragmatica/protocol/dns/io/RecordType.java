@@ -36,7 +36,7 @@ import static org.pragmatica.protocol.dns.io.Encoding.*;
 public enum RecordType implements RecordEncoder, RecordDecoder {
     A(1, true) {
         @Override
-        public AttributeBuilder decode(SliceAccessor sliceAccessor, AttributeBuilder attributeBuilder, short length) {
+        public AttributeBuilder decode(SliceAccessor sliceAccessor, AttributeBuilder attributeBuilder, int length) {
             return attributeBuilder.ip(inet4Address(sliceAccessor.getBytes(length)));
         }
 
@@ -58,7 +58,7 @@ public enum RecordType implements RecordEncoder, RecordDecoder {
     },
     NS(2, true) {
         @Override
-        public AttributeBuilder decode(SliceAccessor sliceAccessor, AttributeBuilder attributeBuilder, short length) {
+        public AttributeBuilder decode(SliceAccessor sliceAccessor, AttributeBuilder attributeBuilder, int length) {
             return attributeBuilder.domainName(decodeDomainName(sliceAccessor));
         }
 
@@ -124,7 +124,7 @@ public enum RecordType implements RecordEncoder, RecordDecoder {
     MINFO(14, true),
     MX(15, true) {
         @Override
-        public AttributeBuilder decode(SliceAccessor sliceAccessor, AttributeBuilder attributeBuilder, short length) {
+        public AttributeBuilder decode(SliceAccessor sliceAccessor, AttributeBuilder attributeBuilder, int length) {
             return attributeBuilder
                 .mxReference(sliceAccessor.getShortInNetOrder())
                 .domainName(decodeDomainName(sliceAccessor));
@@ -165,7 +165,7 @@ public enum RecordType implements RecordEncoder, RecordDecoder {
     GPOS(27, true),
     AAAA(28, true) {
         @Override
-        public AttributeBuilder decode(SliceAccessor sliceAccessor, AttributeBuilder attributeBuilder, short length) {
+        public AttributeBuilder decode(SliceAccessor sliceAccessor, AttributeBuilder attributeBuilder, int length) {
             return attributeBuilder.ip(inet6Address(sliceAccessor.getBytes(length)));
         }
     },
@@ -240,5 +240,9 @@ public enum RecordType implements RecordEncoder, RecordDecoder {
 
     public static RecordType toRecordType(short value) {
         return RECORD_TYPES[value];
+    }
+
+    public boolean isAddress() {
+        return this == A || this == AAAA;
     }
 }
