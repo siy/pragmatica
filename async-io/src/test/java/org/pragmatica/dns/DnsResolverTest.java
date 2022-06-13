@@ -23,19 +23,20 @@ import org.pragmatica.lang.Promise;
 
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
-
 class DnsResolverTest {
     @Test
     void trySomeExistentDomains() {
         var resolver = DnsResolver.resolver();
 
-        var ibm = resolver.ipForName(DomainName.fromString("www.ibm.com"));
-        var google = resolver.ipForName(DomainName.fromString("www.google.com"));
-        var github = resolver.ipForName(DomainName.fromString("www.github.com"));
+        var ibm = resolver.forName(DomainName.fromString("www.ibm.com"));
+        var google = resolver.forName(DomainName.fromString("www.google.com"));
+        var github = resolver.forName(DomainName.fromString("www.github.com"));
+        var twitter = resolver.forName(DomainName.fromString("www.twitter.com"));
 
-        Promise.all(ibm, google, github).map(List::of)
+        Promise.all(ibm, google, github, twitter)
+               .map(List::of)
                .onSuccess(list -> list.forEach(System.out::println))
-               .join().onFailureDo(Assertions::fail);
+               .join()
+               .onFailureDo(Assertions::fail);
     }
 }

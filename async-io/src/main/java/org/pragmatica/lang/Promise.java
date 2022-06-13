@@ -26,6 +26,7 @@ import org.pragmatica.task.TaskExecutor;
 import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import static org.pragmatica.io.async.util.ActionableThreshold.threshold;
 import static org.pragmatica.io.async.util.ResultCollector.resultCollector;
@@ -64,6 +65,10 @@ public interface Promise<T> {
      */
     <U> Promise<U> map(FN1<U, ? super T> mapper);
 
+    default <U> Promise<U> map(Supplier<U> mapper) {
+        return map(__ -> mapper.get());
+    }
+
     /**
      * Compose current instance with the function which returns a Promise of another type.
      *
@@ -72,6 +77,10 @@ public interface Promise<T> {
      * @return Composed instance
      */
     <U> Promise<U> flatMap(FN1<Promise<U>, ? super T> mapper);
+
+    default <U> Promise<U> flatMap(Supplier<Promise<U>> mapper) {
+        return flatMap(__ -> mapper.get());
+    }
 
     /**
      * Run asynchronous task. The task will receive current instance of Promise as a parameter.

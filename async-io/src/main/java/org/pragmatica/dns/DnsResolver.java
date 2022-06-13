@@ -17,10 +17,9 @@
 
 package org.pragmatica.dns;
 
-import org.pragmatica.dns.io.DnsIoErrors;
 import org.pragmatica.dns.io.MessageType;
 import org.pragmatica.dns.io.QuestionRecord;
-import org.pragmatica.dns.io.RecordClass;
+import org.pragmatica.io.async.Proactor;
 import org.pragmatica.io.async.Timeout;
 import org.pragmatica.io.async.file.FileDescriptor;
 import org.pragmatica.io.async.net.InetAddress.Inet4Address;
@@ -33,58 +32,72 @@ import org.pragmatica.lang.PromiseIO;
 import org.pragmatica.lang.Result;
 import org.pragmatica.lang.Unit;
 
-import java.time.Duration;
-import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.PriorityBlockingQueue;
 
 import static org.pragmatica.dns.io.DnsIoErrors.NO_RESULTS_FOUND;
 import static org.pragmatica.lang.PromiseIO.udpSocket;
-import static org.pragmatica.lang.Tuple.tuple;
 
 public class DnsResolver {
-    private static final InetPort DNSPORT = InetPort.inetPort(53);
-    // TODO: pass list as a parameter
-    private static final Inet4Address[] SERVERS = {
-        new Inet4Address(new byte[]{8, 8, 8, 8}),   // Google Public DNS
-        new Inet4Address(new byte[]{8, 8, 4, 4}), // Google Public DNS
+    private static final InetPort DNS_PORT = InetPort.inetPort(53);
 
-//        new Inet4Address(new byte[]{208, 67, 222, 222}),  //Cisco OpenDNS
-//        new Inet4Address(new byte[]{208, 67, 220, 220}),//Cisco OpenDNS
-        new Inet4Address(new byte[]{1, 1, 1, 1}), //Cloudflare
-        new Inet4Address(new byte[]{1, 0, 0, 1}),          //Cloudflare
-        new Inet4Address(new byte[]{9, 9, 9, 9}),  //Quad9
-        //new Inet4Address(new byte[]{149, 112, 112, 112}), //Quad9
+    private static final Inet4Address[] SERVERS = {
+        new Inet4Address(new byte[]{1, 0, 0, 1}),                               // Cloudflare
+        new Inet4Address(new byte[]{1, 1, 1, 1}),                               // Cloudflare
+        new Inet4Address(new byte[]{8, 8, 4, 4}),                               // Google Public DNS
+        new Inet4Address(new byte[]{8, 8, 8, 8}),                               // Google Public DNS
+        new Inet4Address(new byte[]{9, 9, 9, 9}),                               // Quad9
+        new Inet4Address(new byte[]{(byte) 149, 112, 112, 112}),                // Quad9
+        new Inet4Address(new byte[]{(byte) 208, 67, (byte) 220, (byte) 220}),   // Cisco OpenDNS
+        new Inet4Address(new byte[]{(byte) 208, 67, (byte) 222, (byte) 222}),   // Cisco OpenDNS
     };
+
+    private record TtlEntry(DomainAddress domainAddress, long expirationTime) {
+        static TtlEntry create(DomainAddress domainAddress) {
+            return new TtlEntry(domainAddress, System.nanoTime() + domainAddress.ttl().toNanos());
+        }
+    }
 
     private final ConcurrentMap<DomainName, Promise<DomainAddress>> cache = new ConcurrentHashMap<>();
     private final List<FileDescriptor> sockets;
+    private final PriorityBlockingQueue<TtlEntry> queue = new PriorityBlockingQueue<>(1024, Comparator.comparingLong(TtlEntry::expirationTime));
 
-    private DnsResolver(List<FileDescriptor> sockets) {
-        this.sockets = sockets;
+    private DnsResolver(List<Inet4Address> serverList) {
+        this.sockets = serverList
+                             .stream()
+                             .map(inetAddress -> SocketAddress.socketAddress(DNS_PORT, inetAddress))
+                             .map(address -> udpSocket().flatMap(fd -> PromiseIO.connect(fd, address)).join())
+                             .map(Result::unwrap)
+                             .toList();
+
+        Promise.promise().async(this::ttlProcessor);
     }
 
     public static DnsResolver resolver() {
-        var list = Arrays.stream(SERVERS)
-                         .map(inetAddress -> SocketAddress.socketAddress(DNSPORT, inetAddress))
-                         .map(address -> udpSocket().flatMap(fd -> PromiseIO.connect(fd, address)).join())
-                         .map(Result::unwrap)
-                         .toList();
-
-        return new DnsResolver(list);
+        return new DnsResolver(List.of(SERVERS));
     }
 
-    public Promise<DomainAddress> ipForName(DomainName domainName) {
+    public static DnsResolver resolver(List<Inet4Address> servers) {
+        return new DnsResolver(servers);
+    }
+
+    public Promise<DomainAddress> forName(DomainName domainName) {
         return cache.computeIfAbsent(domainName, this::resolveDomain);
     }
 
+    public Promise<Unit> stop() {
+        var result = Promise.<Unit>promise();
+        var threshold = ActionableThreshold.threshold(sockets.size(), () -> result.resolve(Unit.unitResult()));
+
+        sockets.forEach(fd -> PromiseIO.close(fd).onResultDo(threshold::registerEvent));
+        return result;
+    }
+
     private Promise<DomainAddress> resolveDomain(DomainName domainName) {
-        var promise = Promise.<DomainAddress>promise();
-
-        promise.async(p -> startResolve(p, domainName));
-
-        return promise;
+        return Promise.<DomainAddress>promise().async(promise -> startResolve(promise, domainName));
     }
 
     @SuppressWarnings("resource")
@@ -92,11 +105,14 @@ public class DnsResolver {
         var requestBuffer = encodeQuery(domainName);
 
         Promise.anySuccess(NO_RESULTS_FOUND.result(),
-                           sockets.stream().map(socket -> querySingleServer(socket, requestBuffer, domainName)).toList())
+                           sockets.stream()
+                                  .map(socket -> querySingleServer(socket, requestBuffer, domainName))
+                                  .toList())
                .onResult(promise::resolve)
                .onResultDo(requestBuffer::close);
+
         promise
-            .onSuccess(domainAddress -> setupTimer(domainName, domainAddress.ttl()));
+            .onSuccess(domainAddress -> queue.offer(TtlEntry.create(domainAddress)));
     }
 
     private OffHeapSlice encodeQuery(DomainName domainName) {
@@ -111,19 +127,14 @@ public class DnsResolver {
         return requestBuffer;
     }
 
-    //TODO: use common 1s timer
-    private void setupTimer(DomainName domainName, Duration ttl) {
-        PromiseIO.delay(Timeout.fromDuration(ttl)).onResultDo(() -> cache.remove(domainName));
-    }
-
     @SuppressWarnings("resource")
     private Promise<DomainAddress> querySingleServer(FileDescriptor socket, OffHeapSlice requestBuffer, DomainName domainName) {
         var promise = Promise.<DomainAddress>promise();
         var responseBuffer = OffHeapSlice.fixedSize(4096);
 
         PromiseIO.write(socket, requestBuffer)
-                 .flatMap(__ -> PromiseIO.read(socket, responseBuffer))
-                 .onResult(__ -> decodeResponse(responseBuffer, promise, domainName))
+                 .flatMap(() -> PromiseIO.read(socket, responseBuffer))
+                 .onResultDo(() -> decodeResponse(responseBuffer, promise, domainName))
                  .onResultDo(responseBuffer::close);
 
         return promise;
@@ -133,20 +144,37 @@ public class DnsResolver {
         var domainAddress = DnsMessage.decode(buffer)
                                       .map(message -> message
                                           .answerRecords().stream()
-                                          .filter(record -> record.recordClass() == RecordClass.IN)
-                                          .filter(record -> record.recordType().isAddress())
-                                          .map(record -> tuple(domainName, record.domainData().ip(), Duration.ofSeconds(record.ttl())))
-                                          .map(tuple -> tuple.map(DomainAddress::domainAddress))
+                                          .map(ResourceRecord::toDomainAddress)
+                                          .filter(Result::isSuccess)
+                                          .map(Result::unwrap)
+                                          .map(address -> address.replaceDomain(domainName))
                                           .findFirst())
                                       .flatMap(optional -> optional.map(Result::success).orElseGet(NO_RESULTS_FOUND::result));
         promise.resolve(domainAddress);
     }
 
-    public Promise<Unit> stop() {
-        var result = Promise.<Unit>promise();
-        var threshold = ActionableThreshold.threshold(sockets.size(), () -> result.resolve(Unit.unitResult()));
+    private void ttlProcessor(Object unused, Proactor proactor) {
+        while (true) {
+            var head = queue.peek();
 
-        sockets.forEach(fd -> PromiseIO.close(fd).onResultDo(threshold::registerEvent));
-        return result;
+            if (head == null) {
+                break;
+            }
+
+            var time = System.nanoTime();
+
+            if (head.expirationTime > time) {
+                break;
+            }
+
+            head = queue.poll();
+
+            if (head == null) {
+                break;
+            }
+
+            cache.remove(head.domainAddress.name());
+        }
+        proactor.delay(this::ttlProcessor, Timeout.timeout(1).seconds());
     }
 }

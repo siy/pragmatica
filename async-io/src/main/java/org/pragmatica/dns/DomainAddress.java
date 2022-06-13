@@ -31,4 +31,8 @@ public interface DomainAddress {
 
         return new domainAddress(name, ip, ttl);
     }
+
+    default DomainAddress replaceDomain(DomainName domainName) {
+        return domainAddress(domainName, ip(), ttl());
+    }
 }

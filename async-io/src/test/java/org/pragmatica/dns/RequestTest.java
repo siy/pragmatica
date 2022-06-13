@@ -56,9 +56,9 @@ public class RequestTest {
 
             var result = socket(AddressFamily.INET, SocketType.DGRAM, SocketFlag.closeOnExec(), SocketOption.reuseAll())
                 .onSuccess(socket::set)
-                .flatMap(__ -> connect(socket.get(), socketAddress))
-                .flatMap(__ -> write(socket.get(), query))
-                .flatMap(__ -> read(socket.get(), buffer))
+                .flatMap(() -> connect(socket.get(), socketAddress))
+                .flatMap(() -> write(socket.get(), query))
+                .flatMap(() -> read(socket.get(), buffer))
                 .join();
 
             record answer(String domainName, InetAddress inetAddress, int ttl) {}

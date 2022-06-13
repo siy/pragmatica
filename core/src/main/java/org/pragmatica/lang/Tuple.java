@@ -111,10 +111,6 @@ public interface Tuple {
         }
     }
 
-    static Tuple0 tuple() {
-        return Unit.unit();
-    }
-
     static <T1> Tuple1<T1> tuple(T1 param1) {
         record tuple1<T1>(T1 param1) implements Tuple1<T1> {
             @Override
