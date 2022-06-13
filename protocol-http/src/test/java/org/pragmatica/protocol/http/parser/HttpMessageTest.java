@@ -76,7 +76,7 @@ class HttpMessageTest {
 
             var message = HttpMessage.forResponse();
 
-            var parsingResult = socket(AddressFamily.INET, SocketType.STREAM, SocketFlag.none(), SocketOption.reuseAll())
+            var parsingResult = socket(AddressFamily.INET, SocketType.STREAM, SocketFlag.closeOnExec(), SocketOption.reuseAll())
                 .onSuccess(socket::set)
                 .onSuccess(System.out::println)
                 .flatMap(fd -> connect(fd, address))

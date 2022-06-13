@@ -255,6 +255,14 @@ public interface PromiseIO {
         return open(path, flags, mode, empty());
     }
 
+    static Promise<FileDescriptor> tcpSocket() {
+        return socket(AddressFamily.INET, SocketType.STREAM, SocketFlag.closeOnExec(), SocketOption.reuseAll());
+    }
+
+    static Promise<FileDescriptor> udpSocket() {
+        return socket(AddressFamily.INET, SocketType.DGRAM, SocketFlag.closeOnExec(), SocketOption.reuseAll());
+    }
+
     static Promise<FileDescriptor> socket(AddressFamily af, SocketType type, Set<SocketFlag> flags, Set<SocketOption> options) {
         return Promise.promise((promise, proactor) -> proactor.socket(promise::resolve, af, type, flags, options));
     }

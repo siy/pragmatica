@@ -80,6 +80,10 @@ public sealed interface Timeout extends Comparable<Timeout> {
         return Long.compare(nanoseconds(), o.nanoseconds());
     }
 
+    static Timeout fromDuration(Duration ttl) {
+        return Timeout.timeout(ttl.toMillis()).millis();
+    }
+
     /**
      * Create instance of timeout builder.
      *
