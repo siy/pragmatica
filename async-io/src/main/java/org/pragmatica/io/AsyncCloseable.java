@@ -15,12 +15,11 @@
  *
  */
 
-package org.pragmatica.dns;
+package org.pragmatica.io;
 
-public interface DomainName {
-    String name();
-    static DomainName fromString(String domainName) {
-        record domainName(String name) implements DomainName {};
-        return new domainName(domainName);
-    }
+import org.pragmatica.lang.Promise;
+import org.pragmatica.lang.Unit;
+
+public interface AsyncCloseable {
+    Promise<Unit> close();
 }

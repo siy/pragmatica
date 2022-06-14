@@ -24,30 +24,28 @@ import org.pragmatica.lang.PromiseIO;
 import static org.pragmatica.lang.PromiseIO.socket;
 
 public class ClientConnector<T extends InetAddress> {
-    private final Type type;
+    private final ConnectorType type;
     private final SocketAddress<T> address;
 
-    private enum Type {
-        UDP,
-        TCP;
-
-    }
-
-    private ClientConnector(Type type, SocketAddress<T> address) {
+    private ClientConnector(ConnectorType type, SocketAddress<T> address) {
         this.type = type;
         this.address = address;
     }
 
     public static <T extends InetAddress> ClientConnector<T> udpConnector(T address, InetPort port) {
-        return new ClientConnector<>(Type.UDP, SocketAddress.genericAddress(port, address));
+        return new ClientConnector<>(ConnectorType.UDP, SocketAddress.genericAddress(port, address));
     }
 
     public static <T extends InetAddress> ClientConnector<T> tcpConnector(T address, InetPort port) {
-        return new ClientConnector<>(Type.TCP, SocketAddress.genericAddress(port, address));
+        return new ClientConnector<>(ConnectorType.TCP, SocketAddress.genericAddress(port, address));
+    }
+
+    public static <T extends InetAddress> ClientConnector<T> connector(ConnectorType type, T address, InetPort port) {
+        return new ClientConnector<>(type, SocketAddress.genericAddress(port, address));
     }
 
     public Promise<ClientConnectionContext<T>> connect() {
-        return socket(type == Type.UDP ? SocketType.DGRAM : SocketType.STREAM)
+        return socket(type == ConnectorType.UDP ? SocketType.DGRAM : SocketType.STREAM)
             .flatMap(fd -> PromiseIO.connect(fd, address)).map(fd -> new ClientConnectionContext<>(address, fd));
     }
 }

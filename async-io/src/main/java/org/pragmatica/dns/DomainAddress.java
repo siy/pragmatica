@@ -18,6 +18,9 @@
 package org.pragmatica.dns;
 
 import org.pragmatica.io.async.net.InetAddress;
+import org.pragmatica.io.async.net.InetPort;
+import org.pragmatica.io.util.ClientConnector;
+import org.pragmatica.io.util.ConnectorType;
 
 import java.time.Duration;
 
@@ -34,5 +37,18 @@ public interface DomainAddress {
 
     default DomainAddress replaceDomain(DomainName domainName) {
         return domainAddress(domainName, ip(), ttl());
+    }
+
+    @SuppressWarnings("unchecked")
+    default <T extends InetAddress> ClientConnector<T> clientConnector(ConnectorType type, InetPort port) {
+        return ClientConnector.<T>connector(type, (T) ip(), port);
+    }
+
+    default <T extends InetAddress> ClientConnector<T> clientUdpConnector(InetPort port) {
+        return clientConnector(ConnectorType.UDP, port);
+    }
+
+    default <T extends InetAddress> ClientConnector<T> clientTcpConnector(InetPort port) {
+        return clientConnector(ConnectorType.TCP, port);
     }
 }

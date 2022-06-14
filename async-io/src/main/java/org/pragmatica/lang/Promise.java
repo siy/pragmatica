@@ -65,7 +65,7 @@ public interface Promise<T> {
      */
     <U> Promise<U> map(FN1<U, ? super T> mapper);
 
-    default <U> Promise<U> map(Supplier<U> mapper) {
+    default <U> Promise<U> mapReplace(Supplier<U> mapper) {
         return map(__ -> mapper.get());
     }
 

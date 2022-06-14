@@ -19,6 +19,7 @@ package org.pragmatica.dns;
 
 import org.pragmatica.dns.codec.MessageType;
 import org.pragmatica.dns.codec.QuestionRecord;
+import org.pragmatica.io.AsyncCloseable;
 import org.pragmatica.io.async.file.FileDescriptor;
 import org.pragmatica.io.async.net.InetAddress.Inet4Address;
 import org.pragmatica.io.async.net.InetPort;
@@ -26,6 +27,7 @@ import org.pragmatica.io.async.util.ActionableThreshold;
 import org.pragmatica.io.async.util.OffHeapSlice;
 import org.pragmatica.io.util.PeriodicTaskRunner;
 import org.pragmatica.lang.Promise;
+import org.pragmatica.lang.PromiseIO;
 import org.pragmatica.lang.Result;
 import org.pragmatica.lang.Unit;
 
@@ -43,7 +45,7 @@ import static org.pragmatica.lang.Promise.anySuccess;
 import static org.pragmatica.lang.PromiseIO.*;
 import static org.pragmatica.lang.Unit.unitResult;
 
-public class DomainNameResolver {
+public class DomainNameResolver implements AsyncCloseable {
     private static final InetPort DNS_PORT = InetPort.inetPort(53);
 
     private static final Inet4Address[] SERVERS = {
@@ -87,12 +89,13 @@ public class DomainNameResolver {
         return cache.computeIfAbsent(domainName, this::resolveDomain);
     }
 
-    public Promise<Unit> stop() {
+    @Override
+    public Promise<Unit> close() {
         var runnerPromise = taskRunner.stop();
         var socketPromise = Promise.<Unit>promise();
         var threshold = ActionableThreshold.threshold(sockets.size(), () -> socketPromise.resolve(unitResult()));
 
-        sockets.forEach(fd -> close(fd).onResultDo(threshold::registerEvent));
+        sockets.forEach(fd -> PromiseIO.close(fd).onResultDo(threshold::registerEvent));
 
         return all(runnerPromise, socketPromise).map(Unit::unit);
     }

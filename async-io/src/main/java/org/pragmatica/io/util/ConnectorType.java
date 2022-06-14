@@ -15,12 +15,10 @@
  *
  */
 
-package org.pragmatica.dns;
+package org.pragmatica.io.util;
 
-public interface DomainName {
-    String name();
-    static DomainName fromString(String domainName) {
-        record domainName(String name) implements DomainName {};
-        return new domainName(domainName);
-    }
+public enum ConnectorType {
+    UDP,
+    TCP;
+
 }

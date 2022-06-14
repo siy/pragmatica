@@ -17,8 +17,17 @@
 
 package org.pragmatica.io.util;
 
+import org.pragmatica.io.AsyncCloseable;
 import org.pragmatica.io.async.file.FileDescriptor;
 import org.pragmatica.io.async.net.InetAddress;
 import org.pragmatica.io.async.net.SocketAddress;
+import org.pragmatica.lang.Promise;
+import org.pragmatica.lang.PromiseIO;
+import org.pragmatica.lang.Unit;
 
-public record ClientConnectionContext<T extends InetAddress>(SocketAddress<T> address, FileDescriptor socket) {}
+public record ClientConnectionContext<T extends InetAddress>(SocketAddress<T> address, FileDescriptor socket) implements AsyncCloseable {
+    @Override
+    public Promise<Unit> close() {
+        return PromiseIO.close(socket).mapReplace(Unit::unit);
+    }
+}
