@@ -51,6 +51,6 @@ class PeriodicTaskRunnerTest {
 
         System.out.println("Min: " + min + "ms, Max: " + max + "ms, Avg: " + average + "ms");
 
-        assertTrue(average > 90 && average < 110, "Expected average time must be between 90ms and 110ms");
+        assertTrue(average > 80 && average < 120, "Expected average time must be between 80ms and 120ms");
     }
 }
