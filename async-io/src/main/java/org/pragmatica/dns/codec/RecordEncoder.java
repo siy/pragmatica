@@ -15,7 +15,7 @@
  *
  */
 
-package org.pragmatica.dns.io;
+package org.pragmatica.dns.codec;
 
 
 import org.pragmatica.io.async.util.SliceAccessor;

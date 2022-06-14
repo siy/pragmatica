@@ -18,11 +18,9 @@
 package org.pragmatica.dns;
 
 import org.junit.jupiter.api.Test;
-import org.pragmatica.dns.DnsMessage;
-import org.pragmatica.dns.DnsMessageBuilder;
-import org.pragmatica.dns.io.MessageType;
-import org.pragmatica.dns.io.QuestionRecord;
-import org.pragmatica.dns.io.RecordClass;
+import org.pragmatica.dns.codec.MessageType;
+import org.pragmatica.dns.codec.QuestionRecord;
+import org.pragmatica.dns.codec.RecordClass;
 import org.pragmatica.io.async.file.FileDescriptor;
 import org.pragmatica.io.async.net.*;
 import org.pragmatica.io.async.util.OffHeapSlice;

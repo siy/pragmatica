@@ -23,10 +23,10 @@ import org.pragmatica.lang.Promise;
 
 import java.util.List;
 
-class DnsResolverTest {
+class DomainNameResolverTest {
     @Test
     void trySomeExistentDomains() {
-        var resolver = DnsResolver.resolver();
+        var resolver = DomainNameResolver.resolver();
 
         var ibm = resolver.forName(DomainName.fromString("www.ibm.com"));
         var google = resolver.forName(DomainName.fromString("www.google.com"));

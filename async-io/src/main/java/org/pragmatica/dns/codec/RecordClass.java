@@ -15,12 +15,12 @@
  *
  */
 
-package org.pragmatica.dns.io;
+package org.pragmatica.dns.codec;
 
 import org.pragmatica.lang.Result;
 
 import static org.pragmatica.lang.Result.success;
-import static org.pragmatica.dns.io.DnsIoErrors.INVALID_RECORD_CLASS;
+import static org.pragmatica.dns.codec.DnsIoErrors.INVALID_RECORD_CLASS;
 
 public enum RecordClass {
     IN(1),

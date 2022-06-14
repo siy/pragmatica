@@ -16,8 +16,8 @@
  */
 package org.pragmatica.dns;
 
-import org.pragmatica.dns.io.RecordClass;
-import org.pragmatica.dns.io.RecordType;
+import org.pragmatica.dns.codec.RecordClass;
+import org.pragmatica.dns.codec.RecordType;
 
 public final class ResourceRecordBuilder {
     private ResourceRecordBuilder() {}

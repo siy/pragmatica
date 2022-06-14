@@ -15,32 +15,38 @@
  *
  */
 
-package org.pragmatica.dns.io;
+package org.pragmatica.dns.codec;
 
 import org.pragmatica.lang.Result;
 
 import static org.pragmatica.lang.Result.success;
-import static org.pragmatica.dns.io.DnsIoErrors.INVALID_MESSAGE_TYPE;
 
-public enum MessageType {
-    QUERY(0),
-    RESPONSE(1);
+public enum ResponseCode {
+    NO_ERROR(0),
+    FORMAT_ERROR(1),
+    SERVER_FAILURE(2),
+    NAME_ERROR(3),
+    NOT_IMPLEMENTED(4),
+    REFUSED(5);
 
     private final byte value;
 
-    MessageType(int value) {
-        this.value = (byte) ((byte) (value & 0x01) << 7);
+    ResponseCode(int value) {
+        this.value = (byte) value;
     }
 
-    public byte asByte() {
+    public byte toByte() {
         return this.value;
     }
-
-    public static Result<MessageType> fromByte(byte value) {
+    public static Result<ResponseCode> fromByte(byte value) {
         return switch (value) {
-            case 0 -> success(QUERY);
-            case 1 -> success(RESPONSE);
-            default -> INVALID_MESSAGE_TYPE.result();
+            case 0 -> success(NO_ERROR);
+            case 1 -> success(FORMAT_ERROR);
+            case 2 -> success(SERVER_FAILURE);
+            case 3 -> success(NAME_ERROR);
+            case 4 -> success(NOT_IMPLEMENTED);
+            case 5 -> success(REFUSED);
+            default -> DnsIoErrors.INVALID_RESPONSE_CODE.result();
         };
     }
 }

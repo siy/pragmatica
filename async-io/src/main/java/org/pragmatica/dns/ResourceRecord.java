@@ -17,15 +17,15 @@
 
 package org.pragmatica.dns;
 
-import org.pragmatica.dns.io.RecordClass;
-import org.pragmatica.dns.io.RecordType;
+import org.pragmatica.dns.codec.RecordClass;
+import org.pragmatica.dns.codec.RecordType;
 import org.pragmatica.lang.Result;
 
 import static java.time.Duration.ofSeconds;
 import static org.pragmatica.dns.DomainAddress.domainAddress;
 import static org.pragmatica.dns.DomainName.fromString;
-import static org.pragmatica.dns.io.DnsIoErrors.INVALID_RECORD_CLASS;
-import static org.pragmatica.dns.io.DnsIoErrors.INVALID_RECORD_TYPE;
+import static org.pragmatica.dns.codec.DnsIoErrors.INVALID_RECORD_CLASS;
+import static org.pragmatica.dns.codec.DnsIoErrors.INVALID_RECORD_TYPE;
 import static org.pragmatica.lang.Result.success;
 
 public record ResourceRecord(String domainName, RecordType recordType, RecordClass recordClass, int ttl, DnsAttributes attributes) {

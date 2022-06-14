@@ -15,7 +15,7 @@
  *
  */
 
-package org.pragmatica.dns.io;
+package org.pragmatica.dns.codec;
 
 import org.pragmatica.lang.Cause;
 import org.pragmatica.lang.Result;

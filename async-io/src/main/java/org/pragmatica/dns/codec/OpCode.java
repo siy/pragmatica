@@ -15,38 +15,37 @@
  *
  */
 
-package org.pragmatica.dns.io;
+package org.pragmatica.dns.codec;
 
 import org.pragmatica.lang.Result;
 
 import static org.pragmatica.lang.Result.success;
 
-public enum ResponseCode {
-    NO_ERROR(0),
-    FORMAT_ERROR(1),
-    SERVER_FAILURE(2),
-    NAME_ERROR(3),
-    NOT_IMPLEMENTED(4),
-    REFUSED(5);
+public enum OpCode {
+    QUERY(0),
+    IQUERY(1),
+    STATUS(2),
+    NOTIFY(4),
+    UPDATE(5);
 
     private final byte value;
 
-    ResponseCode(int value) {
-        this.value = (byte) value;
+    OpCode(int value) {
+        this.value = (byte) ((byte) (value & 0x0F) << 3);
     }
 
-    public byte toByte() {
+    public byte asByte() {
         return this.value;
     }
-    public static Result<ResponseCode> fromByte(byte value) {
+
+    public static Result<OpCode> fromByte(byte value) {
         return switch (value) {
-            case 0 -> success(NO_ERROR);
-            case 1 -> success(FORMAT_ERROR);
-            case 2 -> success(SERVER_FAILURE);
-            case 3 -> success(NAME_ERROR);
-            case 4 -> success(NOT_IMPLEMENTED);
-            case 5 -> success(REFUSED);
-            default -> DnsIoErrors.INVALID_RESPONSE_CODE.result();
+            case 0 -> success(QUERY);
+            case 1 -> success(IQUERY);
+            case 2 -> success(STATUS);
+            case 4 -> success(NOTIFY);
+            case 5 -> success(UPDATE);
+            default -> DnsIoErrors.INVALID_OPCODE.result();
         };
     }
 }

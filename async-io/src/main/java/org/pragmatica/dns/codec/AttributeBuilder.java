@@ -15,7 +15,7 @@
  *
  */
 
-package org.pragmatica.dns.io;
+package org.pragmatica.dns.codec;
 
 import org.pragmatica.io.async.net.InetAddress;
 import org.pragmatica.io.async.net.InetAddress.Inet4Address;

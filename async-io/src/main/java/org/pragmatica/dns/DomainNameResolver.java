@@ -17,31 +17,33 @@
 
 package org.pragmatica.dns;
 
-import org.pragmatica.dns.io.MessageType;
-import org.pragmatica.dns.io.QuestionRecord;
-import org.pragmatica.io.async.Proactor;
-import org.pragmatica.io.async.Timeout;
+import org.pragmatica.dns.codec.MessageType;
+import org.pragmatica.dns.codec.QuestionRecord;
 import org.pragmatica.io.async.file.FileDescriptor;
 import org.pragmatica.io.async.net.InetAddress.Inet4Address;
 import org.pragmatica.io.async.net.InetPort;
-import org.pragmatica.io.async.net.SocketAddress;
 import org.pragmatica.io.async.util.ActionableThreshold;
 import org.pragmatica.io.async.util.OffHeapSlice;
+import org.pragmatica.io.util.PeriodicTaskRunner;
 import org.pragmatica.lang.Promise;
-import org.pragmatica.lang.PromiseIO;
 import org.pragmatica.lang.Result;
 import org.pragmatica.lang.Unit;
 
-import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.PriorityBlockingQueue;
 
-import static org.pragmatica.dns.io.DnsIoErrors.NO_RESULTS_FOUND;
-import static org.pragmatica.lang.PromiseIO.udpSocket;
+import static java.util.Comparator.comparingLong;
+import static org.pragmatica.dns.codec.DnsIoErrors.NO_RESULTS_FOUND;
+import static org.pragmatica.io.async.Timeout.timeout;
+import static org.pragmatica.io.async.net.SocketAddress.socketAddress;
+import static org.pragmatica.lang.Promise.all;
+import static org.pragmatica.lang.Promise.anySuccess;
+import static org.pragmatica.lang.PromiseIO.*;
+import static org.pragmatica.lang.Unit.unitResult;
 
-public class DnsResolver {
+public class DomainNameResolver {
     private static final InetPort DNS_PORT = InetPort.inetPort(53);
 
     private static final Inet4Address[] SERVERS = {
@@ -56,32 +58,29 @@ public class DnsResolver {
     };
 
     private record TtlEntry(DomainAddress domainAddress, long expirationTime) {
-        static TtlEntry create(DomainAddress domainAddress) {
-            return new TtlEntry(domainAddress, System.nanoTime() + domainAddress.ttl().toNanos());
-        }
     }
 
     private final ConcurrentMap<DomainName, Promise<DomainAddress>> cache = new ConcurrentHashMap<>();
     private final List<FileDescriptor> sockets;
-    private final PriorityBlockingQueue<TtlEntry> queue = new PriorityBlockingQueue<>(1024, Comparator.comparingLong(TtlEntry::expirationTime));
+    private final PriorityBlockingQueue<TtlEntry> queue = new PriorityBlockingQueue<>(1024, comparingLong(TtlEntry::expirationTime));
+    private final PeriodicTaskRunner taskRunner = PeriodicTaskRunner.periodicTaskRunner(timeout(1).seconds(), this::ttlProcessor);
 
-    private DnsResolver(List<Inet4Address> serverList) {
+    private DomainNameResolver(List<Inet4Address> serverList) {
         this.sockets = serverList
-                             .stream()
-                             .map(inetAddress -> SocketAddress.socketAddress(DNS_PORT, inetAddress))
-                             .map(address -> udpSocket().flatMap(fd -> PromiseIO.connect(fd, address)).join())
-                             .map(Result::unwrap)
-                             .toList();
-
-        Promise.promise().async(this::ttlProcessor);
+            .stream()
+            .map(inetAddress -> socketAddress(DNS_PORT, inetAddress))
+            .map(address -> udpSocket().flatMap(fd -> connect(fd, address)).join())
+            .map(Result::unwrap)
+            .toList();
+        taskRunner.start();
     }
 
-    public static DnsResolver resolver() {
-        return new DnsResolver(List.of(SERVERS));
+    public static DomainNameResolver resolver() {
+        return new DomainNameResolver(List.of(SERVERS));
     }
 
-    public static DnsResolver resolver(List<Inet4Address> servers) {
-        return new DnsResolver(servers);
+    public static DomainNameResolver resolver(List<Inet4Address> servers) {
+        return new DomainNameResolver(servers);
     }
 
     public Promise<DomainAddress> forName(DomainName domainName) {
@@ -89,11 +88,13 @@ public class DnsResolver {
     }
 
     public Promise<Unit> stop() {
-        var result = Promise.<Unit>promise();
-        var threshold = ActionableThreshold.threshold(sockets.size(), () -> result.resolve(Unit.unitResult()));
+        var runnerPromise = taskRunner.stop();
+        var socketPromise = Promise.<Unit>promise();
+        var threshold = ActionableThreshold.threshold(sockets.size(), () -> socketPromise.resolve(unitResult()));
 
-        sockets.forEach(fd -> PromiseIO.close(fd).onResultDo(threshold::registerEvent));
-        return result;
+        sockets.forEach(fd -> close(fd).onResultDo(threshold::registerEvent));
+
+        return all(runnerPromise, socketPromise).map(Unit::unit);
     }
 
     private Promise<DomainAddress> resolveDomain(DomainName domainName) {
@@ -104,15 +105,15 @@ public class DnsResolver {
     private void startResolve(Promise<DomainAddress> promise, DomainName domainName) {
         var requestBuffer = encodeQuery(domainName);
 
-        Promise.anySuccess(NO_RESULTS_FOUND.result(),
-                           sockets.stream()
-                                  .map(socket -> querySingleServer(socket, requestBuffer, domainName))
-                                  .toList())
-               .onResult(promise::resolve)
-               .onResultDo(requestBuffer::close);
+        anySuccess(NO_RESULTS_FOUND.result(),
+                   sockets.stream()
+                          .map(socket -> querySingleServer(socket, requestBuffer, domainName))
+                          .toList())
+            .onResult(promise::resolve)
+            .onResultDo(requestBuffer::close);
 
         promise
-            .onSuccess(domainAddress -> queue.offer(TtlEntry.create(domainAddress)));
+            .onSuccess(domainAddress -> queue.offer(ttlEntry(domainAddress)));
     }
 
     private OffHeapSlice encodeQuery(DomainName domainName) {
@@ -132,28 +133,40 @@ public class DnsResolver {
         var promise = Promise.<DomainAddress>promise();
         var responseBuffer = OffHeapSlice.fixedSize(4096);
 
-        PromiseIO.write(socket, requestBuffer)
-                 .flatMap(() -> PromiseIO.read(socket, responseBuffer))
-                 .onResultDo(() -> decodeResponse(responseBuffer, promise, domainName))
-                 .onResultDo(responseBuffer::close);
+        write(socket, requestBuffer)
+            .flatMap(() -> read(socket, responseBuffer))
+            .onResultDo(() -> decodeResponse(responseBuffer, promise, domainName))
+            .onResultDo(responseBuffer::close);
 
         return promise;
     }
 
     private void decodeResponse(OffHeapSlice buffer, Promise<DomainAddress> promise, DomainName domainName) {
-        var domainAddress = DnsMessage.decode(buffer)
-                                      .map(message -> message
-                                          .answerRecords().stream()
-                                          .map(ResourceRecord::toDomainAddress)
-                                          .filter(Result::isSuccess)
-                                          .map(Result::unwrap)
-                                          .map(address -> address.replaceDomain(domainName))
-                                          .findFirst())
-                                      .flatMap(optional -> optional.map(Result::success).orElseGet(NO_RESULTS_FOUND::result));
-        promise.resolve(domainAddress);
+        promise.resolve(decodeDomainAddress(buffer, domainName));
     }
 
-    private void ttlProcessor(Object unused, Proactor proactor) {
+    private Result<DomainAddress> decodeDomainAddress(OffHeapSlice buffer, DomainName domainName) {
+        return DnsMessage.decode(buffer)
+                         .flatMap(message -> decodeMessage(message, domainName));
+    }
+
+    private Result<DomainAddress> decodeMessage(DnsMessage message, DomainName domainName) {
+        return message
+            .answerRecords().stream()
+            .map(ResourceRecord::toDomainAddress)
+            .filter(Result::isSuccess)
+            .map(Result::unwrap)
+            .map(address -> address.replaceDomain(domainName))
+            .findFirst()
+            .map(Result::success)
+            .orElseGet(NO_RESULTS_FOUND::result);
+    }
+
+    private static TtlEntry ttlEntry(DomainAddress domainAddress) {
+        return new TtlEntry(domainAddress, System.nanoTime() + domainAddress.ttl().toNanos());
+    }
+
+    private void ttlProcessor() {
         while (true) {
             var head = queue.peek();
 
@@ -175,6 +188,5 @@ public class DnsResolver {
 
             cache.remove(head.domainAddress.name());
         }
-        proactor.delay(this::ttlProcessor, Timeout.timeout(1).seconds());
     }
 }

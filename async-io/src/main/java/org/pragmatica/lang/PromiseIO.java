@@ -263,6 +263,10 @@ public interface PromiseIO {
         return socket(AddressFamily.INET, SocketType.DGRAM, SocketFlag.closeOnExec(), SocketOption.reuseAll());
     }
 
+    static Promise<FileDescriptor> socket(SocketType type) {
+        return socket(AddressFamily.INET, type, SocketFlag.closeOnExec(), SocketOption.reuseAll());
+    }
+
     static Promise<FileDescriptor> socket(AddressFamily af, SocketType type, Set<SocketFlag> flags, Set<SocketOption> options) {
         return Promise.promise((promise, proactor) -> proactor.socket(promise::resolve, af, type, flags, options));
     }

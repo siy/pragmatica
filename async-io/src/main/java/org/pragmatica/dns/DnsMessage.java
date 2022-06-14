@@ -18,7 +18,7 @@
 package org.pragmatica.dns;
 
 
-import org.pragmatica.dns.io.*;
+import org.pragmatica.dns.codec.*;
 import org.pragmatica.io.async.util.OffHeapSlice;
 import org.pragmatica.io.async.util.SliceAccessor;
 import org.pragmatica.lang.Result;

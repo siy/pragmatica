@@ -15,37 +15,32 @@
  *
  */
 
-package org.pragmatica.dns.io;
+package org.pragmatica.dns.codec;
 
 import org.pragmatica.lang.Result;
 
 import static org.pragmatica.lang.Result.success;
+import static org.pragmatica.dns.codec.DnsIoErrors.INVALID_MESSAGE_TYPE;
 
-public enum OpCode {
+public enum MessageType {
     QUERY(0),
-    IQUERY(1),
-    STATUS(2),
-    NOTIFY(4),
-    UPDATE(5);
+    RESPONSE(1);
 
     private final byte value;
 
-    OpCode(int value) {
-        this.value = (byte) ((byte) (value & 0x0F) << 3);
+    MessageType(int value) {
+        this.value = (byte) ((byte) (value & 0x01) << 7);
     }
 
     public byte asByte() {
         return this.value;
     }
 
-    public static Result<OpCode> fromByte(byte value) {
+    public static Result<MessageType> fromByte(byte value) {
         return switch (value) {
             case 0 -> success(QUERY);
-            case 1 -> success(IQUERY);
-            case 2 -> success(STATUS);
-            case 4 -> success(NOTIFY);
-            case 5 -> success(UPDATE);
-            default -> DnsIoErrors.INVALID_OPCODE.result();
+            case 1 -> success(RESPONSE);
+            default -> INVALID_MESSAGE_TYPE.result();
         };
     }
 }

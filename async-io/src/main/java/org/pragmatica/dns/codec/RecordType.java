@@ -15,7 +15,7 @@
  *
  */
 
-package org.pragmatica.dns.io;
+package org.pragmatica.dns.codec;
 
 
 import org.pragmatica.io.async.net.InetAddress.Inet4Address;
@@ -31,9 +31,9 @@ import static org.pragmatica.io.async.net.InetAddress.inet6Address;
 import static org.pragmatica.lang.Option.option;
 import static org.pragmatica.lang.Result.all;
 import static org.pragmatica.lang.Result.success;
-import static org.pragmatica.dns.io.DnsIoErrors.INVALID_RECORD_TYPE;
-import static org.pragmatica.dns.io.DnsIoErrors.TOO_SHORT_INPUT;
-import static org.pragmatica.dns.io.Encoding.*;
+import static org.pragmatica.dns.codec.DnsIoErrors.INVALID_RECORD_TYPE;
+import static org.pragmatica.dns.codec.DnsIoErrors.TOO_SHORT_INPUT;
+import static org.pragmatica.dns.codec.Encoding.*;
 
 public enum RecordType implements RecordEncoder, RecordDecoder {
     A(1, true) {

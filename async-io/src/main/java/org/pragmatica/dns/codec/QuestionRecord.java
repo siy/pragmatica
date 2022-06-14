@@ -15,16 +15,14 @@
  *
  */
 
-package org.pragmatica.dns.io;
+package org.pragmatica.dns.codec;
 
+public record QuestionRecord(String domainName, RecordType recordType, RecordClass recordClass) {
+    public static QuestionRecord addressV4ByName(String domainName) {
+        return new QuestionRecord(domainName, RecordType.A, RecordClass.IN);
+    }
 
-import org.pragmatica.io.async.util.SliceAccessor;
-import org.pragmatica.lang.Result;
-
-import static org.pragmatica.lang.Result.success;
-
-public interface RecordDecoder {
-    default Result<AttributeBuilder> decode(SliceAccessor sliceAccessor, AttributeBuilder attributeBuilder, int length) {
-        return success(attributeBuilder);
+    public static QuestionRecord addressV6ByName(String domainName) {
+        return new QuestionRecord(domainName, RecordType.AAAA, RecordClass.IN);
     }
 }

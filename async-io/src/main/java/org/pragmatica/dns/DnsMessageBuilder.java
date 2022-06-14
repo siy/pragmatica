@@ -18,10 +18,10 @@
 package org.pragmatica.dns;
 
 
-import org.pragmatica.dns.io.MessageType;
-import org.pragmatica.dns.io.OpCode;
-import org.pragmatica.dns.io.QuestionRecord;
-import org.pragmatica.dns.io.ResponseCode;
+import org.pragmatica.dns.codec.MessageType;
+import org.pragmatica.dns.codec.OpCode;
+import org.pragmatica.dns.codec.QuestionRecord;
+import org.pragmatica.dns.codec.ResponseCode;
 
 import java.util.ArrayList;
 import java.util.List;

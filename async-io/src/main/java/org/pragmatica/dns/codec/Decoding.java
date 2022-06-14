@@ -15,7 +15,7 @@
  *
  */
 
-package org.pragmatica.dns.io;
+package org.pragmatica.dns.codec;
 
 import org.pragmatica.io.async.util.SliceAccessor;
 import org.pragmatica.lang.Result;
@@ -28,8 +28,8 @@ import java.util.stream.IntStream;
 
 import static org.pragmatica.lang.Result.*;
 import static org.pragmatica.lang.Unit.unitResult;
-import static org.pragmatica.dns.io.DnsIoErrors.TOO_SHORT_INPUT;
-import static org.pragmatica.dns.io.RecordType.toRecordType;
+import static org.pragmatica.dns.codec.DnsIoErrors.TOO_SHORT_INPUT;
+import static org.pragmatica.dns.codec.RecordType.toRecordType;
 
 //TODO: switch to Result<T>, more error checking
 public final class Decoding {
