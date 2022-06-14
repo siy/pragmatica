@@ -18,8 +18,8 @@
 package org.pragmatica.dns.codec;
 
 
-import org.pragmatica.io.async.util.SliceAccessor;
 import org.pragmatica.dns.ResourceRecord;
+import org.pragmatica.io.async.util.SliceAccessor;
 
 public interface RecordEncoder {
     default void encode(SliceAccessor buffer, ResourceRecord record) {

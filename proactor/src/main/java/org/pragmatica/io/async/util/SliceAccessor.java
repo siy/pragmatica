@@ -23,6 +23,7 @@ import org.pragmatica.io.async.util.raw.RawMemory;
  * Sequential (with position) reader/writer of {@link OffHeapSlice}.
  */
 public final class SliceAccessor {
+    private static final byte[] EMPTY_ARRAY = {};
     private final OffHeapSlice slice;
     private int position;
 
@@ -33,15 +34,6 @@ public final class SliceAccessor {
 
     public static SliceAccessor forSlice(OffHeapSlice slice) {
         return new SliceAccessor(slice);
-    }
-
-    public SliceAccessor position(int position) {
-        this.position = position;
-        return this;
-    }
-
-    public int position() {
-        return position;
     }
 
     private long addressForPositionAdjustedBy(int width) {
@@ -107,6 +99,14 @@ public final class SliceAccessor {
         return RawMemory.getByteArray(addressForPositionAdjustedBy(length), length);
     }
 
+    public byte[] getRemainingBytes() {
+        var length = availableForRead();
+        if (length <= 0) {
+            return EMPTY_ARRAY;
+        }
+        return RawMemory.getByteArray(addressForPositionAdjustedBy(length), length);
+    }
+
     public SliceAccessor putShortInNetOrder(short value) {
         RawMemory.putShortInNetOrder(addressForPositionAdjustedBy(Short.BYTES), value);
         return this;
@@ -153,6 +153,15 @@ public final class SliceAccessor {
         return this;
     }
 
+    public SliceAccessor position(int position) {
+        this.position = position;
+        return this;
+    }
+
+    public int position() {
+        return position;
+    }
+
     public SliceAccessor updateSlice() {
         slice.used(position);
         return this;
@@ -176,5 +185,9 @@ public final class SliceAccessor {
 
     public boolean availableBytes(int len) {
         return availableForRead() >= len;
+    }
+
+    public int used() {
+        return slice.used();
     }
 }

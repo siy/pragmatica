@@ -28,10 +28,10 @@ class DomainNameResolverTest {
     void trySomeExistentDomains() {
         var resolver = DomainNameResolver.resolver();
 
-        var ibm = resolver.forName(DomainName.fromString("www.ibm.com"));
-        var google = resolver.forName(DomainName.fromString("www.google.com"));
-        var github = resolver.forName(DomainName.fromString("www.github.com"));
-        var twitter = resolver.forName(DomainName.fromString("www.twitter.com"));
+        var ibm = resolver.forName("www.ibm.com");
+        var google = resolver.forName("www.google.com");
+        var github = resolver.forName("www.github.com");
+        var twitter = resolver.forName("www.twitter.com");
 
         Promise.all(ibm, google, github, twitter)
                .map(List::of)

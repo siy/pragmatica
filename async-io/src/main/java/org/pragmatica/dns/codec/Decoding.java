@@ -17,21 +17,20 @@
 
 package org.pragmatica.dns.codec;
 
+import org.pragmatica.dns.DnsAttributes;
+import org.pragmatica.dns.ResourceRecord;
 import org.pragmatica.io.async.util.SliceAccessor;
 import org.pragmatica.lang.Result;
 import org.pragmatica.lang.Unit;
-import org.pragmatica.dns.DnsAttributes;
-import org.pragmatica.dns.ResourceRecord;
 
 import java.util.List;
 import java.util.stream.IntStream;
 
-import static org.pragmatica.lang.Result.*;
-import static org.pragmatica.lang.Unit.unitResult;
 import static org.pragmatica.dns.codec.DnsIoErrors.TOO_SHORT_INPUT;
 import static org.pragmatica.dns.codec.RecordType.toRecordType;
+import static org.pragmatica.lang.Result.*;
+import static org.pragmatica.lang.Unit.unitResult;
 
-//TODO: switch to Result<T>, more error checking
 public final class Decoding {
     private Decoding() {}
 
@@ -39,7 +38,7 @@ public final class Decoding {
         var builder = new StringBuilder();
 
         return decodeDomainName(sliceAccessor, builder)
-            .map(__ -> builder.toString());
+            .map(builder::toString);
     }
 
     private static Result<Unit> decodeDomainName(SliceAccessor sliceAccessor, StringBuilder domainName) {
@@ -65,7 +64,7 @@ public final class Decoding {
                 .onResultDo(() -> sliceAccessor.position(originalPosition));
         } else if (isLabel(length)) {
             return decodeLabel(sliceAccessor, domainName, length)
-                .flatMap(__ -> decodeDomainName(sliceAccessor, domainName));
+                .flatMap(() -> decodeDomainName(sliceAccessor, domainName));
         }
 
         return unitResult();
@@ -106,7 +105,7 @@ public final class Decoding {
     }
 
     public static Result<Boolean> decodeRecursionDesired(byte header) {
-        return success( (header & 0x01) == 1);
+        return success((header & 0x01) == 1);
     }
 
     public static Result<Boolean> decodeRecursionAvailable(byte header) {

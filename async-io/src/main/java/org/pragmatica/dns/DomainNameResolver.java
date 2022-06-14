@@ -85,6 +85,10 @@ public class DomainNameResolver implements AsyncCloseable {
         return new DomainNameResolver(servers);
     }
 
+    public Promise<DomainAddress> forName(String domainName) {
+        return forName(DomainName.fromString(domainName));
+    }
+
     public Promise<DomainAddress> forName(DomainName domainName) {
         return cache.computeIfAbsent(domainName, this::resolveDomain);
     }

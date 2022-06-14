@@ -19,15 +19,15 @@
  */
 package org.pragmatica.protocol.http.parser;
 
+import org.pragmatica.io.async.util.SliceAccessor;
 import org.pragmatica.lang.Option.Some;
 import org.pragmatica.lang.Result;
 import org.pragmatica.protocol.http.parser.ParsingResult.Continue;
 import org.pragmatica.protocol.http.parser.header.HttpHeader;
 import org.pragmatica.protocol.http.parser.header.StandardHttpHeaderNames;
-import org.pragmatica.protocol.http.parser.util.Slice;
 import org.pragmatica.protocol.http.parser.util.DetachedSlice;
+import org.pragmatica.protocol.http.parser.util.Slice;
 
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -35,8 +35,8 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.pragmatica.lang.Result.success;
 import static org.pragmatica.protocol.http.parser.HttpMessage.HttpParserState.*;
 import static org.pragmatica.protocol.http.parser.ParserType.REQUEST;
-import static org.pragmatica.protocol.http.parser.util.ParserHelper.*;
 import static org.pragmatica.protocol.http.parser.ParsingErrors.*;
+import static org.pragmatica.protocol.http.parser.util.ParserHelper.*;
 
 public class HttpMessage {
     private static final int LIMIT = 0x7fff;
@@ -98,14 +98,17 @@ public class HttpMessage {
         }
 
         builder
-            .append("Headers (").append(headers.size()).append("): ").append('\n');
-
+            .append("Headers (").append(headers.size()).append("):").append('\n');
 
         for (var h : headers) {
-            builder.append(' ').append(h).append('\n');
+            builder.append('\t').append(h).append('\n');
         }
 
         return builder.toString();
+    }
+
+    public Result<ParsingResult> parse(SliceAccessor sliceAccessor) {
+        return parse(sliceAccessor.getRemainingBytes());
     }
 
     public Result<ParsingResult> parse(byte[] input) {

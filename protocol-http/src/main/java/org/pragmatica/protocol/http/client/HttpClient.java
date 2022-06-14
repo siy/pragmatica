@@ -15,24 +15,8 @@
  *
  */
 
-package org.pragmatica.protocol.http.parser;
+package org.pragmatica.protocol.http.client;
 
-import org.pragmatica.io.async.util.SliceAccessor;
-
-public sealed interface ParsingResult {
-    SliceAccessor bodyPosition(SliceAccessor input);
-
-    record Done() implements ParsingResult {
-        @Override
-        public SliceAccessor bodyPosition(SliceAccessor input) {
-            return input.position(input.used());
-        }
-    }
-
-    record Continue(int index) implements ParsingResult {
-        @Override
-        public SliceAccessor bodyPosition(SliceAccessor input) {
-            return input.position(index);
-        }
-    }
+public final class HttpClient {
+    //TODO: finish it
 }

@@ -17,9 +17,9 @@
 
 package org.pragmatica.dns.codec;
 
+import org.pragmatica.dns.ResourceRecord;
 import org.pragmatica.io.async.net.InetAddress.Inet4Address;
 import org.pragmatica.io.async.util.SliceAccessor;
-import org.pragmatica.dns.ResourceRecord;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;

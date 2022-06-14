@@ -18,44 +18,43 @@
 package org.pragmatica.io.util;
 
 import org.junit.jupiter.api.Test;
-import org.pragmatica.dns.DomainName;
 import org.pragmatica.dns.DomainNameResolver;
 import org.pragmatica.io.async.net.InetAddress;
 import org.pragmatica.io.async.net.InetPort;
-import org.pragmatica.io.async.util.SliceAccessor;
 import org.pragmatica.lang.Promise;
 
 import java.nio.charset.StandardCharsets;
 
 class ReadWriteContextTest {
     private static final String MINIMAL_REQUEST = "GET / HTTP/1.1\r\nHost: %s\r\nConnection: close\r\n\r\n";
+    private final DomainNameResolver resolver = DomainNameResolver.resolver();
+
 
     @Test
     void tryWriteThenRead() {
         writeReadHost("www.ibm.com");
+        writeReadHost("www.google.com");
+        writeReadHost("www.twitter.com");
     }
 
     private void writeReadHost(String host) {
-        var resolver = DomainNameResolver.resolver();
-
         var result =
-            resolver.forName(DomainName.fromString(host))
+            resolver.forName(host)
                     .map(domainAddress -> domainAddress.clientTcpConnector(InetPort.inetPort(80)))
                     .flatMap(ClientConnector::connect)
                     .map(context -> ReadWriteContext.readWriteContext(context, 16384))
                     .flatMap(context -> doConversation(context, host))
                     .flatMap(ReadWriteContext::close)
-                    .flatMap(resolver::close)
                     .join();
 
-        System.out.println("Result: " + result);
+        System.out.println("\nResult: " + result + "\n");
     }
 
     private <T extends InetAddress> Promise<ReadWriteContext<T>> doConversation(ReadWriteContext<T> context, String host) {
         var request = String.format(MINIMAL_REQUEST, host).getBytes(StandardCharsets.UTF_8);
 
-        return context.write(buffer -> SliceAccessor.forSlice(buffer).putBytes(request).updateSlice())
-                      .flatMap(() -> context.read(buffer -> new String(buffer.export(), StandardCharsets.UTF_8)))
+        return context.prepareThenWrite(writeAccessor -> writeAccessor.putBytes(request).updateSlice())
+                      .flatMap(() -> context.readPlain(readAccessor -> new String(readAccessor.getRemainingBytes(), StandardCharsets.UTF_8)))
                       .onSuccess(System.out::println)
                       .onFailure(System.out::println)
                       .mapReplace(() -> context);

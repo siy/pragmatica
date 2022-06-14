@@ -1,26 +1,26 @@
 package org.pragmatica.protocol.http.parser;
 
 import org.junit.jupiter.api.Test;
-import org.pragmatica.io.async.file.FileDescriptor;
-import org.pragmatica.io.async.net.*;
-import org.pragmatica.io.async.util.OffHeapSlice;
+import org.pragmatica.dns.DomainNameResolver;
+import org.pragmatica.io.async.net.InetAddress;
+import org.pragmatica.io.async.net.InetPort;
+import org.pragmatica.io.util.ClientConnector;
+import org.pragmatica.io.util.ReadWriteContext;
+import org.pragmatica.lang.Promise;
 import org.pragmatica.lang.Result;
 import org.pragmatica.protocol.http.parser.ParsingResult.Continue;
 import org.pragmatica.protocol.http.parser.ParsingResult.Done;
 
-import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.pragmatica.lang.Option.option;
-import static org.pragmatica.lang.PromiseIO.*;
 import static org.pragmatica.lang.Result.success;
 
 class HttpMessageTest {
 
     private static final String MINIMAL_REQUEST = "GET / HTTP/1.1\r\nHost: %s\r\nConnection: close\r\n\r\n";
+
+    private final DomainNameResolver resolver = DomainNameResolver.resolver();
 
     @Test
     void getWithoutBodyParsedSuccessfully() {
@@ -57,47 +57,35 @@ class HttpMessageTest {
     }
 
     @Test
-    void externalHostCanBeConnectedAndRead() throws UnknownHostException {
-        connectAndPrint("www.ibm.com");
+    void externalHostCanBeConnectedAndRead() {
+        writeReadHost("www.google.com");
     }
 
-    private void connectAndPrint(String host) throws UnknownHostException {
-        var addr = java.net.Inet4Address.getByName(host);
-        var address = InetAddress.inet4Address(addr.getAddress())
-                                 .map(inetAddress -> SocketAddress.socketAddress(InetPort.inetPort(80), inetAddress))
-                                 .unwrap();
+    private void writeReadHost(String host) {
+        var result =
+            resolver.forName(host)
+                    .map(domainAddress -> domainAddress.clientTcpConnector(InetPort.inetPort(80)))
+                    .flatMap(ClientConnector::connect)
+                    .map(context -> ReadWriteContext.readWriteContext(context, 16384))
+                    .flatMap(context -> doConversation(context, host))
+                    .flatMap(ReadWriteContext::close)
+                    .join();
 
-        System.out.println("Address: " + address);
-
-        var socket = new AtomicReference<FileDescriptor>();
-
-        try (var preparedText = OffHeapSlice.fromBytes(minimalRequest(host));
-             var buffer = OffHeapSlice.fixedSize(4096)) {
-
-            var message = HttpMessage.forResponse();
-
-            var parsingResult = socket(AddressFamily.INET, SocketType.STREAM, SocketFlag.closeOnExec(), SocketOption.reuseAll())
-                .onSuccess(socket::set)
-                .onSuccess(System.out::println)
-                .flatMap(fd -> connect(fd, address))
-                .flatMap(fd -> write(fd, preparedText))
-                .flatMap(__ -> read(socket.get(), buffer))
-                .join()
-                .onSuccess(__ -> System.out.println("Buffer: " + buffer))
-                .flatMap(__ -> message.parse(buffer.export()));
-
-            System.out.println("Parsing result: " + parsingResult + "\n\n");
-            System.out.println(message.text());
-
-            assertTrue(parsingResult.isSuccess());
-        } finally {
-            option(socket.get())
-                .onPresent(fd -> close(fd).join());
-        }
+        System.out.println("\nResult: " + result + "\n");
     }
 
-    private byte[] minimalRequest(String host) {
-        return String.format(MINIMAL_REQUEST, host).getBytes(StandardCharsets.US_ASCII);
+    private <T extends InetAddress> Promise<ReadWriteContext<T>> doConversation(ReadWriteContext<T> context, String host) {
+        var request = String.format(MINIMAL_REQUEST, host).getBytes(StandardCharsets.UTF_8);
+        var message = HttpMessage.forResponse();
+
+        return context.prepareThenWrite(writeAccessor -> writeAccessor.putBytes(request).updateSlice())
+                      .flatMap(() -> context.readAndTransform(message::parse))
+                      .map(parsingResult -> parsingResult.bodyPosition(context.reader()))
+                      .map(bodySlice -> new String(bodySlice.getRemainingBytes(), StandardCharsets.UTF_8))
+                      .onSuccessDo(() -> System.out.println(message.text()))
+                      .onSuccess(body -> System.out.println("Body:\n" + body + "\n"))
+                      .onFailure(System.out::println)
+                      .mapReplace(() -> context);
     }
 
     void parseRequest(String request, Result<ParsingResult> expected) {

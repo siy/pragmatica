@@ -21,12 +21,17 @@ import org.pragmatica.io.AsyncCloseable;
 import org.pragmatica.io.async.common.SizeT;
 import org.pragmatica.io.async.net.InetAddress;
 import org.pragmatica.io.async.util.OffHeapSlice;
+import org.pragmatica.io.async.util.SliceAccessor;
 import org.pragmatica.lang.Functions.FN1;
 import org.pragmatica.lang.Promise;
 import org.pragmatica.lang.PromiseIO;
+import org.pragmatica.lang.Result;
 import org.pragmatica.lang.Unit;
 
 import java.util.function.Consumer;
+
+import static org.pragmatica.lang.Promise.resolved;
+import static org.pragmatica.lang.PromiseIO.write;
 
 public final class ReadWriteContext<T extends InetAddress> implements AsyncCloseable {
     private final ClientConnectionContext<T> connectionContext;
@@ -43,21 +48,41 @@ public final class ReadWriteContext<T extends InetAddress> implements AsyncClose
         return new ReadWriteContext<>(connectionContext, bufferSize);
     }
 
-    public <R> Promise<R> read(FN1<R, OffHeapSlice> transformer) {
+    public <R> Promise<R> readPlain(FN1<R, SliceAccessor> transformer) {
         return PromiseIO.read(connectionContext.socket(), readBuffer)
-                        .mapReplace(() -> transformer.apply(readBuffer));
+                        .mapReplace(() -> transformer.apply(SliceAccessor.forSlice(readBuffer)));
     }
 
-    public Promise<SizeT> write(Consumer<OffHeapSlice> bufferFiller) {
-        bufferFiller.accept(writeBuffer);
-        return PromiseIO.write(connectionContext.socket(), writeBuffer);
+    public <R> Promise<R> readAndTransform(FN1<Result<R>, SliceAccessor> transformer) {
+        return PromiseIO.read(connectionContext.socket(), readBuffer)
+                        .flatMap(() -> resolved(transformer.apply(SliceAccessor.forSlice(readBuffer))));
+    }
+
+    public Promise<SizeT> prepareThenWrite(Consumer<SliceAccessor> bufferFiller) {
+        var sliceAccessor = SliceAccessor.forSlice(writeBuffer);
+        bufferFiller.accept(sliceAccessor);
+        sliceAccessor.updateSlice();
+
+        return write(connectionContext.socket(), writeBuffer);
+    }
+
+    public Promise<SizeT> transformThenWrite(FN1<Result<Unit>, SliceAccessor> bufferFiller) {
+        var sliceAccessor = SliceAccessor.forSlice(writeBuffer);
+
+        return resolved(bufferFiller.apply(sliceAccessor).onSuccessDo(sliceAccessor::updateSlice))
+            .flatMap(() -> write(connectionContext.socket(), writeBuffer));
     }
 
     @Override
     public Promise<Unit> close() {
-        return connectionContext.close().onResultDo(() -> {
-            readBuffer.close();
-            writeBuffer.close();
-        });
+        return connectionContext.close()
+                                .onResultDo(() -> {
+                                    readBuffer.close();
+                                    writeBuffer.close();
+                                });
+    }
+
+    public SliceAccessor reader() {
+        return SliceAccessor.forSlice(readBuffer);
     }
 }

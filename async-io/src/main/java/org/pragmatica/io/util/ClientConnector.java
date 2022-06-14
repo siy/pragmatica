@@ -17,7 +17,10 @@
 
 package org.pragmatica.io.util;
 
-import org.pragmatica.io.async.net.*;
+import org.pragmatica.io.async.net.InetAddress;
+import org.pragmatica.io.async.net.InetPort;
+import org.pragmatica.io.async.net.SocketAddress;
+import org.pragmatica.io.async.net.SocketType;
 import org.pragmatica.lang.Promise;
 import org.pragmatica.lang.PromiseIO;
 

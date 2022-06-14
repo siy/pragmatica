@@ -19,8 +19,8 @@ package org.pragmatica.dns.codec;
 
 import org.pragmatica.lang.Result;
 
-import static org.pragmatica.lang.Result.success;
 import static org.pragmatica.dns.codec.DnsIoErrors.INVALID_MESSAGE_TYPE;
+import static org.pragmatica.lang.Result.success;
 
 public enum MessageType {
     QUERY(0),
