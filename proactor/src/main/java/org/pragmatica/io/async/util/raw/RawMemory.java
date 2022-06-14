@@ -44,6 +44,14 @@ public final class RawMemory {
         instance.putIntUnaligned(null, address, value, true);
     }
 
+    public static void putLongInNetOrder(long address, long value) {
+        instance.putLongUnaligned(null, address, value, true);
+    }
+
+    public static long getLongInNetOrder(long address) {
+        return instance.getLongUnaligned(null, address, true);
+    }
+
     // Raw access of different size
     public static long getLong(long address) {
         return instance.getLong(null, address);

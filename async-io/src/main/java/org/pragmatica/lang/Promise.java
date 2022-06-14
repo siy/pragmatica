@@ -26,6 +26,7 @@ import org.pragmatica.task.TaskExecutor;
 import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import static org.pragmatica.io.async.util.ActionableThreshold.threshold;
 import static org.pragmatica.io.async.util.ResultCollector.resultCollector;
@@ -64,6 +65,10 @@ public interface Promise<T> {
      */
     <U> Promise<U> map(FN1<U, ? super T> mapper);
 
+    default <U> Promise<U> mapReplace(Supplier<U> mapper) {
+        return map(__ -> mapper.get());
+    }
+
     /**
      * Compose current instance with the function which returns a Promise of another type.
      *
@@ -72,6 +77,10 @@ public interface Promise<T> {
      * @return Composed instance
      */
     <U> Promise<U> flatMap(FN1<Promise<U>, ? super T> mapper);
+
+    default <U> Promise<U> flatMap(Supplier<Promise<U>> mapper) {
+        return flatMap(__ -> mapper.get());
+    }
 
     /**
      * Run asynchronous task. The task will receive current instance of Promise as a parameter.
@@ -179,10 +188,10 @@ public interface Promise<T> {
     }
 
     /**
-     * Attach a side effect action which will be executed upon resolution of the current instance with {@link Result} containing {@link
-     * Result.Success}. If instance is resolved with {@link Result} containing {@link Result.Failure}, then action will not be invoked. If promise is
-     * already resolved by the time of invocation of this method and bufferSize is a {@link Result.Success}, then provided action will be executed
-     * immediately.
+     * Attach a side effect action which will be executed upon resolution of the current instance with {@link Result} containing
+     * {@link Result.Success}. If instance is resolved with {@link Result} containing {@link Result.Failure}, then action will not be invoked. If
+     * promise is already resolved by the time of invocation of this method and bufferSize is a {@link Result.Success}, then provided action will be
+     * executed immediately.
      *
      * @param action the action to execute
      *
@@ -193,10 +202,10 @@ public interface Promise<T> {
     }
 
     /**
-     * Attach a side effect action which will be executed upon resolution of the current instance with {@link Result} containing {@link
-     * Result.Success}. If instance is resolved with {@link Result} containing {@link Result.Failure}, then action will not be invoked. If promise is
-     * already resolved by the time of invocation of this method and bufferSize is a {@link Result.Success}, then provided action will be executed
-     * immediately. Note that unlike {@link Promise#onSuccess(Consumer)}, the action passed to this method does not receive parameter.
+     * Attach a side effect action which will be executed upon resolution of the current instance with {@link Result} containing
+     * {@link Result.Success}. If instance is resolved with {@link Result} containing {@link Result.Failure}, then action will not be invoked. If
+     * promise is already resolved by the time of invocation of this method and bufferSize is a {@link Result.Success}, then provided action will be
+     * executed immediately. Note that unlike {@link Promise#onSuccess(Consumer)}, the action passed to this method does not receive parameter.
      *
      * @param action the action to execute
      *
@@ -207,10 +216,10 @@ public interface Promise<T> {
     }
 
     /**
-     * Attach a side effect action which will be executed upon resolution of the current instance with {@link Result} containing {@link
-     * Result.Failure}. If instance is resolved with {@link Result} containing {@link Result.Success}, then action will not be invoked. If promise is
-     * already resolved by the time of invocation of this method and bufferSize is a {@link Result.Failure}, then provided action will be executed
-     * immediately.
+     * Attach a side effect action which will be executed upon resolution of the current instance with {@link Result} containing
+     * {@link Result.Failure}. If instance is resolved with {@link Result} containing {@link Result.Success}, then action will not be invoked. If
+     * promise is already resolved by the time of invocation of this method and bufferSize is a {@link Result.Failure}, then provided action will be
+     * executed immediately.
      *
      * @param action the action to execute
      *
@@ -221,10 +230,10 @@ public interface Promise<T> {
     }
 
     /**
-     * Attach a side effect action which will be executed upon resolution of the current instance with {@link Result} containing {@link
-     * Result.Failure}. If instance is resolved with {@link Result} containing {@link Result.Success}, then action will not be invoked. If promise is
-     * already resolved by the time of invocation of this method and bufferSize is a {@link Result.Failure}, then provided action will be executed
-     * immediately. Note that unlike {@link Promise#onFailure(Consumer)}, the action passed to this method does not receive parameter.
+     * Attach a side effect action which will be executed upon resolution of the current instance with {@link Result} containing
+     * {@link Result.Failure}. If instance is resolved with {@link Result} containing {@link Result.Success}, then action will not be invoked. If
+     * promise is already resolved by the time of invocation of this method and bufferSize is a {@link Result.Failure}, then provided action will be
+     * executed immediately. Note that unlike {@link Promise#onFailure(Consumer)}, the action passed to this method does not receive parameter.
      *
      * @param action the action to execute
      *
@@ -359,6 +368,13 @@ public interface Promise<T> {
                                                         .onResultDo(at::registerEvent))));
     }
 
+    static <T> Promise<T> anySuccess(Result<T> failureResult, List<Promise<T>> promises) {
+        return Promise.promise(anySuccess -> threshold(promises.size(), () -> anySuccess.resolve(failureResult))
+            .apply(at -> promises.forEach(promise -> promise.onResult(result -> result.onSuccess(anySuccess::success)
+                                                                                      .onSuccessDo(() -> cancelAll(promises)))
+                                                            .onResultDo(at::registerEvent))));
+    }
+
     /**
      * Return promise which will be resolved once any of the promises provided as a parameters will be resolved with success. If none of the promises
      * will be resolved with success, then created instance will be resolved with {@link SystemError#ECANCELED}.
@@ -372,12 +388,16 @@ public interface Promise<T> {
         return anySuccess(Result.failure(SystemError.ECANCELED), promises);
     }
 
+    static <T> Promise<T> anySuccess(List<Promise<T>> promises) {
+        return anySuccess(Result.failure(SystemError.ECANCELED), promises);
+    }
+
     /**
      * Cancel all provided promises.
      *
      * @param promises Input promises.
      */
-    static void cancelAll(Promise<?>... promises) {
+    static <T> void cancelAll(Promise<T>... promises) {
         cancelAll(List.of(promises));
     }
 
@@ -386,7 +406,7 @@ public interface Promise<T> {
      *
      * @param promises Input promises.
      */
-    static void cancelAll(List<Promise<?>> promises) {
+    static <T> void cancelAll(List<Promise<T>> promises) {
         promises.forEach(Promise::cancel);
     }
 
