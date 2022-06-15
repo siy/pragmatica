@@ -42,7 +42,7 @@ class ReadWriteContextTest {
             resolver.forName(host)
                     .map(domainAddress -> domainAddress.clientTcpConnector(InetPort.inetPort(80)))
                     .flatMap(ClientConnector::connect)
-                    .map(context -> ReadWriteContext.readWriteContext(context, 16384))
+                    .map(ReadWriteContext::readWriteContext)
                     .flatMap(context -> doConversation(context, host))
                     .flatMap(ReadWriteContext::close)
                     .join();

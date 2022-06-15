@@ -25,14 +25,14 @@ public sealed interface ParsingResult {
     record Done() implements ParsingResult {
         @Override
         public SliceAccessor bodyPosition(SliceAccessor input) {
-            return input.position(input.used());
+            return input.position(input.used()).remainingAsSlice();
         }
     }
 
     record Continue(int index) implements ParsingResult {
         @Override
         public SliceAccessor bodyPosition(SliceAccessor input) {
-            return input.position(index);
+            return input.position(index).remainingAsSlice();
         }
     }
 }

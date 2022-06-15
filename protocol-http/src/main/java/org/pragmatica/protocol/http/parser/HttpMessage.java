@@ -107,8 +107,9 @@ public class HttpMessage {
         return builder.toString();
     }
 
-    public Result<ParsingResult> parse(SliceAccessor sliceAccessor) {
-        return parse(sliceAccessor.getRemainingBytes());
+    public Result<SliceAccessor> parse(SliceAccessor sliceAccessor) {
+        return parse(sliceAccessor.getRemainingBytes())
+            .map(result -> result.bodyPosition(sliceAccessor));
     }
 
     public Result<ParsingResult> parse(byte[] input) {

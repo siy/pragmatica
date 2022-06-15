@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 import org.pragmatica.dns.DomainNameResolver;
 import org.pragmatica.io.async.net.InetAddress;
 import org.pragmatica.io.async.net.InetPort;
+import org.pragmatica.io.async.util.SliceAccessor;
 import org.pragmatica.io.util.ClientConnector;
 import org.pragmatica.io.util.ReadWriteContext;
 import org.pragmatica.lang.Promise;
@@ -66,7 +67,7 @@ class HttpMessageTest {
             resolver.forName(host)
                     .map(domainAddress -> domainAddress.clientTcpConnector(InetPort.inetPort(80)))
                     .flatMap(ClientConnector::connect)
-                    .map(context -> ReadWriteContext.readWriteContext(context, 16384))
+                    .map(ReadWriteContext::readWriteContext)
                     .flatMap(context -> doConversation(context, host))
                     .flatMap(ReadWriteContext::close)
                     .join();
@@ -78,10 +79,8 @@ class HttpMessageTest {
         var request = String.format(MINIMAL_REQUEST, host).getBytes(StandardCharsets.UTF_8);
         var message = HttpMessage.forResponse();
 
-        return context.prepareThenWrite(writeAccessor -> writeAccessor.putBytes(request).updateSlice())
-                      .flatMap(() -> context.readAndTransform(message::parse))
-                      .map(parsingResult -> parsingResult.bodyPosition(context.reader()))
-                      .map(bodySlice -> new String(bodySlice.getRemainingBytes(), StandardCharsets.UTF_8))
+        return context.exchangeSimple(writeAccessor -> writeAccessor.putBytes(request).updateSlice(), message::parse)
+                      .map(SliceAccessor::remainingAsString)
                       .onSuccessDo(() -> System.out.println(message.text()))
                       .onSuccess(body -> System.out.println("Body:\n" + body + "\n"))
                       .onFailure(System.out::println)
