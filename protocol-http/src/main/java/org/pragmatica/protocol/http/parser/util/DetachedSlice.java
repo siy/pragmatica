@@ -44,6 +44,12 @@ public final class DetachedSlice {
         return end - start;
     }
 
+    public DetachedSlice len(int len) {
+        end = start + len;
+        return this;
+    }
+
+
     public int start() {
         return start;
     }
