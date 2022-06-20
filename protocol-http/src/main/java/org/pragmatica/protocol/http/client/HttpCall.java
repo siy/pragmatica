@@ -17,9 +17,7 @@
 
 package org.pragmatica.protocol.http.client;
 
-import org.pragmatica.io.util.ReadWriteContextConfig;
-
-public final class HttpClient {
-//    private final ReadWriteContextConfig config;
-
+public class HttpCall {
+//    private final String path;
+//    private final
 }

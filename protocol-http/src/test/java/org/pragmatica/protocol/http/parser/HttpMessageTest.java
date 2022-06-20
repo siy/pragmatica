@@ -59,10 +59,11 @@ class HttpMessageTest {
 
     @Test
     void externalHostCanBeConnectedAndRead() {
-        writeReadHost("www.google.com");
+        writeThenReadHost("www.google.com");
+        writeThenReadHost("www.duckduckgo.com");
     }
 
-    private void writeReadHost(String host) {
+    private void writeThenReadHost(String host) {
         var result =
             resolver.forName(host)
                     .map(domainAddress -> domainAddress.clientTcpConnector(InetPort.inetPort(80)))
