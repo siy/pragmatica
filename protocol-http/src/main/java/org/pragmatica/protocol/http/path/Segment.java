@@ -17,5 +17,10 @@
 
 package org.pragmatica.protocol.http.path;
 
-public interface Segment {
+import org.pragmatica.protocol.http.parameter.Parameter;
+import org.pragmatica.protocol.http.parameter.Parameter.Path;
+
+public sealed interface Segment {
+    record Plain(String text) implements Segment {}
+    record Typed<T>(Path<T> parameter) implements Segment {}
 }

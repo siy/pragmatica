@@ -17,5 +17,55 @@
 
 package org.pragmatica.protocol.http.path;
 
-public class SegmentedPathBuilder {
+import org.pragmatica.lang.Tuple;
+import org.pragmatica.lang.Tuple.*;
+import org.pragmatica.lang.Unit;
+//import org.pragmatica.protocol.http.path.PathSegment.*;
+import org.pragmatica.protocol.http.path.Segment.*;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import static org.pragmatica.lang.Tuple.tuple;
+
+public final class SegmentedPathBuilder {
+    private SegmentedPathBuilder() {}
+
+    public static Builder0 builder() {
+        return new Builder0();
+    }
+
+    public final class Builder0 {
+        private final List<Segment> segments = new ArrayList<>();
+
+        Builder0 plain(Plain segment) {
+            segments.add(segment);
+            return this;
+        }
+
+        <T1> Builder1<T1> typed(Typed<T1> segment) {
+
+        }
+
+        SegmentedPath<Unit> build() {
+            return new SegmentedPath<>(segments);
+        }
+    }
+
+    public interface Builder1<T1> {
+        Builder1<T1> plain(Segment segment);
+        <T2> Builder2<T1, T2> typed(Typed<T2> segment);
+        SegmentedPath<Tuple1<T1>> build();
+    }
+
+    public interface Builder2<T1, T2> {
+        Builder2<T1, T2> plain(Segment segment);
+        <T3> Builder3<T1, T2, T3> typed(Typed<T3> segment);
+        SegmentedPath<Tuple2<T1, T2>> build();
+    }
+
+    public interface Builder3<T1, T2, T3> {
+        Builder3<T1, T2, T3> plain(Segment segment);
+        SegmentedPath<Tuple3<T1, T2, T3>> build();
+    }
 }

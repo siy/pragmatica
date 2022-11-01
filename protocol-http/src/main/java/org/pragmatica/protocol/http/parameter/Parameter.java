@@ -17,5 +17,8 @@
 
 package org.pragmatica.protocol.http.parameter;
 
-public interface RequestParameter {
+public sealed interface Parameter<T> {
+    final class Path<T> implements Parameter<T> {}
+    final class Query<T> implements Parameter<T> {}
+    final class Body<T> implements Parameter<T> {}
 }

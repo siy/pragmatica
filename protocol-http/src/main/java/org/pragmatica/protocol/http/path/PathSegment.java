@@ -17,5 +17,14 @@
 
 package org.pragmatica.protocol.http.path;
 
-public class SegmentedPath {
+import org.pragmatica.lang.Tuple.*;
+import org.pragmatica.lang.Tuple.Tuple1;
+import org.pragmatica.lang.Tuple.Tuple2;
+import org.pragmatica.lang.Tuple.Tuple9;
+
+public sealed interface PathSegment<T> {
+    non-sealed interface Segment0 extends PathSegment<Tuple0> {}
+    non-sealed interface Segment1<T1> extends PathSegment<Tuple1<T1>> {}
+    non-sealed interface Segment2<T1, T2> extends PathSegment<Tuple2<T1, T2>> {}
+    non-sealed interface Segment9<T1, T2, T3, T4, T5, T6, T7, T8, T9> extends PathSegment<Tuple9<T1, T2, T3, T4, T5, T6, T7, T8, T9>> {}
 }
