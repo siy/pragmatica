@@ -137,6 +137,7 @@
                     <configuration>
                         <argLine>--enable-preview</argLine>
                         <forkNode implementation="org.apache.maven.plugin.surefire.extensions.SurefireForkNodeFactory"/>
+                        <useSystemClassLoader>false</useSystemClassLoader>
                     </configuration>
                 </plugin>
                 <plugin>
@@ -155,6 +156,7 @@
                     <version>2.22.1</version>
                     <configuration>
                         <argLine>--enable-preview</argLine>
+                        <useSystemClassLoader>false</useSystemClassLoader>
                     </configuration>
                 </plugin>
             </plugins>
