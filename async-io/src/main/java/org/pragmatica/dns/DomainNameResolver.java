@@ -67,6 +67,7 @@ public class DomainNameResolver implements AsyncCloseable {
     private final PriorityBlockingQueue<TtlEntry> queue = new PriorityBlockingQueue<>(1024, comparingLong(TtlEntry::expirationTime));
     private final PeriodicTaskRunner taskRunner = PeriodicTaskRunner.periodicTaskRunner(timeout(1).seconds(), this::ttlProcessor);
 
+    //TODO: better error handling
     private DomainNameResolver(List<Inet4Address> serverList) {
         this.sockets = serverList
             .stream()

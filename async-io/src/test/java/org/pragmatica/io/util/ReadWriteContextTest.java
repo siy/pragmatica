@@ -57,6 +57,6 @@ class ReadWriteContextTest {
                       .flatMap(() -> context.readPlain(readAccessor -> new String(readAccessor.getRemainingBytes(), StandardCharsets.UTF_8)))
                       .onSuccess(System.out::println)
                       .onFailure(System.out::println)
-                      .mapReplace(() -> context);
+                      .map(() -> context);
     }
 }

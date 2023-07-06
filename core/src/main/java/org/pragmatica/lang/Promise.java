@@ -17,19 +17,14 @@
 
 package org.pragmatica.lang;
 
-import org.pragmatica.io.async.Proactor;
-import org.pragmatica.io.async.SystemError;
-import org.pragmatica.io.async.Timeout;
 import org.pragmatica.lang.Functions.*;
-import org.pragmatica.task.TaskExecutor;
 
 import java.util.List;
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-import static org.pragmatica.io.async.util.ActionableThreshold.threshold;
-import static org.pragmatica.io.async.util.ResultCollector.resultCollector;
+import static org.pragmatica.lang.utils.ActionableThreshold.threshold;
+import static org.pragmatica.lang.utils.ResultCollector.resultCollector;
 
 /**
  * The (perhaps not yet available) result of the asynchronous operation.
@@ -46,12 +41,12 @@ public interface Promise<T> {
     Promise<T> resolve(Result<T> value);
 
     /**
-     * Resolve current instance with {@link SystemError#ECANCELED} error.
+     * Resolve current instance with {@link CoreError#CANCELLED} error.
      *
      * @return Current instance
      */
     default Promise<T> cancel() {
-        return resolve(SystemError.ECANCELED.result());
+        return resolve(CoreError.CANCELLED.result());
     }
 
     boolean isResolved();
@@ -65,6 +60,13 @@ public interface Promise<T> {
      */
     <U> Promise<U> map(FN1<U, ? super T> mapper);
 
+    /**
+     * Transform current instance by replacing stored value with one returned by provided supplier.
+     *
+     * @param mapper The replacement value supplier. Invoked only if current instance is resolved with success.
+     *
+     * @return Transformed instance
+     */
     default <U> Promise<U> map(Supplier<U> mapper) {
         return map(__ -> mapper.get());
     }
@@ -78,9 +80,18 @@ public interface Promise<T> {
      */
     <U> Promise<U> flatMap(FN1<Promise<U>, ? super T> mapper);
 
+    /**
+     * Transform current instance by replacing stored result with one returned by provided supplier.
+     *
+     * @param mapper The replacement result supplier. Invoked only if current instance is resolved with success.
+     *
+     * @return Transformed instance
+     */
     default <U> Promise<U> flatMap(Supplier<Promise<U>> mapper) {
         return flatMap(__ -> mapper.get());
     }
+
+    Promise<T> mapError(FN1<Cause, Cause> mapper);
 
     /**
      * Run asynchronous task. The task will receive current instance of Promise as a parameter.
@@ -89,61 +100,7 @@ public interface Promise<T> {
      *
      * @return Current instance
      */
-    default Promise<T> async(Consumer<Promise<T>> action) {
-        return async((promise, __) -> action.accept(promise));
-    }
-
-    /**
-     * Run asynchronous task. The task will receive an instance of {@link Proactor} as a parameter.
-     *
-     * @param action The task to run
-     *
-     * @return Current instance
-     */
-    default Promise<T> asyncIO(Consumer<Proactor> action) {
-        return async((__, proactor) -> action.accept(proactor));
-    }
-
-    /**
-     * Run asynchronous task. The task will receive current instance of Promise and an instance of {@link Proactor} as a parameter.
-     *
-     * @param action The task to run
-     *
-     * @return Current instance
-     */
-    Promise<T> async(BiConsumer<Promise<T>, Proactor> action);
-
-    /**
-     * Run asynchronous task. The task will receive current instance of Promise, instance of {@link Proactor} and instance of {@link TaskExecutor} as
-     * a parameters.
-     *
-     * @param action The task to run
-     *
-     * @return Current instance
-     */
-    Promise<T> async(TriConsumer<Promise<T>, Proactor, TaskExecutor> action);
-
-    /**
-     * Run asynchronous task after specified timeout.
-     *
-     * @param timeout The timeout before task will be started
-     * @param action  The task to run
-     *
-     * @return Current instance
-     */
-    default Promise<T> async(Timeout timeout, Consumer<Promise<T>> action) {
-        return async(timeout, (promise, __) -> action.accept(promise));
-    }
-
-    /**
-     * Run asynchronous task after specified timeout.
-     *
-     * @param timeout The timeout before task will be started
-     * @param action  The task to run
-     *
-     * @return Current instance
-     */
-    Promise<T> async(Timeout timeout, BiConsumer<Promise<T>, Proactor> action);
+    Promise<T> async(Consumer<Promise<T>> action);
 
     /**
      * Wait indefinitely for completion of the Promise and all attached actions (see {@link #onResult(Consumer)}).
@@ -154,7 +111,7 @@ public interface Promise<T> {
 
     /**
      * Wait for completion of the Promise and all attached actions. The waiting time is limited to specified timeout. If timeout expires before
-     * Promise is resolved, then returned result contains {@link SystemError#ETIME} error.
+     * Promise is resolved, then returned result contains {@link CoreError#TIMEOUT} error.
      * <p>
      * Note that if return signals that timeout is expired, this does not change state of the promise.
      *
@@ -288,36 +245,6 @@ public interface Promise<T> {
     }
 
     /**
-     * Create an unresolved instance and run asynchronous action which will receive created instance and an instance of {@link Proactor} as
-     * parameters.
-     * <p>
-     * WARNING: Passed {@link Proactor} instance is valid only within body of the consumer. It should not be stored nor reused outside the execution
-     * scope of the consumer.
-     *
-     * @param consumer The action to run
-     *
-     * @return Created instance
-     */
-    static <R> Promise<R> promise(BiConsumer<Promise<R>, Proactor> consumer) {
-        return Promise.<R>promise().async(consumer);
-    }
-
-    /**
-     * Create an unresolved instance and run asynchronous action which will receive created instance, an instance of {@link Proactor} and instance of
-     * {@link TaskExecutor} as parameters.
-     * <p>
-     * WARNING: Passed {@link Proactor} instance is valid only within body of the consumer. It should not be stored nor reused outside the execution
-     * scope of the consumer.
-     *
-     * @param consumer The action to run
-     *
-     * @return Created instance
-     */
-    static <R> Promise<R> promise(TriConsumer<Promise<R>, Proactor, TaskExecutor> consumer) {
-        return Promise.<R>promise().async(consumer);
-    }
-
-    /**
      * Create a resolved instance.
      *
      * @param value The bufferSize which will be stored in the created instance
@@ -377,7 +304,7 @@ public interface Promise<T> {
 
     /**
      * Return promise which will be resolved once any of the promises provided as a parameters will be resolved with success. If none of the promises
-     * will be resolved with success, then created instance will be resolved with {@link SystemError#ECANCELED}.
+     * will be resolved with success, then created instance will be resolved with {@link CoreError#CANCELLED}.
      *
      * @param promises Input promises
      *
@@ -385,11 +312,11 @@ public interface Promise<T> {
      */
     @SafeVarargs
     static <T> Promise<T> anySuccess(Promise<T>... promises) {
-        return anySuccess(Result.failure(SystemError.ECANCELED), promises);
+        return anySuccess(Result.failure(CoreError.CANCELLED), promises);
     }
 
     static <T> Promise<T> anySuccess(List<Promise<T>> promises) {
-        return anySuccess(Result.failure(SystemError.ECANCELED), promises);
+        return anySuccess(Result.failure(CoreError.CANCELLED), promises);
     }
 
     /**
@@ -397,6 +324,7 @@ public interface Promise<T> {
      *
      * @param promises Input promises.
      */
+    @SafeVarargs
     static <T> void cancelAll(Promise<T>... promises) {
         cancelAll(List.of(promises));
     }

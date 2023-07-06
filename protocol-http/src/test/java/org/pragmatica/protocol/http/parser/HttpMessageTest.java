@@ -85,7 +85,7 @@ class HttpMessageTest {
                       .onSuccessDo(() -> System.out.println(message.text()))
                       .onSuccess(body -> System.out.println("Body:\n" + body + "\n"))
                       .onFailure(System.out::println)
-                      .mapReplace(() -> context);
+                      .map(() -> context);
     }
 
     void parseRequest(String request, Result<ParsingResult> expected) {

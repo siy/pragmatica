@@ -50,7 +50,7 @@ public final class ReadWriteContext<T extends InetAddress> implements AsyncClose
 
     public <R> Promise<R> readPlain(FN1<R, SliceAccessor> transformer) {
         return PromiseIO.read(connectionContext.socket(), readBuffer)
-                        .mapReplace(() -> transformer.apply(SliceAccessor.forSlice(readBuffer)));
+                        .map(() -> transformer.apply(SliceAccessor.forSlice(readBuffer)));
     }
 
     public <R> Promise<R> readAndTransform(FN1<Result<R>, SliceAccessor> transformer) {

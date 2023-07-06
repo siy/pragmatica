@@ -142,14 +142,19 @@
 
                     <compilerStartOptions>
                         <compilerStartOption>-g</compilerStartOption>
-                        <compilerStartOption>-O2</compilerStartOption>
+                        <compilerStartOption>-O3</compilerStartOption>
                         <compilerStartOption>-Wall</compilerStartOption>
                         <compilerStartOption>-Wextra</compilerStartOption>
+                        <compilerStartOption>-ffreestanding</compilerStartOption>
+                        <compilerStartOption>-fno-builtin</compilerStartOption>
                         <compilerStartOption>-fno-stack-protector</compilerStartOption>
                         <compilerStartOption>-fomit-frame-pointer</compilerStartOption>
                         <compilerStartOption>-Wno-unused-parameter</compilerStartOption>
                         <compilerStartOption>-Wno-sign-compare</compilerStartOption>
                         <compilerStartOption>-DLIBURING_INTERNAL</compilerStartOption>
+                        <compilerStartOption>-D_GNU_SOURCE</compilerStartOption>
+                        <compilerStartOption>-D_LARGEFILE_SOURCE</compilerStartOption>
+                        <compilerStartOption>-D_FILE_OFFSET_BITS=64</compilerStartOption>
                         <compilerStartOption>-fPIC</compilerStartOption>
                         <compilerStartOption>-I ${project.basedir}/../liburing/src/include</compilerStartOption>
                         <compilerStartOption>-I ${project.basedir}/../liburing/src</compilerStartOption>

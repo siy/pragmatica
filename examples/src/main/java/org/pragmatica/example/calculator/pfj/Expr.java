@@ -2,8 +2,6 @@ package org.pragmatica.example.calculator.pfj;
 
 import org.pragmatica.lang.Result;
 
-import static org.pragmatica.example.calculator.pfj.EvalErrors.DIVISION_BY_ZERO;
-import static org.pragmatica.example.calculator.pfj.EvalErrors.INTEGER_OVERFLOW;
 import static org.pragmatica.lang.Result.*;
 
 public sealed interface Expr {
@@ -35,7 +33,7 @@ public sealed interface Expr {
         }
 
         public static Result<Long> add(long augend, long addend) {
-            return lift(INTEGER_OVERFLOW, () -> Math.addExact(augend, addend));
+            return lift(EvalErrors.INTEGER_OVERFLOW, () -> Math.addExact(augend, addend));
         }
     }
 
@@ -47,7 +45,7 @@ public sealed interface Expr {
         }
 
         public static Result<Long> sub(long minuend, long subtrahend) {
-            return lift(INTEGER_OVERFLOW, () -> Math.subtractExact(minuend, subtrahend));
+            return lift(EvalErrors.INTEGER_OVERFLOW, () -> Math.subtractExact(minuend, subtrahend));
         }
     }
 
@@ -59,7 +57,7 @@ public sealed interface Expr {
         }
 
         public static Result<Long> mul(long multiplier, long multiplicand) {
-            return lift(INTEGER_OVERFLOW, () -> Math.multiplyExact(multiplier, multiplicand));
+            return lift(EvalErrors.INTEGER_OVERFLOW, () -> Math.multiplyExact(multiplier, multiplicand));
         }
     }
 
@@ -71,9 +69,7 @@ public sealed interface Expr {
         }
 
         public static Result<Long> div(long dividend, long divisor) {
-            return divisor == 0
-                   ? DIVISION_BY_ZERO.result()
-                   : success(dividend / divisor);
+            return divisor == 0 ? EvalErrors.DIVISION_BY_ZERO.result() : success(dividend / divisor);
         }
     }
 }

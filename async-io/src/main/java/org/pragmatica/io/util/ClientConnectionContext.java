@@ -28,6 +28,6 @@ import org.pragmatica.lang.Unit;
 public record ClientConnectionContext<T extends InetAddress>(SocketAddress<T> address, FileDescriptor socket) implements AsyncCloseable {
     @Override
     public Promise<Unit> close() {
-        return PromiseIO.close(socket).mapReplace(Unit::unit);
+        return PromiseIO.close(socket).map(() -> Unit.unit());
     }
 }

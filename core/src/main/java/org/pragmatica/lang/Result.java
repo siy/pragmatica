@@ -68,10 +68,6 @@ public sealed interface Result<T> permits Success, Failure {
         return fold(cause -> mapper.apply(cause).result(), __ -> this);
     }
 
-    default Result<T> mapError(Supplier<Cause> supplier) {
-        return fold(__ -> supplier.get().result(), __ -> this);
-    }
-
     /**
      * Transform operation result into another operation result. In case if current instance (this) is an error, transformation function is not
      * invoked and value remains the same.
@@ -502,7 +498,7 @@ public sealed interface Result<T> permits Success, Failure {
     }
 
     /**
-     * Transform provided results into single result containing tuple of values. The result is failure if any input result is failure. Otherwise
+     * Transform provided results into single result containing tuple of values. The result is failure if any input result is failure. Otherwise,
      * returned instance contains tuple with values from input results.
      *
      * @return {@link Mapper1} prepared for further transformation.
@@ -512,7 +508,7 @@ public sealed interface Result<T> permits Success, Failure {
     }
 
     /**
-     * Transform provided results into single result containing tuple of values. The result is failure if any input result is failure. Otherwise
+     * Transform provided results into single result containing tuple of values. The result is failure if any input result is failure. Otherwise,
      * returned instance contains tuple with values from input results.
      *
      * @return {@link Mapper2} prepared for further transformation.
@@ -522,7 +518,7 @@ public sealed interface Result<T> permits Success, Failure {
     }
 
     /**
-     * Transform provided results into single result containing tuple of values. The result is failure if any input result is failure. Otherwise
+     * Transform provided results into single result containing tuple of values. The result is failure if any input result is failure. Otherwise,
      * returned instance contains tuple with values from input results.
      *
      * @return {@link Mapper3} prepared for further transformation.
@@ -532,7 +528,7 @@ public sealed interface Result<T> permits Success, Failure {
     }
 
     /**
-     * Transform provided results into single result containing tuple of values. The result is failure if any input result is failure. Otherwise
+     * Transform provided results into single result containing tuple of values. The result is failure if any input result is failure. Otherwise,
      * returned instance contains tuple with values from input results.
      *
      * @return {@link Mapper4} prepared for further transformation.
@@ -548,7 +544,7 @@ public sealed interface Result<T> permits Success, Failure {
     }
 
     /**
-     * Transform provided results into single result containing tuple of values. The result is failure if any input result is failure. Otherwise
+     * Transform provided results into single result containing tuple of values. The result is failure if any input result is failure. Otherwise,
      * returned instance contains tuple with values from input results.
      *
      * @return {@link Mapper5} prepared for further transformation.
@@ -565,7 +561,7 @@ public sealed interface Result<T> permits Success, Failure {
     }
 
     /**
-     * Transform provided results into single result containing tuple of values. The result is failure if any input result is failure. Otherwise
+     * Transform provided results into single result containing tuple of values. The result is failure if any input result is failure. Otherwise,
      * returned instance contains tuple with values from input results.
      *
      * @return {@link Mapper6} prepared for further transformation.
@@ -584,7 +580,7 @@ public sealed interface Result<T> permits Success, Failure {
     }
 
     /**
-     * Transform provided results into single result containing tuple of values. The result is failure if any input result is failure. Otherwise
+     * Transform provided results into single result containing tuple of values. The result is failure if any input result is failure. Otherwise,
      * returned instance contains tuple with values from input results.
      *
      * @return {@link Mapper7} prepared for further transformation.
@@ -605,7 +601,7 @@ public sealed interface Result<T> permits Success, Failure {
     }
 
     /**
-     * Transform provided results into single result containing tuple of values. The result is failure if any input result is failure. Otherwise
+     * Transform provided results into single result containing tuple of values. The result is failure if any input result is failure. Otherwise,
      * returned instance contains tuple with values from input results.
      *
      * @return {@link Mapper8} prepared for further transformation.
@@ -627,7 +623,7 @@ public sealed interface Result<T> permits Success, Failure {
     }
 
     /**
-     * Transform provided results into single result containing tuple of values. The result is failure if any input result is failure. Otherwise
+     * Transform provided results into single result containing tuple of values. The result is failure if any input result is failure. Otherwise,
      * returned instance contains tuple with values from input results.
      *
      * @return {@link Mapper9} prepared for further transformation.
@@ -855,4 +851,6 @@ public sealed interface Result<T> permits Success, Failure {
             return id().flatMap(tuple -> tuple.map(mapper));
         }
     }
+
+
 }

@@ -25,6 +25,7 @@ class ExprTest {
     }
 
     @Test
+    @SuppressWarnings("deprecation")
     void it_works() {
         var expr = new Expr.Number(10);
 
@@ -32,6 +33,7 @@ class ExprTest {
     }
 
     @Test
+    @SuppressWarnings("deprecation")
     void simple_expr1() {
         var expr = new Expr.Add(new Expr.Number(1), new Expr.Number(2));
 
@@ -39,6 +41,7 @@ class ExprTest {
     }
 
     @Test
+    @SuppressWarnings("deprecation")
     void simple_expr2() {
         var expr = new Expr.Sub(new Expr.Number(2), new Expr.Number(3));
 
@@ -46,6 +49,7 @@ class ExprTest {
     }
 
     @Test
+    @SuppressWarnings("deprecation")
     void simple_expr3() {
         var expr = new Expr.Mul(new Expr.Number(3), new Expr.Number(2));
 
@@ -53,6 +57,7 @@ class ExprTest {
     }
 
     @Test
+    @SuppressWarnings("deprecation")
     void simple_expr4() {
         var expr = new Expr.Div(new Expr.Number(3), new Expr.Number(6));
 
@@ -60,6 +65,7 @@ class ExprTest {
     }
 
     @Test
+    @SuppressWarnings("deprecation")
     void simple_expr5() {
         var expr = new Expr.Sqr(new Expr.Number(6));
 
