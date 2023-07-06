@@ -17,7 +17,6 @@
 
 package org.pragmatica.io.util;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.pragmatica.dns.DomainNameResolver;
 import org.pragmatica.io.async.net.InetAddress;
@@ -32,7 +31,6 @@ class ReadWriteContextTest {
 
 
     @Test
-    @Disabled
     void tryWriteThenRead() {
         writeReadHost("www.ibm.com");
         writeReadHost("www.google.com");
