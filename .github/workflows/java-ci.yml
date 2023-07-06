@@ -16,7 +16,7 @@ jobs:
         uses: actions/setup-java@v2
         with:
           distribution: 'zulu'
-          java-version: '21.0.0+28'
+          java-version: '21.0.0+28-ea'
           cache: 'maven'
       - name: Build with Maven
         run: sudo -E bash -c "ulimit -l 65536 && ulimit -a && MAVEN_OPTS=--enable-preview mvn --no-transfer-progress --batch-mode --update-snapshots package"
