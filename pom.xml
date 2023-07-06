@@ -135,7 +135,9 @@
                     <artifactId>maven-surefire-plugin</artifactId>
                     <version>3.0.0-M5</version>
                     <configuration>
+                        <forkCount>1</forkCount>
                         <argLine>--enable-preview</argLine>
+                        <argLine>--add-exports java.base/jdk.internal.misc=ALL-UNNAMED</argLine>
 <!--                        <forkNode implementation="org.apache.maven.plugin.surefire.extensions.SurefireForkNodeFactory"/>-->
                     </configuration>
                 </plugin>
