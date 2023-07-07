@@ -37,7 +37,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <java.release>17</java.release>
+        <java.release>21</java.release>
         <java.enable-preview>--enable-preview</java.enable-preview>
 
         <!-- Testing -->
@@ -145,12 +145,12 @@
                     <target>${java.release}</target>
                     <compilerArgs>
                         <arg>${java.enable-preview}</arg>
-                        <arg>--add-modules</arg>
-                        <arg>jdk.incubator.foreign</arg>
+<!--                        <arg>&#45;&#45;add-modules</arg>-->
+<!--                        <arg>jdk.incubator.foreign</arg>-->
                         <arg>--add-exports</arg>
                         <arg>java.base/jdk.internal.misc=ALL-UNNAMED</arg>
-                        <arg>--add-exports</arg>
-                        <arg>jdk.incubator.foreign/jdk.incubator.foreign=ALL-UNNAMED</arg>
+<!--                        <arg>&#45;&#45;add-exports</arg>-->
+<!--                        <arg>jdk.incubator.foreign/jdk.incubator.foreign=ALL-UNNAMED</arg>-->
                     </compilerArgs>
                 </configuration>
             </plugin>
