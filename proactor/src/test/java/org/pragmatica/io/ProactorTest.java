@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2022 Sergiy Yevtushenko.
+ *  Copyright (c) 2020-2022 Sergiy Yevtushenko.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -179,7 +179,7 @@ class ProactorTest {
         }
     }
 
-    private static <T> T throwIfError(Cause f) {
+    private static <T> T throwIfError(Result.Cause f) {
         fail(f);
         return null;
     }
@@ -191,7 +191,7 @@ class ProactorTest {
         } while (reference.get() == null);
     }
 
-    private static void fail(Cause failure) {
+    private static void fail(Result.Cause failure) {
         Assertions.fail(failure.message());
     }
 }

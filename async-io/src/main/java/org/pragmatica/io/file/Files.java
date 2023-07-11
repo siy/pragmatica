@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2022 Sergiy Yevtushenko.
+ *  Copyright (c) 2020-2022 Sergiy Yevtushenko.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -27,8 +27,6 @@ import org.pragmatica.io.codec.UTF8Decoder;
 import org.pragmatica.io.file.protocol.BlockReaderProtocol;
 import org.pragmatica.io.file.protocol.LineReaderProtocol;
 import org.pragmatica.lang.Option;
-import org.pragmatica.lang.Promise;
-import org.pragmatica.lang.PromiseIO;
 import org.pragmatica.lang.Unit;
 
 import java.nio.file.Path;

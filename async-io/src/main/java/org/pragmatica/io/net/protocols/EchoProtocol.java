@@ -26,7 +26,6 @@ import org.pragmatica.io.async.util.OffHeapSlice;
 import org.pragmatica.io.net.AcceptProtocol;
 import org.pragmatica.io.net.ConnectionProtocol;
 import org.pragmatica.io.net.ConnectionProtocolContext;
-import org.pragmatica.lang.Cause;
 import org.pragmatica.lang.Option;
 import org.pragmatica.lang.Result;
 import org.pragmatica.lang.Unit;
@@ -77,7 +76,7 @@ public sealed interface EchoProtocol<T extends InetAddress> extends ConnectionPr
             });
         }
 
-        private Unit handleFailure(Cause failure, Proactor proactor) {
+        private Unit handleFailure(Result.Cause failure, Proactor proactor) {
             if (LOG.isInfoEnabled()) {
                 LOG.info("I/O error: {}", failure);
             }

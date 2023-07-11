@@ -12,6 +12,12 @@
     <artifactId>core</artifactId>
     <name>Core Classes</name>
 
+    <dependencies>
+        <dependency>
+            <groupId>org.pragmatica</groupId>
+            <artifactId>proactor</artifactId>
+        </dependency>
+    </dependencies>
     <build>
         <plugins>
             <plugin>

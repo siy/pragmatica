@@ -17,10 +17,9 @@
 
 package org.pragmatica.dns.codec;
 
-import org.pragmatica.lang.Cause;
 import org.pragmatica.lang.Result;
 
-public enum DnsIoErrors implements Cause {
+public enum DnsIoErrors implements Result.Cause {
     TOO_SHORT_INPUT("Input does not contain full DNS response message"),
     INVALID_OPCODE("Invalid operation code"),
     INVALID_RESPONSE_CODE("Invalid response code"),
@@ -35,7 +34,7 @@ public enum DnsIoErrors implements Cause {
 
     DnsIoErrors(String message) {
         this.message = message;
-        this.result = Cause.super.result();
+        this.result = Result.Cause.super.result();
     }
 
     @Override

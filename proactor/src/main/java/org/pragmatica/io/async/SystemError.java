@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2022 Sergiy Yevtushenko.
+ *  Copyright (c) 2020-2022 Sergiy Yevtushenko.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,14 +17,13 @@
 
 package org.pragmatica.io.async;
 
-import org.pragmatica.lang.Cause;
 import org.pragmatica.lang.Functions.FN1;
 import org.pragmatica.lang.Result;
 
 /**
  * Representation of native error codes in Java
  */
-public enum SystemError implements Cause {
+public enum SystemError implements Result.Cause {
     ENOERR(0, "Operation successful"),
     EPERM(1, "Operation not permitted"),
     ENOENT(2, "No such file or directory"),

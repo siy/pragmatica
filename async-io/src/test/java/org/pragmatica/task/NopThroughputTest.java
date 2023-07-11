@@ -19,7 +19,6 @@ package org.pragmatica.task;
 
 import org.junit.jupiter.api.Test;
 import org.pragmatica.io.async.Proactor;
-import org.pragmatica.lang.Promise;
 import org.pragmatica.lang.Unit;
 
 import java.util.concurrent.ConcurrentLinkedQueue;

@@ -20,7 +20,6 @@ package org.pragmatica.io.net;
 import org.pragmatica.io.async.net.InetAddress;
 import org.pragmatica.io.net.tcp.ListenConfig;
 import org.pragmatica.io.net.tcp.TcpListener;
-import org.pragmatica.lang.Promise;
 import org.pragmatica.lang.Unit;
 
 /**

@@ -27,7 +27,6 @@ import org.pragmatica.io.async.util.ActionableThreshold;
 import org.pragmatica.io.async.util.OffHeapSlice;
 import org.pragmatica.io.util.PeriodicTaskRunner;
 import org.pragmatica.lang.Promise;
-import org.pragmatica.lang.PromiseIO;
 import org.pragmatica.lang.Result;
 import org.pragmatica.lang.Unit;
 
@@ -42,7 +41,7 @@ import static org.pragmatica.io.async.Timeout.timeout;
 import static org.pragmatica.io.async.net.SocketAddress.socketAddress;
 import static org.pragmatica.lang.Promise.all;
 import static org.pragmatica.lang.Promise.anySuccess;
-import static org.pragmatica.lang.PromiseIO.*;
+import static org.pragmatica.lang.io.PromiseIO.*;
 import static org.pragmatica.lang.Unit.unitResult;
 
 public class DomainNameResolver implements AsyncCloseable {

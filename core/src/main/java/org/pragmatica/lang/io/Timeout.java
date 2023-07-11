@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2022 Sergiy Yevtushenko.
+ *  Copyright (c) 2023 Sergiy Yevtushenko.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,12 +15,13 @@
  *
  */
 
-package org.pragmatica.lang;
+package org.pragmatica.lang.io;
 
 import org.pragmatica.lang.Tuple.Tuple2;
 
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
+
 
 import static org.pragmatica.lang.Tuple.tuple;
 

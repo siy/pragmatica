@@ -22,9 +22,8 @@ import org.pragmatica.io.async.net.InetPort;
 import org.pragmatica.io.async.net.SocketAddress;
 import org.pragmatica.io.async.net.SocketType;
 import org.pragmatica.lang.Promise;
-import org.pragmatica.lang.PromiseIO;
 
-import static org.pragmatica.lang.PromiseIO.socket;
+import static org.pragmatica.lang.io.PromiseIO.socket;
 
 public class ClientConnector<T extends InetAddress> {
     private final ConnectorType type;

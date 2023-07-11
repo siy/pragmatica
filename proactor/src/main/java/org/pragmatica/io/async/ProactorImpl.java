@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2022 Sergiy Yevtushenko.
+ *  Copyright (c) 2020-2022 Sergiy Yevtushenko.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -76,7 +76,7 @@ class ProactorImpl implements Proactor {
         return new ProactorImpl(api, sharedAllocator);
     }
 
-    private static <R> R fail(Cause cause) {
+    private static <R> R fail(Result.Cause cause) {
         throw new IllegalStateException("Unable to initialize IO_URING interface: " + cause.message());
     }
 

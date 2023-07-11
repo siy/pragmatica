@@ -19,7 +19,7 @@ package org.pragmatica.io.net.protocols;
 
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
-import org.pragmatica.lang.Cause;
+import org.pragmatica.lang.Result;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,7 +43,7 @@ class EchoProtocolTest {
             .join();
     }
 
-    private void printFailure(Cause cause) {
+    private void printFailure(Result.Cause cause) {
         LOG.warn("Error: {}", cause.message());
     }
 }

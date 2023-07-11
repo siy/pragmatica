@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2022 Sergiy Yevtushenko.
+ *  Copyright (c) 2023 Sergiy Yevtushenko.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,9 +18,9 @@
 package org.pragmatica.lang;
 
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import org.pragmatica.io.async.Timeout;
+import org.pragmatica.lang.io.CoreError;
+import org.pragmatica.lang.io.Timeout;
 
 import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
@@ -30,7 +30,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.pragmatica.io.async.SystemError.*;
 
 class PromiseTest {
     @Test
@@ -57,7 +56,7 @@ class PromiseTest {
     void promiseCanBeCancelled() {
         var promise = Promise.<Integer>promise();
 
-        assertEquals(ECANCELED.result(), promise.cancel().join());
+        Assertions.assertEquals(CoreError.CANCELLED.result(), promise.cancel().join());
     }
 
     @Test
@@ -88,7 +87,7 @@ class PromiseTest {
         assertEquals(0, ref1.get());
         assertFalse(ref2.get());
 
-        promise.resolve(EFAULT.result()).join();
+        promise.resolve(CoreError.FAULT.result()).join();
 
         assertEquals(0, ref1.get());
         assertFalse(ref2.get());
@@ -96,7 +95,7 @@ class PromiseTest {
 
     @Test
     void failureActionsAreExecutedAfterResolutionWithFailure() {
-        var ref1 = new AtomicReference<Cause>();
+        var ref1 = new AtomicReference<Result.Cause>();
         var ref2 = new AtomicBoolean(false);
         var promise = Promise.<Integer>promise()
                              .onFailure(ref1::set)
@@ -105,15 +104,15 @@ class PromiseTest {
         assertNull(ref1.get());
         assertFalse(ref2.get());
 
-        promise.resolve(EFAULT.result()).join();
+        promise.resolve(CoreError.FAULT.result()).join();
 
-        assertEquals(EFAULT, ref1.get());
+        Assertions.assertEquals(CoreError.FAULT, ref1.get());
         assertTrue(ref2.get());
     }
 
     @Test
     void failureActionsAreNotExecutedAfterResolutionWithSuccess() {
-        var ref1 = new AtomicReference<Cause>();
+        var ref1 = new AtomicReference<Result.Cause>();
         var ref2 = new AtomicBoolean(false);
         var promise = Promise.<Integer>promise()
                              .onFailure(ref1::set)
@@ -156,9 +155,9 @@ class PromiseTest {
         assertNull(ref1.get());
         assertFalse(ref2.get());
 
-        promise.resolve(EFAULT.result()).join();
+        promise.resolve(CoreError.FAULT.result()).join();
 
-        Assertions.assertEquals(EFAULT.result(), ref1.get());
+        Assertions.assertEquals(CoreError.FAULT.result(), ref1.get());
         assertTrue(ref2.get());
     }
 
@@ -175,14 +174,13 @@ class PromiseTest {
 
         var result = promise.join(Timeout.timeout(10).millis());
 
-        Assertions.assertEquals(result, ETIME.result());
+        Assertions.assertEquals(result, CoreError.TIMEOUT.result());
 
         assertNull(ref1.get());
         assertFalse(ref2.get());
     }
 
     @Test
-    @Disabled("Rework required")
     void asyncActionIsExecutedAfterTimeout() {
         var ref1 = new AtomicLong(System.nanoTime());
         var ref2 = new AtomicLong();
@@ -197,10 +195,10 @@ class PromiseTest {
 
         promise.join();
 
-//        //For informational purposes
-//        System.out.printf("From start of promise creation to start of async execution: %.2fms\n", (ref2.get() - ref1.get())/1e6);
-//        System.out.printf("From start of async execution to start of execution of attached action: %.2fms\n", (ref3.get() - ref2.get())/1e6);
-//        System.out.printf("Total execution time: %2fms\n", (ref3.get() - ref1.get())/1e6);
+        //For informational purposes
+        System.out.printf("From start of promise creation to start of async execution: %.2fms\n", (ref2.get() - ref1.get())/1e6);
+        System.out.printf("From start of async execution to start of execution of attached action: %.2fms\n", (ref3.get() - ref2.get())/1e6);
+        System.out.printf("Total execution time: %2fms\n", (ref3.get() - ref1.get())/1e6);
 
         // Expect that timeout should be between requested and twice as requested
         assertTrue((ref2.get() - ref1.get()) >= Timeout.timeout(10).millis().nanoseconds());

@@ -17,10 +17,9 @@
 
 package org.pragmatica.protocol.http.parser;
 
-import org.pragmatica.lang.Cause;
 import org.pragmatica.lang.Result;
 
-public enum ParsingErrors implements Cause {
+public enum ParsingErrors implements Result.Cause {
     UNKNOWN_METHOD("Unknown method"),
     REQUEST_HEADER_TOO_LONG("Request header length exceeds limit"),
     INVALID_REQUEST_HEADER("Invalid request header"),

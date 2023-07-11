@@ -20,7 +20,6 @@ package org.pragmatica.io.net;
 import org.pragmatica.io.async.net.InetAddress;
 import org.pragmatica.io.net.tcp.ClientConfig;
 import org.pragmatica.io.net.tcp.TcpClient;
-import org.pragmatica.lang.Promise;
 
 public interface Client {
     <T> Promise<T> access(ClientProtocol<T> protocol);

@@ -24,14 +24,13 @@ import org.pragmatica.io.async.util.OffHeapSlice;
 import org.pragmatica.io.async.util.SliceAccessor;
 import org.pragmatica.lang.Functions.FN1;
 import org.pragmatica.lang.Promise;
-import org.pragmatica.lang.PromiseIO;
 import org.pragmatica.lang.Result;
 import org.pragmatica.lang.Unit;
 
 import java.util.function.Consumer;
 
 import static org.pragmatica.lang.Promise.resolved;
-import static org.pragmatica.lang.PromiseIO.write;
+import static org.pragmatica.lang.io.PromiseIO.write;
 
 public final class ReadWriteContext<T extends InetAddress> implements AsyncCloseable {
     private final ClientConnectionContext<T> connectionContext;

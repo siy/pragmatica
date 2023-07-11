@@ -22,7 +22,6 @@ import org.junit.jupiter.api.Test;
 import org.pragmatica.io.async.common.SizeT;
 import org.pragmatica.io.async.util.OffHeapSlice;
 import org.pragmatica.io.codec.UTF8Decoder;
-import org.pragmatica.lang.Promise;
 import org.pragmatica.lang.Unit;
 
 import java.nio.file.Path;

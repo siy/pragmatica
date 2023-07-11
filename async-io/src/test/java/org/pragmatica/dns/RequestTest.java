@@ -29,7 +29,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static org.pragmatica.io.async.net.InetPort.inetPort;
 import static org.pragmatica.lang.Option.option;
-import static org.pragmatica.lang.PromiseIO.*;
+import static org.pragmatica.lang.io.PromiseIO.*;
 
 public class RequestTest {
     private static final byte[] DNS1 = new byte[]{8, 8, 8, 8};

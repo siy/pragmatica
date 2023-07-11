@@ -26,7 +26,6 @@ import org.pragmatica.io.async.util.allocator.FixedBuffer;
 import org.pragmatica.io.net.AcceptProtocol;
 import org.pragmatica.io.net.ConnectionProtocol;
 import org.pragmatica.io.net.ConnectionProtocolContext;
-import org.pragmatica.lang.Cause;
 import org.pragmatica.lang.Option;
 import org.pragmatica.lang.Result;
 import org.pragmatica.lang.Unit;
@@ -83,7 +82,7 @@ public sealed interface FixedBuffersEchoProtocol<T extends InetAddress> extends 
             });
         }
 
-        private Unit handleFailure(Cause failure, Proactor proactor) {
+        private Unit handleFailure(Result.Cause failure, Proactor proactor) {
             if (LOG.isInfoEnabled()) {
                 LOG.info("I/O error: {}", failure);
             }

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2022 Sergiy Yevtushenko.
+ *  Copyright (c) 2023 Sergiy Yevtushenko.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,9 +15,11 @@
  *
  */
 
-package org.pragmatica.lang;
+package org.pragmatica.lang.utils;
 
 import org.pragmatica.lang.Functions.FN1;
+import org.pragmatica.lang.Option;
+import org.pragmatica.lang.Result;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -28,18 +30,18 @@ import static org.pragmatica.lang.Option.none;
 import static org.pragmatica.lang.Option.some;
 
 /**
- * Frequently used variants of {@link Cause}.
+ * Frequently used variants of {@link Result.Cause}.
  */
 public final class Causes {
-    public static final Cause IRRELEVANT = new SimpleCause("irrelevant", none());
+    public static final Result.Cause IRRELEVANT = new SimpleCause("irrelevant", none());
 
     private Causes() {
     }
 
     /**
-     * Simplest possible variant of {@link Cause} which contains only message describing the cause
+     * Simplest possible variant of {@link Result.Cause} which contains only message describing the cause
      */
-    record SimpleCause(String message, Option<Cause> source) implements Cause {
+    record SimpleCause(String message, Option<Result.Cause> source) implements Result.Cause {
     }
 
     /**
@@ -49,11 +51,11 @@ public final class Causes {
      *
      * @return created instance
      */
-    public static Cause cause(String message) {
+    public static Result.Cause cause(String message) {
         return new SimpleCause(message, none());
     }
 
-    public static Cause cause(String message, Cause source) {
+    public static Result.Cause cause(String message, Result.Cause source) {
         return new SimpleCause(message, some(source));
     }
 
@@ -64,7 +66,7 @@ public final class Causes {
      *
      * @return created instance
      */
-    public static Cause fromThrowable(Throwable throwable) {
+    public static Result.Cause fromThrowable(Throwable throwable) {
         var sw = new StringWriter();
         throwable.printStackTrace(new PrintWriter(sw));
 
@@ -82,7 +84,7 @@ public final class Causes {
      *
      * @return created mapping function
      */
-    public static <T> FN1<Cause, T> with1(String template) {
+    public static <T> FN1<Result.Cause, T> with1(String template) {
         return (T input) -> cause(MessageFormat.format(template, input));
     }
 }

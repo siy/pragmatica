@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2022 Sergiy Yevtushenko.
+ *  Copyright (c) 2020-2022 Sergiy Yevtushenko.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -853,4 +853,29 @@ public sealed interface Result<T> permits Success, Failure {
     }
 
 
+    /**
+     * Basic interface for failure cause types.
+     */
+    interface Cause {
+        /**
+         * Message associated with the failure.
+         */
+        String message();
+
+        /**
+         * The original cause (if any) of the error.
+         */
+        default Option<Cause> source() {
+            return Option.empty();
+        }
+
+        /**
+         * Represent cause as a failure {@link Result} instance.
+         *
+         * @return cause converted into {@link Result} with necessary type.
+         */
+        default <T> Result<T> result() {
+            return failure(this);
+        }
+    }
 }

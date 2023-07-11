@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2022 Sergiy Yevtushenko.
+ *  Copyright (c) 2020-2022 Sergiy Yevtushenko.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.pragmatica.lang.Result.Failure;
 import org.pragmatica.lang.Result.Success;
+import org.pragmatica.lang.utils.Causes;
 
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;

@@ -26,6 +26,7 @@ import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 import org.openjdk.jmh.runner.options.TimeValue;
+import org.pragmatica.lang.utils.Causes;
 
 import java.security.SecureRandom;
 import java.util.Random;
@@ -35,7 +36,7 @@ import java.util.concurrent.TimeUnit;
 public class ResultPerformanceTest {
     private static final int MAX_LEN = 255;
     private static final Random RANDOM = new SecureRandom();
-    private static final Cause TEST_CAUSE = Causes.cause("Error");
+    private static final Result.Cause TEST_CAUSE = Causes.cause("Error");
 
     private static String generateRandomString() {
         var builder = new StringBuilder();

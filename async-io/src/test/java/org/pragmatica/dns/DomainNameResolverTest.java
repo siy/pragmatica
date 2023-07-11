@@ -19,7 +19,6 @@ package org.pragmatica.dns;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.pragmatica.lang.Promise;
 
 import java.util.List;
 

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2022 Sergiy Yevtushenko.
+ *  Copyright (c) 2020-2022 Sergiy Yevtushenko.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 
 package org.pragmatica.example.echo;
 
-import org.pragmatica.lang.Cause;
+import org.pragmatica.lang.Result;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,7 +41,7 @@ public class EchoServer {
                         .join();
     }
 
-    private static void printFailure(Cause cause) {
+    private static void printFailure(Result.Cause cause) {
         LOG.warn("Error: {}", cause);
     }
 }

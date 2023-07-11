@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2022 Sergiy Yevtushenko.
+ *  Copyright (c) 2020-2022 Sergiy Yevtushenko.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -227,13 +227,13 @@ public sealed interface Option<T> permits Some, None {
 
     /**
      * Convert current instance to instance of {@link Result}. The present instance is converted into success result. The empty instance is converted
-     * into failure result with provided {@link Cause}.
+     * into failure result with provided {@link Result.Cause}.
      *
      * @param cause the failure necessary for conversion of empty instance.
      *
      * @return created instance
      */
-    default Result<T> toResult(Cause cause) {
+    default Result<T> toResult(Result.Cause cause) {
         return fold(cause::result, Result::success);
     }
 

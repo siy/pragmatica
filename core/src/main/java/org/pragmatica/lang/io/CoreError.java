@@ -15,11 +15,15 @@
  *
  */
 
-package org.pragmatica.lang;
+package org.pragmatica.lang.io;
 
-public enum CoreError implements Cause {
+import org.pragmatica.lang.Result;
+
+public enum CoreError implements Result.Cause {
     CANCELLED("Operation cancelled"),
     TIMEOUT("Operation timed out"),
+
+    FAULT("Operation failed"),
 
     ;
 

@@ -22,7 +22,6 @@ import org.pragmatica.io.async.file.FileDescriptor;
 import org.pragmatica.io.async.net.*;
 import org.pragmatica.io.net.Client;
 import org.pragmatica.io.net.ClientProtocol;
-import org.pragmatica.lang.Promise;
 import org.pragmatica.lang.Result;
 import org.pragmatica.lang.Unit;
 

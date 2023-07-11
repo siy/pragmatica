@@ -21,7 +21,6 @@ import org.junit.jupiter.api.Test;
 import org.pragmatica.dns.DomainNameResolver;
 import org.pragmatica.io.async.net.InetAddress;
 import org.pragmatica.io.async.net.InetPort;
-import org.pragmatica.lang.Promise;
 
 import java.nio.charset.StandardCharsets;
 

@@ -6,7 +6,6 @@ import org.pragmatica.io.async.net.InetAddress;
 import org.pragmatica.io.async.net.InetPort;
 import org.pragmatica.io.util.ClientConnector;
 import org.pragmatica.io.util.ReadWriteContext;
-import org.pragmatica.lang.Promise;
 import org.pragmatica.lang.Result;
 import org.pragmatica.protocol.http.parser.ParsingResult.Continue;
 import org.pragmatica.protocol.http.parser.ParsingResult.Done;

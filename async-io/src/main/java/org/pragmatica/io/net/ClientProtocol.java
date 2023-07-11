@@ -20,7 +20,6 @@ package org.pragmatica.io.net;
 import org.pragmatica.io.async.Proactor;
 import org.pragmatica.io.async.net.ConnectionContext;
 import org.pragmatica.io.async.net.InetAddress;
-import org.pragmatica.lang.Promise;
 
 /**
  * Client protocol (handler).
