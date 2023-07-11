@@ -1,17 +1,17 @@
 /*
- * Copyright (c) 2021 Sergiy Yevtushenko.
+ *  Copyright (c) 2020-2022 Sergiy Yevtushenko.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 
 package org.pragmatica.lang;
@@ -110,10 +110,6 @@ public interface Tuple {
         }
     }
 
-    static Tuple0 tuple() {
-        return Unit.unit();
-    }
-
     static <T1> Tuple1<T1> tuple(T1 param1) {
         record tuple1<T1>(T1 param1) implements Tuple1<T1> {
             @Override
@@ -159,7 +155,6 @@ public interface Tuple {
 
     static <T1, T2, T3, T4> Tuple4<T1, T2, T3, T4> tuple(T1 param1, T2 param2, T3 param3, T4 param4) {
         record tuple4<T1, T2, T3, T4>(T1 param1, T2 param2, T3 param3, T4 param4) implements Tuple4<T1, T2, T3, T4> {
-
             @Override
             public <T> T map(FN4<T, T1, T2, T3, T4> mapper) {
                 return mapper.apply(param1(), param2(), param3(), param4());
@@ -172,10 +167,7 @@ public interface Tuple {
     static <T1, T2, T3, T4, T5> Tuple5<T1, T2, T3, T4, T5> tuple(
         T1 param1, T2 param2, T3 param3, T4 param4, T5 param5
     ) {
-        record tuple5<T1, T2, T3, T4, T5>(T1 param1, T2 param2, T3 param3,
-                                          T4 param4, T5 param5)
-            implements Tuple5<T1, T2, T3, T4, T5> {
-
+        record tuple5<T1, T2, T3, T4, T5>(T1 param1, T2 param2, T3 param3, T4 param4, T5 param5) implements Tuple5<T1, T2, T3, T4, T5> {
             @Override
             public <T> T map(FN5<T, T1, T2, T3, T4, T5> mapper) {
                 return mapper.apply(param1(), param2(), param3(), param4(), param5());
@@ -189,10 +181,8 @@ public interface Tuple {
         T1 param1, T2 param2, T3 param3,
         T4 param4, T5 param5, T6 param6
     ) {
-        record tuple6<T1, T2, T3, T4, T5, T6>(T1 param1, T2 param2, T3 param3,
-                                              T4 param4, T5 param5, T6 param6)
+        record tuple6<T1, T2, T3, T4, T5, T6>(T1 param1, T2 param2, T3 param3, T4 param4, T5 param5, T6 param6)
             implements Tuple6<T1, T2, T3, T4, T5, T6> {
-
             @Override
             public <T> T map(FN6<T, T1, T2, T3, T4, T5, T6> mapper) {
                 return mapper.apply(param1(), param2(), param3(), param4(), param5(), param6());
@@ -206,10 +196,8 @@ public interface Tuple {
         T1 param1, T2 param2, T3 param3,
         T4 param4, T5 param5, T6 param6, T7 param7
     ) {
-        record tuple7<T1, T2, T3, T4, T5, T6, T7>(T1 param1, T2 param2, T3 param3,
-                                                  T4 param4, T5 param5, T6 param6, T7 param7)
+        record tuple7<T1, T2, T3, T4, T5, T6, T7>(T1 param1, T2 param2, T3 param3, T4 param4, T5 param5, T6 param6, T7 param7)
             implements Tuple7<T1, T2, T3, T4, T5, T6, T7> {
-
             @Override
             public <T> T map(FN7<T, T1, T2, T3, T4, T5, T6, T7> mapper) {
                 return mapper.apply(param1(), param2(), param3(), param4(), param5(), param6(), param7());
@@ -224,11 +212,8 @@ public interface Tuple {
         T4 param4, T5 param5, T6 param6,
         T7 param7, T8 param8
     ) {
-        record tuple8<T1, T2, T3, T4, T5, T6, T7, T8>(T1 param1, T2 param2, T3 param3,
-                                                      T4 param4, T5 param5, T6 param6,
-                                                      T7 param7, T8 param8)
+        record tuple8<T1, T2, T3, T4, T5, T6, T7, T8>(T1 param1, T2 param2, T3 param3, T4 param4, T5 param5, T6 param6, T7 param7, T8 param8)
             implements Tuple8<T1, T2, T3, T4, T5, T6, T7, T8> {
-
             @Override
             public <T> T map(FN8<T, T1, T2, T3, T4, T5, T6, T7, T8> mapper) {
                 return mapper.apply(param1(), param2(), param3(), param4(), param5(), param6(), param7(), param8());
@@ -243,9 +228,8 @@ public interface Tuple {
         T4 param4, T5 param5, T6 param6,
         T7 param7, T8 param8, T9 param9
     ) {
-        record tuple9<T1, T2, T3, T4, T5, T6, T7, T8, T9>(T1 param1, T2 param2, T3 param3,
-                                                          T4 param4, T5 param5, T6 param6,
-                                                          T7 param7, T8 param8, T9 param9)
+        record tuple9<T1, T2, T3, T4, T5, T6, T7, T8, T9>(T1 param1, T2 param2, T3 param3, T4 param4, T5 param5, T6 param6, T7 param7, T8 param8,
+                                                          T9 param9)
             implements Tuple9<T1, T2, T3, T4, T5, T6, T7, T8, T9> {
             @Override
             public <T> T map(FN9<T, T1, T2, T3, T4, T5, T6, T7, T8, T9> mapper) {

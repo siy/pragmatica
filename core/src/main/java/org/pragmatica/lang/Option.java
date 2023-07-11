@@ -1,17 +1,17 @@
 /*
- * Copyright (c) 2021 Sergiy Yevtushenko.
+ *  Copyright (c) 2020-2022 Sergiy Yevtushenko.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 
 package org.pragmatica.lang;
@@ -20,14 +20,13 @@ import org.pragmatica.lang.Functions.*;
 import org.pragmatica.lang.Option.None;
 import org.pragmatica.lang.Option.Some;
 
-import java.util.Objects;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
-
-import static org.pragmatica.lang.Tuple.*;
 
 /**
  * Implementation of basic immutable container for value which may or may not be present.
@@ -44,7 +43,18 @@ public sealed interface Option<T> permits Some, None {
      * @return transformed instance
      */
     default <U> Option<U> map(FN1<U, ? super T> mapper) {
-        return flatMap(t -> present(mapper.apply(t)));
+        return fold(Option::empty, t -> present(mapper.apply(t)));
+    }
+
+    /**
+     * Replace current instance with the value returned by provided supplier.
+     *
+     * @param supplier Source of replacement value.
+     *
+     * @return current instance if it is empty or the instance with the replacement value if current instance is present.
+     */
+    default <U> Option<U> replace(Supplier<U> supplier) {
+        return fold(Option::empty, t -> present(supplier.get()));
     }
 
     /**
@@ -61,6 +71,17 @@ public sealed interface Option<T> permits Some, None {
     }
 
     /**
+     * Replace current instance with the instance returned by provided supplier.
+     *
+     * @param supplier Source of replacement value.
+     *
+     * @return current instance if it is empty or the instance with the replacement value if current instance is present.
+     */
+    default <U> Option<U> flatReplace(Supplier<Option<U>> supplier) {
+        return fold(Option::empty, __ -> supplier.get());
+    }
+
+    /**
      * Transform instance according to results of testing of contained value with provided predicate. If instance is empty, it remains empty. If
      * instance contains value, this value is passed to predicate. If predicate returns <code>true</code> then instance remains untouched. If
      * predicate returns <code>false</code> then empty instance is returned instead.
@@ -70,7 +91,7 @@ public sealed interface Option<T> permits Some, None {
      * @return current instance if it is not empty and predicate returns <code>true</code> and empty instance otherwise
      */
     default Option<T> filter(Predicate<? super T> predicate) {
-        return flatMap(v -> predicate.test(v) ? this : empty());
+        return fold(Option::empty, v -> predicate.test(v) ? this : empty());
     }
 
     /**
@@ -82,8 +103,13 @@ public sealed interface Option<T> permits Some, None {
      *
      * @return this instance for fluent call chaining
      */
-    default Option<T> whenPresent(Consumer<? super T> consumer) {
-        apply(() -> {}, consumer);
+    default Option<T> onPresent(Consumer<? super T> consumer) {
+        apply(Functions::unitFn, consumer);
+        return this;
+    }
+
+    default Option<T> onSome(Consumer<? super T> consumer) {
+        apply(Functions::unitFn, consumer);
         return this;
     }
 
@@ -94,13 +120,18 @@ public sealed interface Option<T> permits Some, None {
      *
      * @return this instance for fluent call chaining
      */
-    default Option<T> whenEmpty(Runnable action) {
-        apply(action, __ -> {});
+    default Option<T> onEmpty(Runnable action) {
+        apply(action, Functions::unitFn);
+        return this;
+    }
+
+    default Option<T> onNone(Runnable action) {
+        apply(action, Functions::unitFn);
         return this;
     }
 
     /**
-     * Convenience method which allows to perform specific actions for empty and present instances at once.
+     * Convenience method which allows performing specific actions for empty and present instances at once.
      *
      * @param emptyValConsumer    Action to perform in case of empty instance
      * @param nonEmptyValConsumer Action to perform on present instance value
@@ -143,6 +174,29 @@ public sealed interface Option<T> permits Some, None {
     }
 
     /**
+     * Return current instance if current instance is present. If current instance is empty then return provided replacement option instance.
+     *
+     * @param replacement Replacement option instance for case when current instance is empty
+     *
+     * @return either current instance or provided replacement instance if current instance is empty
+     */
+    default Option<T> orElse(Option<T> replacement) {
+        return fold(() -> replacement, __ -> this);
+    }
+
+    /**
+     * Return current instance if current instance is present. If current instance is empty then retrieve replacement Option instance from given
+     * {@link Supplier}.
+     *
+     * @param supplier Source if replacement option instance for case when current instance is empty
+     *
+     * @return either current instance or provided replacement instance if current instance is empty
+     */
+    default Option<T> orElse(Supplier<Option<T>> supplier) {
+        return fold(supplier, __ -> this);
+    }
+
+    /**
      * Check if current instance is present.
      *
      * @return {@code true} if instance is present and {@code false} otherwise.
@@ -172,13 +226,13 @@ public sealed interface Option<T> permits Some, None {
 
     /**
      * Convert current instance to instance of {@link Result}. The present instance is converted into success result. The empty instance is converted
-     * into failure result with provided {@link Cause}.
+     * into failure result with provided {@link Result.Cause}.
      *
      * @param cause the failure necessary for conversion of empty instance.
      *
      * @return created instance
      */
-    default Result<T> toResult(Cause cause) {
+    default Result<T> toResult(Result.Cause cause) {
         return fold(cause::result, Result::success);
     }
 
@@ -237,6 +291,16 @@ public sealed interface Option<T> permits Some, None {
     }
 
     /**
+     * Create empty instance.
+     *
+     * @return Created instance
+     */
+    @SuppressWarnings("unchecked")
+    static <R> Option<R> none() {
+        return (Option<R>) NONE;
+    }
+
+    /**
      * Create a present instance with the passed value.
      *
      * @param value Value to be stored in the created instance.
@@ -247,39 +311,30 @@ public sealed interface Option<T> permits Some, None {
         return new Some<>(value);
     }
 
-    final class Some<T> implements Option<T> {
-        private final T value;
+    /**
+     * Create a present instance with the passed value.
+     *
+     * @param value Value to be stored in the created instance.
+     *
+     * @return Created instance
+     */
+    static <R> Option<R> some(R value) {
+        return new Some<>(value);
+    }
 
-        private Some(T value) {
-            this.value = value;
-        }
-
+    record Some<T>(T value) implements Option<T> {
         @Override
         public <R> R fold(Supplier<? extends R> emptyMapper, FN1<? extends R, ? super T> presentMapper) {
             return presentMapper.apply(value);
         }
 
         @Override
-        public boolean equals(Object o) {
-            if (this == o) {
-                return true;
-            }
-
-            return o instanceof Some<?> some && value.equals(some.value);
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(value);
-        }
-
-        @Override
         public String toString() {
-            return "Some(" + value.toString() + ")";
+            return "Some(" + value + ")";
         }
     }
 
-    final class None<T> implements Option<T> {
+    record None<T>() implements Option<T> {
         @Override
         public <R> R fold(Supplier<? extends R> emptyMapper, FN1<? extends R, ? super T> presentMapper) {
             return emptyMapper.get();
@@ -293,6 +348,19 @@ public sealed interface Option<T> permits Some, None {
 
     @SuppressWarnings({"rawtypes"})
     None NONE = new None();
+
+    /**
+     * This method allows "unwrapping" the value stored inside the Option instance. If value is missing then {@link IllegalStateException} is thrown.
+     * <p>
+     * WARNING!!!<br> This method should be avoided in the production code. It's main intended use case - simplification of the tests. For this reason
+     * method is marked as {@link Deprecated}. This generates warning at compile time.
+     *
+     * @return value stored inside present instance.
+     */
+    @Deprecated
+    default T unwrap() {
+        return fold(() -> { throw new IllegalStateException("Option is empty!!!"); }, Functions::id);
+    }
 
     /**
      * Find first present option among ones passed as parameters.
@@ -329,37 +397,69 @@ public sealed interface Option<T> permits Some, None {
     }
 
     /**
-     * Transform option into option of tuple with single value. The result is empty if input option is empty. Otherwise resulting instance contains
+     * Transform a number of Option values into Option instance containing list of values. Result is empty Option if any values in the input is empty.
+     * Otherwise, result is a present option with list of values which were stored inside input Option instances.
+     *
+     * @param values values to transform.
+     *
+     * @return Empty option if input list contains empty Option instances. Otherwise, returns Option containing list of values.
+     */
+    @SafeVarargs
+    static <T> Option<List<T>> allOf(Option<T>... values) {
+        return allOf(List.of(values));
+    }
+
+    /**
+     * Transform a list of Option values into Option instance containing list of values. Result is empty Option if any values in the list is empty.
+     * Otherwise, result is a present option with list of values which were stored inside input Option instances.
+     *
+     * @param values values to transform.
+     *
+     * @return Empty option if input list contains empty Option instances. Otherwise, returns Option containing list of values.
+     */
+    static <T> Option<List<T>> allOf(List<Option<T>> values) {
+        var result = new ArrayList<T>();
+        for (var value : values) {
+            if (value.isEmpty()) {
+                return empty();
+            }
+            value.onPresent(result::add);
+        }
+        return present(result);
+    }
+
+    /**
+     * Transform option into option of tuple with single value. The result is empty if input option is empty. Otherwise, resulting instance contains
      * tuple with input option value.
      *
      * @return {@link Mapper1} prepared for further transformation.
      */
     static <T1> Mapper1<T1> all(Option<T1> op1) {
-        return () -> op1.flatMap(v1 -> option(tuple(v1)));
+        return () -> op1.flatMap(v1 -> option(Tuple.tuple(v1)));
     }
 
     /**
-     * Transform options into option of tuple of two values. The result is empty if any input option is empty. Otherwise resulting instance contains
+     * Transform options into option of tuple of two values. The result is empty if any input option is empty. Otherwise, resulting instance contains
      * tuple with values from input options.
      *
      * @return {@link Mapper2} prepared for further transformation.
      */
     static <T1, T2> Mapper2<T1, T2> all(Option<T1> op1, Option<T2> op2) {
-        return () -> op1.flatMap(v1 -> op2.flatMap(v2 -> option(tuple(v1, v2))));
+        return () -> op1.flatMap(v1 -> op2.flatMap(v2 -> option(Tuple.tuple(v1, v2))));
     }
 
     /**
-     * Transform options into option of tuple of three values. The result is empty if any input option is empty. Otherwise resulting instance contains
-     * tuple with values from input options.
+     * Transform options into option of tuple of three values. The result is empty if any input option is empty. Otherwise, resulting instance
+     * contains tuple with values from input options.
      *
      * @return {@link Mapper3} prepared for further transformation.
      */
     static <T1, T2, T3> Mapper3<T1, T2, T3> all(Option<T1> op1, Option<T2> op2, Option<T3> op3) {
-        return () -> op1.flatMap(v1 -> op2.flatMap(v2 -> op3.flatMap(v3 -> option(tuple(v1, v2, v3)))));
+        return () -> op1.flatMap(v1 -> op2.flatMap(v2 -> op3.flatMap(v3 -> option(Tuple.tuple(v1, v2, v3)))));
     }
 
     /**
-     * Transform options into option of tuple of four values. The result is empty if any input option is empty. Otherwise resulting instance contains
+     * Transform options into option of tuple of four values. The result is empty if any input option is empty. Otherwise, resulting instance contains
      * tuple with values from input options.
      *
      * @return {@link Mapper4} prepared for further transformation.
@@ -371,11 +471,11 @@ public sealed interface Option<T> permits Some, None {
             v1 -> op2.flatMap(
                 v2 -> op3.flatMap(
                     v3 -> op4.flatMap(
-                        v4 -> Option.option(tuple(v1, v2, v3, v4))))));
+                        v4 -> Option.option(Tuple.tuple(v1, v2, v3, v4))))));
     }
 
     /**
-     * Transform options into option of tuple of five values. The result is empty if any input option is empty. Otherwise resulting instance contains
+     * Transform options into option of tuple of five values. The result is empty if any input option is empty. Otherwise, resulting instance contains
      * tuple with values from input options.
      *
      * @return {@link Mapper5} prepared for further transformation.
@@ -388,11 +488,11 @@ public sealed interface Option<T> permits Some, None {
                 v2 -> op3.flatMap(
                     v3 -> op4.flatMap(
                         v4 -> op5.flatMap(
-                            v5 -> option(tuple(v1, v2, v3, v4, v5)))))));
+                            v5 -> option(Tuple.tuple(v1, v2, v3, v4, v5)))))));
     }
 
     /**
-     * Transform options into option of tuple of six values. The result is empty if any input option is empty. Otherwise resulting instance contains
+     * Transform options into option of tuple of six values. The result is empty if any input option is empty. Otherwise, resulting instance contains
      * tuple with values from input options.
      *
      * @return {@link Mapper6} prepared for further transformation.
@@ -407,12 +507,12 @@ public sealed interface Option<T> permits Some, None {
                     v3 -> op4.flatMap(
                         v4 -> op5.flatMap(
                             v5 -> op6.flatMap(
-                                v6 -> option(tuple(v1, v2, v3, v4, v5, v6))))))));
+                                v6 -> option(Tuple.tuple(v1, v2, v3, v4, v5, v6))))))));
     }
 
     /**
-     * Transform options into option of tuple of seven values. The result is empty if any input option is empty. Otherwise resulting instance contains
-     * tuple with values from input options.
+     * Transform options into option of tuple of seven values. The result is empty if any input option is empty. Otherwise, resulting instance
+     * contains tuple with values from input options.
      *
      * @return {@link Mapper7} prepared for further transformation.
      */
@@ -427,12 +527,12 @@ public sealed interface Option<T> permits Some, None {
                         v4 -> op5.flatMap(
                             v5 -> op6.flatMap(
                                 v6 -> op7.flatMap(
-                                    v7 -> option(tuple(v1, v2, v3, v4, v5, v6, v7)))))))));
+                                    v7 -> option(Tuple.tuple(v1, v2, v3, v4, v5, v6, v7)))))))));
     }
 
     /**
-     * Transform options into option of tuple of eight values. The result is empty if any input option is empty. Otherwise resulting instance contains
-     * tuple with values from input options.
+     * Transform options into option of tuple of eight values. The result is empty if any input option is empty. Otherwise, resulting instance
+     * contains tuple with values from input options.
      *
      * @return {@link Mapper8} prepared for further transformation.
      */
@@ -448,11 +548,11 @@ public sealed interface Option<T> permits Some, None {
                             v5 -> op6.flatMap(
                                 v6 -> op7.flatMap(
                                     v7 -> op8.flatMap(
-                                        v8 -> option(tuple(v1, v2, v3, v4, v5, v6, v7, v8))))))))));
+                                        v8 -> option(Tuple.tuple(v1, v2, v3, v4, v5, v6, v7, v8))))))))));
     }
 
     /**
-     * Transform options into option of tuple of nine values. The result is empty if any input option is empty. Otherwise resulting instance contains
+     * Transform options into option of tuple of nine values. The result is empty if any input option is empty. Otherwise, resulting instance contains
      * tuple with values from input options.
      *
      * @return {@link Mapper9} prepared for further transformation.
@@ -470,12 +570,12 @@ public sealed interface Option<T> permits Some, None {
                                 v6 -> op7.flatMap(
                                     v7 -> op8.flatMap(
                                         v8 -> op9.flatMap(
-                                            v9 -> option(tuple(v1, v2, v3, v4, v5, v6, v7, v8, v9)))))))))));
+                                            v9 -> option(Tuple.tuple(v1, v2, v3, v4, v5, v6, v7, v8, v9)))))))))));
     }
 
     /**
-     * Helper interface for convenient {@link Tuple1} transformation. In case if you need to return a tuple, it might be more convenient to return
-     * this interface instead. For example, instead of this:
+     * Helper interface for convenient {@link Tuple.Tuple1} transformation. In case if you need to return a tuple, it might be more convenient to
+     * return this interface instead. For example, instead of this:
      * <blockquote><pre>
      *     return tuple(value, ...);
      * </pre></blockquote>
@@ -486,7 +586,7 @@ public sealed interface Option<T> permits Some, None {
      */
     @FunctionalInterface
     interface Mapper1<T1> {
-        Option<Tuple1<T1>> id();
+        Option<Tuple.Tuple1<T1>> id();
 
         default <R> Option<R> map(FN1<R, T1> mapper) {
             return id().map(tuple -> tuple.map(mapper));
@@ -498,8 +598,8 @@ public sealed interface Option<T> permits Some, None {
     }
 
     /**
-     * Helper interface for convenient {@link Tuple2} transformation. In case if you need to return a tuple, it might be more convenient to return
-     * this interface instead. For example, instead of this:
+     * Helper interface for convenient {@link Tuple.Tuple2} transformation. In case if you need to return a tuple, it might be more convenient to
+     * return this interface instead. For example, instead of this:
      * <blockquote><pre>
      *     return tuple(value, ...);
      * </pre></blockquote>
@@ -510,7 +610,7 @@ public sealed interface Option<T> permits Some, None {
      */
     @FunctionalInterface
     interface Mapper2<T1, T2> {
-        Option<Tuple2<T1, T2>> id();
+        Option<Tuple.Tuple2<T1, T2>> id();
 
         default <R> Option<R> map(FN2<R, T1, T2> mapper) {
             return id().map(tuple -> tuple.map(mapper));
@@ -522,8 +622,8 @@ public sealed interface Option<T> permits Some, None {
     }
 
     /**
-     * Helper interface for convenient {@link Tuple3} transformation. In case if you need to return a tuple, it might be more convenient to return
-     * this interface instead. For example, instead of this:
+     * Helper interface for convenient {@link Tuple.Tuple3} transformation. In case if you need to return a tuple, it might be more convenient to
+     * return this interface instead. For example, instead of this:
      * <blockquote><pre>
      *     return tuple(value, ...);
      * </pre></blockquote>
@@ -534,7 +634,7 @@ public sealed interface Option<T> permits Some, None {
      */
     @FunctionalInterface
     interface Mapper3<T1, T2, T3> {
-        Option<Tuple3<T1, T2, T3>> id();
+        Option<Tuple.Tuple3<T1, T2, T3>> id();
 
         default <R> Option<R> map(FN3<R, T1, T2, T3> mapper) {
             return id().map(tuple -> tuple.map(mapper));
@@ -546,8 +646,8 @@ public sealed interface Option<T> permits Some, None {
     }
 
     /**
-     * Helper interface for convenient {@link Tuple4} transformation. In case if you need to return a tuple, it might be more convenient to return
-     * this interface instead. For example, instead of this:
+     * Helper interface for convenient {@link Tuple.Tuple4} transformation. In case if you need to return a tuple, it might be more convenient to
+     * return this interface instead. For example, instead of this:
      * <blockquote><pre>
      *     return tuple(value, ...);
      * </pre></blockquote>
@@ -558,7 +658,7 @@ public sealed interface Option<T> permits Some, None {
      */
     @FunctionalInterface
     interface Mapper4<T1, T2, T3, T4> {
-        Option<Tuple4<T1, T2, T3, T4>> id();
+        Option<Tuple.Tuple4<T1, T2, T3, T4>> id();
 
         default <R> Option<R> map(FN4<R, T1, T2, T3, T4> mapper) {
             return id().map(tuple -> tuple.map(mapper));
@@ -570,8 +670,8 @@ public sealed interface Option<T> permits Some, None {
     }
 
     /**
-     * Helper interface for convenient {@link Tuple5} transformation. In case if you need to return a tuple, it might be more convenient to return
-     * this interface instead. For example, instead of this:
+     * Helper interface for convenient {@link Tuple.Tuple5} transformation. In case if you need to return a tuple, it might be more convenient to
+     * return this interface instead. For example, instead of this:
      * <blockquote><pre>
      *     return tuple(value, ...);
      * </pre></blockquote>
@@ -582,7 +682,7 @@ public sealed interface Option<T> permits Some, None {
      */
     @FunctionalInterface
     interface Mapper5<T1, T2, T3, T4, T5> {
-        Option<Tuple5<T1, T2, T3, T4, T5>> id();
+        Option<Tuple.Tuple5<T1, T2, T3, T4, T5>> id();
 
         default <R> Option<R> map(FN5<R, T1, T2, T3, T4, T5> mapper) {
             return id().map(tuple -> tuple.map(mapper));
@@ -594,8 +694,8 @@ public sealed interface Option<T> permits Some, None {
     }
 
     /**
-     * Helper interface for convenient {@link Tuple6} transformation. In case if you need to return a tuple, it might be more convenient to return
-     * this interface instead. For example, instead of this:
+     * Helper interface for convenient {@link Tuple.Tuple6} transformation. In case if you need to return a tuple, it might be more convenient to
+     * return this interface instead. For example, instead of this:
      * <blockquote><pre>
      *     return tuple(value, ...);
      * </pre></blockquote>
@@ -606,7 +706,7 @@ public sealed interface Option<T> permits Some, None {
      */
     @FunctionalInterface
     interface Mapper6<T1, T2, T3, T4, T5, T6> {
-        Option<Tuple6<T1, T2, T3, T4, T5, T6>> id();
+        Option<Tuple.Tuple6<T1, T2, T3, T4, T5, T6>> id();
 
         default <R> Option<R> map(FN6<R, T1, T2, T3, T4, T5, T6> mapper) {
             return id().map(tuple -> tuple.map(mapper));
@@ -618,8 +718,8 @@ public sealed interface Option<T> permits Some, None {
     }
 
     /**
-     * Helper interface for convenient {@link Tuple7} transformation. In case if you need to return a tuple, it might be more convenient to return
-     * this interface instead. For example, instead of this:
+     * Helper interface for convenient {@link Tuple.Tuple7} transformation. In case if you need to return a tuple, it might be more convenient to
+     * return this interface instead. For example, instead of this:
      * <blockquote><pre>
      *     return tuple(value, ...);
      * </pre></blockquote>
@@ -630,7 +730,7 @@ public sealed interface Option<T> permits Some, None {
      */
     @FunctionalInterface
     interface Mapper7<T1, T2, T3, T4, T5, T6, T7> {
-        Option<Tuple7<T1, T2, T3, T4, T5, T6, T7>> id();
+        Option<Tuple.Tuple7<T1, T2, T3, T4, T5, T6, T7>> id();
 
         default <R> Option<R> map(FN7<R, T1, T2, T3, T4, T5, T6, T7> mapper) {
             return id().map(tuple -> tuple.map(mapper));
@@ -642,8 +742,8 @@ public sealed interface Option<T> permits Some, None {
     }
 
     /**
-     * Helper interface for convenient {@link Tuple8} transformation. In case if you need to return a tuple, it might be more convenient to return
-     * this interface instead. For example, instead of this:
+     * Helper interface for convenient {@link Tuple.Tuple8} transformation. In case if you need to return a tuple, it might be more convenient to
+     * return this interface instead. For example, instead of this:
      * <blockquote><pre>
      *     return tuple(value, ...);
      * </pre></blockquote>
@@ -654,7 +754,7 @@ public sealed interface Option<T> permits Some, None {
      */
     @FunctionalInterface
     interface Mapper8<T1, T2, T3, T4, T5, T6, T7, T8> {
-        Option<Tuple8<T1, T2, T3, T4, T5, T6, T7, T8>> id();
+        Option<Tuple.Tuple8<T1, T2, T3, T4, T5, T6, T7, T8>> id();
 
         default <R> Option<R> map(FN8<R, T1, T2, T3, T4, T5, T6, T7, T8> mapper) {
             return id().map(tuple -> tuple.map(mapper));
@@ -666,8 +766,8 @@ public sealed interface Option<T> permits Some, None {
     }
 
     /**
-     * Helper interface for convenient {@link Tuple9} transformation. In case if you need to return a tuple, it might be more convenient to return
-     * this interface instead. For example, instead of this:
+     * Helper interface for convenient {@link Tuple.Tuple9} transformation. In case if you need to return a tuple, it might be more convenient to
+     * return this interface instead. For example, instead of this:
      * <blockquote><pre>
      *     return tuple(value, ...);
      * </pre></blockquote>
@@ -678,7 +778,7 @@ public sealed interface Option<T> permits Some, None {
      */
     @FunctionalInterface
     interface Mapper9<T1, T2, T3, T4, T5, T6, T7, T8, T9> {
-        Option<Tuple9<T1, T2, T3, T4, T5, T6, T7, T8, T9>> id();
+        Option<Tuple.Tuple9<T1, T2, T3, T4, T5, T6, T7, T8, T9>> id();
 
         default <R> Option<R> map(FN9<R, T1, T2, T3, T4, T5, T6, T7, T8, T9> mapper) {
             return id().map(tuple -> tuple.map(mapper));
