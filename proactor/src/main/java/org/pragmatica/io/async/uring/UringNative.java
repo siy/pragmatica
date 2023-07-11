@@ -27,7 +27,6 @@ import java.lang.invoke.MethodHandle;
 
 import static java.lang.foreign.ValueLayout.JAVA_INT;
 import static java.lang.foreign.ValueLayout.JAVA_LONG;
-import static java.lang.invoke.MethodType.methodType;
 
 /**
  * Native interface to Linux IO URING
@@ -70,15 +69,24 @@ final class UringNative {
 
             var linker = Linker.nativeLinker();
 
-            initHandle = linker.downcallHandle(initAddress, FunctionDescriptor.of(JAVA_INT, JAVA_INT, JAVA_LONG, JAVA_INT), Linker.Option.isTrivial());
-            closeHandle = linker.downcallHandle(closeAddress, FunctionDescriptor.ofVoid(JAVA_LONG), Linker.Option.isTrivial());
-            peekCQHandle = linker.downcallHandle(peekCQAddress, FunctionDescriptor.of(JAVA_INT, JAVA_LONG, JAVA_LONG, JAVA_LONG), Linker.Option.isTrivial());
-            advanceCQHandle = linker.downcallHandle(advanceCQAddress, FunctionDescriptor.ofVoid(JAVA_LONG, JAVA_LONG), Linker.Option.isTrivial());
-            nextSQEntryHandle = linker.downcallHandle(nextSQEntryAddress, FunctionDescriptor.of(JAVA_LONG, JAVA_LONG), Linker.Option.isTrivial());
-            peekSQEntriesHandle = linker.downcallHandle(peekSQEntriesAddress, FunctionDescriptor.of(JAVA_INT, JAVA_LONG, JAVA_LONG, JAVA_LONG), Linker.Option.isTrivial());
-            submitAndWaitHandle = linker.downcallHandle(submitAndWaitAddress, FunctionDescriptor.of(JAVA_LONG, JAVA_LONG, JAVA_INT), Linker.Option.isTrivial());
-            socketHandle = linker.downcallHandle(socketAddress, FunctionDescriptor.of(JAVA_INT, JAVA_INT, JAVA_INT, JAVA_INT), Linker.Option.isTrivial());
-            prepareForListenHandle = linker.downcallHandle(prepareForListenAddress, FunctionDescriptor.of(JAVA_INT, JAVA_INT, JAVA_LONG, JAVA_INT, JAVA_INT), Linker.Option.isTrivial());
+//            initHandle = linker.downcallHandle(initAddress, FunctionDescriptor.of(JAVA_INT, JAVA_INT, JAVA_LONG, JAVA_INT), Linker.Option.isTrivial());
+//            closeHandle = linker.downcallHandle(closeAddress, FunctionDescriptor.ofVoid(JAVA_LONG), Linker.Option.isTrivial());
+//            peekCQHandle = linker.downcallHandle(peekCQAddress, FunctionDescriptor.of(JAVA_INT, JAVA_LONG, JAVA_LONG, JAVA_LONG), Linker.Option.isTrivial());
+//            advanceCQHandle = linker.downcallHandle(advanceCQAddress, FunctionDescriptor.ofVoid(JAVA_LONG, JAVA_LONG), Linker.Option.isTrivial());
+//            nextSQEntryHandle = linker.downcallHandle(nextSQEntryAddress, FunctionDescriptor.of(JAVA_LONG, JAVA_LONG), Linker.Option.isTrivial());
+//            peekSQEntriesHandle = linker.downcallHandle(peekSQEntriesAddress, FunctionDescriptor.of(JAVA_INT, JAVA_LONG, JAVA_LONG, JAVA_LONG), Linker.Option.isTrivial());
+//            submitAndWaitHandle = linker.downcallHandle(submitAndWaitAddress, FunctionDescriptor.of(JAVA_LONG, JAVA_LONG, JAVA_INT), Linker.Option.isTrivial());
+//            socketHandle = linker.downcallHandle(socketAddress, FunctionDescriptor.of(JAVA_INT, JAVA_INT, JAVA_INT, JAVA_INT), Linker.Option.isTrivial());
+//            prepareForListenHandle = linker.downcallHandle(prepareForListenAddress, FunctionDescriptor.of(JAVA_INT, JAVA_INT, JAVA_LONG, JAVA_INT, JAVA_INT), Linker.Option.isTrivial());
+            initHandle = linker.downcallHandle(initAddress, FunctionDescriptor.of(JAVA_INT, JAVA_INT, JAVA_LONG, JAVA_INT));
+            closeHandle = linker.downcallHandle(closeAddress, FunctionDescriptor.ofVoid(JAVA_LONG));
+            peekCQHandle = linker.downcallHandle(peekCQAddress, FunctionDescriptor.of(JAVA_INT, JAVA_LONG, JAVA_LONG, JAVA_LONG));
+            advanceCQHandle = linker.downcallHandle(advanceCQAddress, FunctionDescriptor.ofVoid(JAVA_LONG, JAVA_LONG));
+            nextSQEntryHandle = linker.downcallHandle(nextSQEntryAddress, FunctionDescriptor.of(JAVA_LONG, JAVA_LONG));
+            peekSQEntriesHandle = linker.downcallHandle(peekSQEntriesAddress, FunctionDescriptor.of(JAVA_INT, JAVA_LONG, JAVA_LONG, JAVA_LONG));
+            submitAndWaitHandle = linker.downcallHandle(submitAndWaitAddress, FunctionDescriptor.of(JAVA_LONG, JAVA_LONG, JAVA_INT));
+            socketHandle = linker.downcallHandle(socketAddress, FunctionDescriptor.of(JAVA_INT, JAVA_INT, JAVA_INT, JAVA_INT));
+            prepareForListenHandle = linker.downcallHandle(prepareForListenAddress, FunctionDescriptor.of(JAVA_INT, JAVA_INT, JAVA_LONG, JAVA_INT, JAVA_INT));
 
         } catch (final Exception e) {
             LOG.error("Error while loading JNI library for Uring class: ", e);
