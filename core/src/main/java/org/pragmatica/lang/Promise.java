@@ -719,243 +719,243 @@ public interface Promise<T> {
 
         return promise;
     }
-}
 
-final class PromiseImpl<T> implements Promise<T> {
-    @SuppressWarnings("rawtypes")
-    private static final CompletionAction NOP = new CompletionAction<>(Functions::unitFn, null);
+    final class PromiseImpl<T> implements Promise<T> {
+        @SuppressWarnings("rawtypes")
+        private static final CompletionAction NOP = new CompletionAction<>(Functions::unitFn, null);
 
-    @SuppressWarnings("unchecked")
-    private volatile CompletionAction<T> head = NOP;
-    private volatile CompletionAction<T> processed;
-    private volatile Result<T> value;
+        @SuppressWarnings("unchecked")
+        private volatile CompletionAction<T> head = NOP;
+        private volatile CompletionAction<T> processed;
+        private volatile Result<T> value;
 
-    private static final VarHandle HEAD;
-    private static final VarHandle VALUE;
+        private static final VarHandle HEAD;
+        private static final VarHandle VALUE;
 
-    private static class CompletionAction<T> {
-        private volatile CompletionAction<T> next;
-        private final Consumer<Result<T>> action;
-        private final PromiseImpl<?> dependency;
+        private static class CompletionAction<T> {
+            private volatile CompletionAction<T> next;
+            private final Consumer<Result<T>> action;
+            private final PromiseImpl<?> dependency;
 
-        private CompletionAction(Consumer<Result<T>> action, PromiseImpl<?> dependency) {
-            this.action = action;
-            this.dependency = dependency;
+            private CompletionAction(Consumer<Result<T>> action, PromiseImpl<?> dependency) {
+                this.action = action;
+                this.dependency = dependency;
+            }
+
+            @Override
+            public String toString() {
+                return this == NOP ? "NOP" : "Action(" + (dependency == null ? "free" : dependency.toString()) + ')';
+            }
+        }
+
+        static {
+            try {
+                final var lookup = MethodHandles.lookup();
+                HEAD = lookup.findVarHandle(PromiseImpl.class, "head", CompletionAction.class);
+                VALUE = lookup.findVarHandle(PromiseImpl.class, "value", Result.class);
+            } catch (final ReflectiveOperationException e) {
+                throw new ExceptionInInitializerError(e);
+            }
+        }
+
+        private PromiseImpl(Result<T> value) {
+            this.value = value;
+            this.processed = value == null ? null : this.head;
+        }
+
+        @Override
+        public <U> Promise<U> map(FN1<U, ? super T> mapper) {
+            if (value != null) {
+                return new PromiseImpl<>(value.map(mapper));
+            }
+
+            var result = new PromiseImpl<U>(null);
+
+            push(new CompletionAction<>(value -> result.resolve(value.map(mapper)), result));
+
+            return result;
+        }
+
+        @Override
+        public Promise<T> mapError(FN1<Result.Cause, Result.Cause> mapper) {
+            if (value != null) {
+                return new PromiseImpl<>(value.mapError(mapper));
+            }
+
+            var result = new PromiseImpl<T>(null);
+
+            push(new CompletionAction<>(value -> result.resolve(value.mapError(mapper)), result));
+
+            return result;
+        }
+
+        @SuppressWarnings("unchecked")
+        @Override
+        public <U> Promise<U> flatMap(FN1<Promise<U>, ? super T> mapper) {
+            if (value != null) {
+                return value.fold(f -> new PromiseImpl<>((Result<U>) value), mapper);
+            }
+
+            var result = new PromiseImpl<U>(null);
+
+            push(new CompletionAction<>(value -> value.fold(f -> new PromiseImpl<>((Result<U>) value), mapper)
+                                                      .onResult(result::resolve),
+                                        result));
+
+            return result;
+        }
+
+        @Override
+        public Promise<T> onResult(Consumer<Result<T>> action) {
+            if (value != null) {
+                action.accept(value);
+            } else {
+                push(new CompletionAction<>(action, null));
+            }
+
+            return this;
+        }
+
+        @Override
+        public Promise<T> resolve(Result<T> value) {
+            if (VALUE.compareAndSet(this, null, value)) {
+                submit(() -> runActions(value));
+            }
+
+            return this;
+        }
+
+        @Override
+        public boolean isResolved() {
+            return value != null;
+        }
+
+        public Promise<T> async(Consumer<Promise<T>> action) {
+            submit(() -> action.accept(this));
+            return this;
+        }
+
+        public Promise<T> async(Timeout timeout, Consumer<Promise<T>> action) {
+            submit(() -> {
+                try {
+                    Thread.sleep(timeout.duration());
+                } catch (InterruptedException e) {
+                    // ignore
+                }
+                action.accept(this);
+            });
+            return this;
+        }
+
+
+        @Override
+        public Result<T> join() {
+            CompletionAction<T> action;
+
+            while ((action = processed) == null) {
+                Thread.onSpinWait();
+                Thread.yield();
+            }
+
+            while (action != NOP) {
+                action.dependency.join();
+                action = action.next;
+            }
+
+            return value;
+        }
+
+        @Override
+        public Result<T> join(Timeout timeout) {
+            return join(timeout.nanoseconds());
         }
 
         @Override
         public String toString() {
-            return this == NOP ? "NOP" : "Action(" + (dependency == null ? "free" : dependency.toString()) + ')';
-        }
-    }
-
-    static {
-        try {
-            final var lookup = MethodHandles.lookup();
-            HEAD = lookup.findVarHandle(PromiseImpl.class, "head", CompletionAction.class);
-            VALUE = lookup.findVarHandle(PromiseImpl.class, "value", Result.class);
-        } catch (final ReflectiveOperationException e) {
-            throw new ExceptionInInitializerError(e);
-        }
-    }
-
-    PromiseImpl(Result<T> value) {
-        this.value = value;
-        this.processed = value == null ? null : this.head;
-    }
-
-    @Override
-    public <U> Promise<U> map(FN1<U, ? super T> mapper) {
-        if (value != null) {
-            return new PromiseImpl<>(value.map(mapper));
+            return "Promise(" + (value == null ? "<>" : value.toString()) + ')';
         }
 
-        var result = new PromiseImpl<U>(null);
+        @SuppressWarnings("unchecked")
+        private void runActions(Result<T> value) {
+            CompletionAction<T> processed = NOP;
+            CompletionAction<T> head;
 
-        push(new CompletionAction<>(value -> result.resolve(value.map(mapper)), result));
+            while ((head = swapHead()) != null) {
+                while (head != null) {
+                    head.action.accept(value);
+                    var current = head;
+                    head = head.next;
 
-        return result;
-    }
-
-    @Override
-    public Promise<T> mapError(FN1<Result.Cause, Result.Cause> mapper) {
-        if (value != null) {
-            return new PromiseImpl<>(value.mapError(mapper));
-        }
-
-        var result = new PromiseImpl<T>(null);
-
-        push(new CompletionAction<>(value -> result.resolve(value.mapError(mapper)), result));
-
-        return result;
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public <U> Promise<U> flatMap(FN1<Promise<U>, ? super T> mapper) {
-        if (value != null) {
-            return value.fold(f -> new PromiseImpl<>((Result<U>) value), mapper);
-        }
-
-        var result = new PromiseImpl<U>(null);
-
-        push(new CompletionAction<>(value -> value.fold(f -> new PromiseImpl<>((Result<U>) value), mapper)
-                                                  .onResult(result::resolve),
-                                    result));
-
-        return result;
-    }
-
-    @Override
-    public Promise<T> onResult(Consumer<Result<T>> action) {
-        if (value != null) {
-            action.accept(value);
-        } else {
-            push(new CompletionAction<>(action, null));
-        }
-
-        return this;
-    }
-
-    @Override
-    public Promise<T> resolve(Result<T> value) {
-        if (VALUE.compareAndSet(this, null, value)) {
-            submit(() -> runActions(value));
-        }
-
-        return this;
-    }
-
-    @Override
-    public boolean isResolved() {
-        return value != null;
-    }
-
-    public Promise<T> async(Consumer<Promise<T>> action) {
-        submit(() -> action.accept(this));
-        return this;
-    }
-
-    public Promise<T> async(Timeout timeout, Consumer<Promise<T>> action) {
-        submit(() -> {
-            try {
-                Thread.sleep(timeout.duration());
-            } catch (InterruptedException e) {
-                // ignore
-            }
-            action.accept(this);
-        });
-        return this;
-    }
-
-
-    @Override
-    public Result<T> join() {
-        CompletionAction<T> action;
-
-        while ((action = processed) == null) {
-            Thread.onSpinWait();
-            Thread.yield();
-        }
-
-        while (action != NOP) {
-            action.dependency.join();
-            action = action.next;
-        }
-
-        return value;
-    }
-
-    @Override
-    public Result<T> join(Timeout timeout) {
-        return join(timeout.nanoseconds());
-    }
-
-    @Override
-    public String toString() {
-        return "Promise(" + (value == null ? "<>" : value.toString()) + ')';
-    }
-
-    @SuppressWarnings("unchecked")
-    private void runActions(Result<T> value) {
-        CompletionAction<T> processed = NOP;
-        CompletionAction<T> head;
-
-        while ((head = swapHead()) != null) {
-            while (head != null) {
-                head.action.accept(value);
-                var current = head;
-                head = head.next;
-
-                if (current.dependency != null) {
-                    current.next = processed;
-                    processed = current;
+                    if (current.dependency != null) {
+                        current.next = processed;
+                        processed = current;
+                    }
                 }
             }
+
+            this.processed = processed;
         }
 
-        this.processed = processed;
-    }
+        private Result<T> join(long delayNanos) {
+            var start = System.nanoTime();
 
-    private Result<T> join(long delayNanos) {
-        var start = System.nanoTime();
+            CompletionAction<T> action;
 
-        CompletionAction<T> action;
+            while ((action = processed) == null) {
+                Thread.onSpinWait();
 
-        while ((action = processed) == null) {
-            Thread.onSpinWait();
-
-            if (System.nanoTime() - start > delayNanos) {
-                return CoreError.TIMEOUT.result();
-            }
-        }
-
-        while (action != NOP) {
-            var currentNanoTime = System.nanoTime();
-
-            if (currentNanoTime - start > delayNanos) {
-                return CoreError.TIMEOUT.result();
+                if (System.nanoTime() - start > delayNanos) {
+                    return CoreError.TIMEOUT.result();
+                }
             }
 
-            action.dependency.join(currentNanoTime - start);
-            action = action.next;
+            while (action != NOP) {
+                var currentNanoTime = System.nanoTime();
+
+                if (currentNanoTime - start > delayNanos) {
+                    return CoreError.TIMEOUT.result();
+                }
+
+                action.dependency.join(currentNanoTime - start);
+                action = action.next;
+            }
+
+            return value;
         }
 
-        return value;
-    }
+        private void push(CompletionAction<T> newHead) {
+            CompletionAction<T> oldHead;
 
-    private void push(CompletionAction<T> newHead) {
-        CompletionAction<T> oldHead;
-
-        do {
-            oldHead = head;
-            newHead.next = oldHead;
-        } while (!HEAD.compareAndSet(this, oldHead, newHead));
-    }
-
-    private CompletionAction<T> swapHead() {
-        CompletionAction<T> head;
-
-        do {
-            head = this.head;
-        } while (!HEAD.compareAndSet(this, head, NOP));
-
-        CompletionAction<T> current = head;
-        CompletionAction<T> prev = null;
-        CompletionAction<T> next;
-
-        //Reverse list
-        while (current != NOP) {
-            next = current.next;
-            current.next = prev;
-            prev = current;
-            current = next;
+            do {
+                oldHead = head;
+                newHead.next = oldHead;
+            } while (!HEAD.compareAndSet(this, oldHead, newHead));
         }
 
-        return prev;
-    }
+        private CompletionAction<T> swapHead() {
+            CompletionAction<T> head;
 
-    private static Thread submit(Runnable runnable) {
-        return Thread.ofVirtual().start(runnable);
+            do {
+                head = this.head;
+            } while (!HEAD.compareAndSet(this, head, NOP));
+
+            CompletionAction<T> current = head;
+            CompletionAction<T> prev = null;
+            CompletionAction<T> next;
+
+            //Reverse list
+            while (current != NOP) {
+                next = current.next;
+                current.next = prev;
+                prev = current;
+                current = next;
+            }
+
+            return prev;
+        }
+
+        private static Thread submit(Runnable runnable) {
+            return Thread.ofVirtual().start(runnable);
+        }
     }
 }

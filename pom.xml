@@ -10,7 +10,7 @@
     <modules>
         <module>core</module>
         <module>proactor</module>
-        <module>async-io</module>
+        <module>io</module>
     </modules>
 
     <packaging>pom</packaging>

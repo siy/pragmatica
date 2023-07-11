@@ -16,9 +16,9 @@
 
 package org.pragmatica.io.async;
 
-import org.pragmatica.lang.Cause;
 import org.pragmatica.lang.Functions.FN1;
 import org.pragmatica.lang.Result;
+import org.pragmatica.lang.Result.Cause;
 
 /**
  * Representation of native error codes in Java

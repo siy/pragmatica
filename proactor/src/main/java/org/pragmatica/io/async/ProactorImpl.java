@@ -46,6 +46,7 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Set;
 import java.util.function.BiConsumer;
+import org.pragmatica.lang.Result.Cause;
 
 import static org.pragmatica.io.async.uring.UringApi.uringApi;
 
@@ -117,7 +118,7 @@ class ProactorImpl implements Proactor {
         queue.add(factory.forClose(completion, fd, timeout)
                          .register(pendingCompletions));
 
-        timeout.whenPresent(this::appendTimeout);
+        timeout.onPresent(this::appendTimeout);
     }
 
     @Override
@@ -126,7 +127,7 @@ class ProactorImpl implements Proactor {
         queue.add(factory.forRead(completion, fd, buffer, offset, timeout)
                          .register(pendingCompletions));
 
-        timeout.whenPresent(this::appendTimeout);
+        timeout.onPresent(this::appendTimeout);
     }
 
     @Override
@@ -140,7 +141,7 @@ class ProactorImpl implements Proactor {
         queue.add(factory.forWrite(completion, fd, buffer, offset, timeout)
                          .register(pendingCompletions));
 
-        timeout.whenPresent(this::appendTimeout);
+        timeout.onPresent(this::appendTimeout);
     }
 
     @Override
@@ -148,7 +149,7 @@ class ProactorImpl implements Proactor {
         queue.add(factory.forSplice(completion, descriptor, timeout)
                          .register(pendingCompletions));
 
-        timeout.whenPresent(this::appendTimeout);
+        timeout.onPresent(this::appendTimeout);
     }
 
     @Override
@@ -157,7 +158,7 @@ class ProactorImpl implements Proactor {
         queue.add(factory.forOpen(completion, path, flags, mode, timeout)
                          .register(pendingCompletions));
 
-        timeout.whenPresent(this::appendTimeout);
+        timeout.onPresent(this::appendTimeout);
     }
 
     @Override
@@ -195,7 +196,7 @@ class ProactorImpl implements Proactor {
         queue.add(factory.forConnect(completion, socket, clientAddress, timeout)
                          .register(pendingCompletions));
 
-        timeout.whenPresent(this::appendTimeout);
+        timeout.onPresent(this::appendTimeout);
     }
 
     @Override
@@ -208,7 +209,7 @@ class ProactorImpl implements Proactor {
                                   Bitmask.combine(mask),
                                   OffHeapCString.cstring(path.toString()))
                          .register(pendingCompletions));
-        timeout.whenPresent(this::appendTimeout);
+        timeout.onPresent(this::appendTimeout);
     }
 
     @Override
@@ -221,7 +222,7 @@ class ProactorImpl implements Proactor {
                                   Bitmask.combine(mask),
                                   OffHeapCString.cstring(""))
                          .register(pendingCompletions));
-        timeout.whenPresent(this::appendTimeout);
+        timeout.onPresent(this::appendTimeout);
     }
 
     @Override
@@ -230,7 +231,7 @@ class ProactorImpl implements Proactor {
         queue.add(factory.forReadVector(completion, fileDescriptor, offset, timeout, OffHeapIoVector.withBuffers(buffers))
                          .register(pendingCompletions));
 
-        timeout.whenPresent(this::appendTimeout);
+        timeout.onPresent(this::appendTimeout);
     }
 
     @Override
@@ -239,7 +240,7 @@ class ProactorImpl implements Proactor {
         queue.add(factory.forWriteVector(completion, fileDescriptor, offset, timeout, OffHeapIoVector.withBuffers(buffers))
                          .register(pendingCompletions));
 
-        timeout.whenPresent(this::appendTimeout);
+        timeout.onPresent(this::appendTimeout);
     }
 
     private void appendTimeout(Timeout timeout) {

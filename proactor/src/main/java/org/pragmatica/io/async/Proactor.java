@@ -1,27 +1,24 @@
 /*
- * Copyright (c) 2020 Sergiy Yevtushenko
+ *  Copyright (c) 2020-2022 Sergiy Yevtushenko.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 
 package org.pragmatica.io.async;
 
 import org.pragmatica.io.async.common.OffsetT;
 import org.pragmatica.io.async.common.SizeT;
-import org.pragmatica.io.async.file.FileDescriptor;
-import org.pragmatica.io.async.file.FilePermission;
-import org.pragmatica.io.async.file.OpenFlags;
-import org.pragmatica.io.async.file.SpliceDescriptor;
+import org.pragmatica.io.async.file.*;
 import org.pragmatica.io.async.file.stat.FileStat;
 import org.pragmatica.io.async.file.stat.StatFlag;
 import org.pragmatica.io.async.file.stat.StatMask;
@@ -38,6 +35,9 @@ import java.time.Duration;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+
+import static org.pragmatica.lang.Option.empty;
+import static org.pragmatica.lang.Option.option;
 
 /**
  * Low level externally accessible API for submission of I/O operations. The API designed as a <a href="https://en.wikipedia.org/wiki/Proactor_pattern">Proactor</a>
@@ -108,7 +108,6 @@ public interface Proactor {
      * @param descriptor Splice operation details container
      * @param timeout    Optional operation timeout.
      */
-
     void splice(BiConsumer<Result<SizeT>, Proactor> completion, SpliceDescriptor descriptor, Option<Timeout> timeout);
 
     default void splice(Consumer<Result<SizeT>> completion, SpliceDescriptor descriptor, Option<Timeout> timeout) {
@@ -118,9 +117,9 @@ public interface Proactor {
     /**
      * Submit READ operation.
      * <p>
-     * Read from specified file descriptor. The number of bytes to read is defined by the provided buffer {@link OffHeapBuffer#size()}. Upon
-     * successful completion {@code buffer} has its {@link OffHeapBuffer#used(int)} value set to number of bytes actually read. The number of bytes
-     * read also passed as a parameter to callback upon completion.
+     * Read from specified file descriptor. The number of bytes to read is defined by the provided buffer {@link OffHeapSlice#size()}. Upon successful
+     * completion {@code buffer} has its {@link OffHeapSlice#used(int)} value set to number of bytes actually read. The number of bytes read also
+     * passed as a parameter to callback upon completion.
      *
      * @param completion Callback which is invoked once operation is finished.
      * @param fd         File descriptor to read from.
