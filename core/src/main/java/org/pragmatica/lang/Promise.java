@@ -18,6 +18,7 @@
 package org.pragmatica.lang;
 
 import org.pragmatica.lang.Functions.*;
+import org.pragmatica.lang.Result.Cause;
 import org.pragmatica.lang.io.CoreError;
 import org.pragmatica.lang.io.Timeout;
 
@@ -95,7 +96,19 @@ public interface Promise<T> {
         return flatMap(__ -> mapper.get());
     }
 
-    Promise<T> mapError(FN1<Result.Cause, Result.Cause> mapper);
+    Promise<T> mapError(FN1<Cause, Cause> mapper);
+
+
+    /**
+     * General purpose method to start new virtual thread.
+     *
+     * @param runnable The {@link Runnable} to run
+     *
+     * @return created and started thread
+     */
+    static Thread runAsync(Runnable runnable) {
+        return Thread.ofVirtual().start(runnable);
+    }
 
     /**
      * Run asynchronous task. The task will receive current instance of Promise as a parameter.
@@ -195,7 +208,7 @@ public interface Promise<T> {
      *
      * @return Current instance
      */
-    default Promise<T> onFailure(Consumer<? super Result.Cause> action) {
+    default Promise<T> onFailure(Consumer<? super Cause> action) {
         return onResult(result -> result.onFailure(action));
     }
 
@@ -233,7 +246,7 @@ public interface Promise<T> {
      *
      * @return Current instance
      */
-    default Promise<T> failure(Result.Cause cause) {
+    default Promise<T> failure(Cause cause) {
         return resolve(cause.result());
     }
 
@@ -254,7 +267,9 @@ public interface Promise<T> {
      * @return Created instance
      */
     static <R> Promise<R> promise(Consumer<Promise<R>> consumer) {
-        return Promise.<R>promise().async(consumer);
+        var promise = Promise.<R>promise();
+        runAsync(() -> consumer.accept(promise));
+        return promise;
     }
 
     /**
@@ -272,7 +287,7 @@ public interface Promise<T> {
         return new PromiseImpl<>(Result.success(value));
     }
 
-    static <R> Promise<R> failed(Result.Cause failure) {
+    static <R> Promise<R> failed(Cause failure) {
         return new PromiseImpl<>(Result.failure(failure));
     }
 
@@ -777,7 +792,7 @@ public interface Promise<T> {
         }
 
         @Override
-        public Promise<T> mapError(FN1<Result.Cause, Result.Cause> mapper) {
+        public Promise<T> mapError(FN1<Cause, Cause> mapper) {
             if (value != null) {
                 return new PromiseImpl<>(value.mapError(mapper));
             }
@@ -819,7 +834,7 @@ public interface Promise<T> {
         @Override
         public Promise<T> resolve(Result<T> value) {
             if (VALUE.compareAndSet(this, null, value)) {
-                submit(() -> runActions(value));
+                runAsync(() -> runActions(value));
             }
 
             return this;
@@ -831,12 +846,12 @@ public interface Promise<T> {
         }
 
         public Promise<T> async(Consumer<Promise<T>> action) {
-            submit(() -> action.accept(this));
+            runAsync(() -> action.accept(this));
             return this;
         }
 
         public Promise<T> async(Timeout timeout, Consumer<Promise<T>> action) {
-            submit(() -> {
+            runAsync(() -> {
                 try {
                     Thread.sleep(timeout.duration());
                 } catch (InterruptedException e) {
@@ -952,10 +967,6 @@ public interface Promise<T> {
             }
 
             return prev;
-        }
-
-        private static Thread submit(Runnable runnable) {
-            return Thread.ofVirtual().start(runnable);
         }
     }
 }

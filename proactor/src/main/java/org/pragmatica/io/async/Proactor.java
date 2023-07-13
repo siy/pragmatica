@@ -25,8 +25,9 @@ import org.pragmatica.io.async.file.stat.StatMask;
 import org.pragmatica.io.async.net.*;
 import org.pragmatica.io.async.uring.UringSetupFlags;
 import org.pragmatica.io.async.util.OffHeapSlice;
-import org.pragmatica.io.async.util.allocator.ChunkedAllocator;
+import org.pragmatica.io.async.util.Units;
 import org.pragmatica.io.async.util.allocator.FixedBuffer;
+import org.pragmatica.io.async.util.allocator.ChunkedAllocator;
 import org.pragmatica.lang.Option;
 import org.pragmatica.lang.Result;
 import org.pragmatica.lang.Unit;
@@ -34,32 +35,21 @@ import org.pragmatica.lang.Unit;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Set;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static org.pragmatica.lang.Option.empty;
-import static org.pragmatica.lang.Option.option;
 
 /**
- * Low level externally accessible API for submission of I/O operations. The API designed as a <a href="https://en.wikipedia.org/wiki/Proactor_pattern">Proactor</a>
- * pattern.
+ * Low level externally accessible API for submission of I/O operations. The API designed as a <a
+ * href="https://en.wikipedia.org/wiki/Proactor_pattern">Proactor</a> pattern.
  */
 //TODO: finish docs
 public interface Proactor {
-    int DEFAULT_QUEUE_SIZE = 128;
-
-    /**
-     * Create a root instance.
-     */
-    static Proactor proactor(ChunkedAllocator sharedAllocator) {
-        return ProactorImpl.proactor(DEFAULT_QUEUE_SIZE, UringSetupFlags.defaultFlags(), sharedAllocator);
-    }
-
-    /**
-     * Shutdown current Proactor instance.
-     */
-    void shutdown();
-
     /**
      * Submit NOP operation.
      * <p>
@@ -140,8 +130,8 @@ public interface Proactor {
     /**
      * Submit WRITE operation.
      * <p>
-     * Writes data into specified file descriptor at specified offset. The number of bytes to write is defined by the provided buffer {@link
-     * OffHeapSlice#used()}. Number of bytes actually written is passed as a parameter to provided callback.
+     * Writes data into specified file descriptor at specified offset. The number of bytes to write is defined by the provided buffer
+     * {@link OffHeapSlice#used()}. Number of bytes actually written is passed as a parameter to provided callback.
      *
      * @param completion Callback which is invoked once operation is finished.
      * @param fd         File descriptor to write to.
@@ -222,13 +212,8 @@ public interface Proactor {
      * @param flags      Socket open flags. See {@link SocketFlag} for more details.
      * @param options    Additional socket options. See {@link SocketOption} for more details.
      */
-    void socket(BiConsumer<Result<FileDescriptor>, Proactor> completion, AddressFamily af, SocketType type,
+    void socket(Consumer<Result<FileDescriptor>> completion, AddressFamily af, SocketType type,
                 Set<SocketFlag> flags, Set<SocketOption> options);
-
-    default void socket(Consumer<Result<FileDescriptor>> completion, AddressFamily af, SocketType type,
-                        Set<SocketFlag> flags, Set<SocketOption> options) {
-        socket((result, __) -> completion.accept(result), af, type, flags, options);
-    }
 
     /**
      * Create listener bound to specified address/port and ready to accept incoming connection. Upon completion provided callback is invoked with the
@@ -243,15 +228,9 @@ public interface Proactor {
      *
      * @see ListenContext
      */
-    <T extends InetAddress> void listen(BiConsumer<Result<ListenContext<T>>, Proactor> completion,
-                                        SocketAddress<T> socketAddress, SocketType socketType,
-                                        Set<SocketFlag> openFlags, SizeT queueDepth, Set<SocketOption> options);
-
-    default <T extends InetAddress> void listen(Consumer<Result<ListenContext<T>>> completion,
-                                                SocketAddress<T> address, SocketType type,
-                                                Set<SocketFlag> flags, SizeT len, Set<SocketOption> options) {
-        listen((result, __) -> completion.accept(result), address, type, flags, len, options);
-    }
+    <T extends InetAddress> void listen(Consumer<Result<ListenContext<T>>> completion,
+                                        SocketAddress<T> address, SocketType type,
+                                        Set<SocketFlag> flags, SizeT len, Set<SocketOption> options);
 
     /**
      * Submit ACCEPT operation.
@@ -263,8 +242,8 @@ public interface Proactor {
      * @param completion  Callback which is invoked once operation is finished.
      * @param socket      Listening socket to accept connections on.
      * @param flags       Accept flags (see {@link SocketFlag} for more details)
-     * @param addressType tag for address type (TCPv4 or TCPv6). Actual value is irrelevant, matters only type. Constants {@link
-     *                    InetAddress.Inet4Address#INADDR_ANY} and {@link InetAddress.Inet6Address#INADDR_ANY} could be used for this purpose.
+     * @param addressType tag for address type (TCPv4 or TCPv6). Actual value is irrelevant, matters only type. Constants
+     *                    {@link InetAddress.Inet4Address#INADDR_ANY} and {@link InetAddress.Inet6Address#INADDR_ANY} could be used for this purpose.
      *
      * @see ConnectionContext
      */
@@ -490,8 +469,9 @@ public interface Proactor {
     }
 
     /**
-     * Allocate fixed buffer which will be shared between kernel and user space and can be used with {@link #readFixed(BiConsumer, FileDescriptor,
-     * FixedBuffer, OffsetT, Option)} and {@link #writeFixed(BiConsumer, FileDescriptor, FixedBuffer, OffsetT, Option)} methods.
+     * Allocate fixed buffer which will be shared between kernel and user space and can be used with
+     * {@link #readFixed(BiConsumer, FileDescriptor, FixedBuffer, OffsetT, Option)} and
+     * {@link #writeFixed(BiConsumer, FileDescriptor, FixedBuffer, OffsetT, Option)} methods.
      * <p>
      * Fixed buffers are allocated from common memory arena shared across all instances of {@link Proactor}. The arena size is configured at start and
      * can't be changed at run time.
@@ -501,7 +481,8 @@ public interface Proactor {
      * <p>
      * Allocated buffer can be released using {@link FixedBuffer#dispose()}. Buffer content must not be accessed once this method is invoked.
      *
-     * @param size Buffer size in bytes. Note that allocation is done in chunks of size {@link org.pragmatica.io.async.util.allocator.ChunkedAllocator#CHUNK_SIZE}.
+     * @param size Buffer size in bytes. Note that allocation is done in chunks of size
+     *             {@link org.pragmatica.io.async.util.allocator.ChunkedAllocator#CHUNK_SIZE}.
      *
      * @return allocation result.
      */
@@ -553,9 +534,17 @@ public interface Proactor {
     }
 
 
-    void send(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fd, OffHeapSlice buffer, Set<MessageFlags> msgFlags, Option<Timeout> timeout);
+    void send(BiConsumer<Result<SizeT>, Proactor> completion,
+              FileDescriptor fd,
+              OffHeapSlice buffer,
+              Set<MessageFlags> msgFlags,
+              Option<Timeout> timeout);
 
-    default void send(Consumer<Result<SizeT>> completion, FileDescriptor fd, OffHeapSlice buffer, Set<MessageFlags> msgFlags, Option<Timeout> timeout) {
+    default void send(Consumer<Result<SizeT>> completion,
+                      FileDescriptor fd,
+                      OffHeapSlice buffer,
+                      Set<MessageFlags> msgFlags,
+                      Option<Timeout> timeout) {
         send((result, __) -> completion.accept(result), fd, buffer, msgFlags, timeout);
     }
 
@@ -567,9 +556,17 @@ public interface Proactor {
         send((result, __) -> completion.accept(result), fd, buffer, msgFlags, empty());
     }
 
-    void recv(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fd, OffHeapSlice buffer, Set<MessageFlags> msgFlags, Option<Timeout> timeout);
+    void recv(BiConsumer<Result<SizeT>, Proactor> completion,
+              FileDescriptor fd,
+              OffHeapSlice buffer,
+              Set<MessageFlags> msgFlags,
+              Option<Timeout> timeout);
 
-    default void recv(Consumer<Result<SizeT>> completion, FileDescriptor fd, OffHeapSlice buffer, Set<MessageFlags> msgFlags, Option<Timeout> timeout) {
+    default void recv(Consumer<Result<SizeT>> completion,
+                      FileDescriptor fd,
+                      OffHeapSlice buffer,
+                      Set<MessageFlags> msgFlags,
+                      Option<Timeout> timeout) {
         recv((result, __) -> completion.accept(result), fd, buffer, msgFlags, timeout);
     }
 
@@ -582,4 +579,48 @@ public interface Proactor {
     }
 
     //recvmsg, sendmsg, read_fixed, write_fixed
+
+
+    static Proactor proactor() {
+        return ProactorHolder.INSTANCE.get();
+    }
+
+    /**
+     * Shutdown current Proactor instance.
+     */
+    void shutdown();
+
+    /**
+     * Shutdown entire Proactor pool.
+     */
+    static void shutdownAll() {
+        ProactorHolder.INSTANCE.shutdown();
+    }
+
+    enum ProactorHolder {
+        INSTANCE;
+
+        private AtomicInteger counter = new AtomicInteger(0);
+        private final List<Proactor> proactors;
+        private static final int DEFAULT_QUEUE_SIZE = 128;
+
+        ProactorHolder() {
+            Runtime.getRuntime().availableProcessors();
+
+            proactors = IntStream.range(0, Runtime.getRuntime().availableProcessors())
+                                 .mapToObj(__ -> ProactorImpl.proactor(DEFAULT_QUEUE_SIZE,
+                                                                       UringSetupFlags.defaultFlags(),
+                                                                       ChunkedAllocator.allocator(Units._1MiB)))
+                                 .collect(Collectors.toList());
+        }
+
+
+        Proactor get() {
+            return proactors.get(counter.incrementAndGet() % proactors.size());
+        }
+
+        public void shutdown() {
+            proactors.forEach(Proactor::shutdown);
+        }
+    }
 }

@@ -42,6 +42,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 import static org.pragmatica.io.async.uring.struct.offheap.OffHeapIoVector.withReadBuffers;
 import static org.pragmatica.io.async.uring.struct.offheap.OffHeapIoVector.withWriteBuffers;
@@ -150,16 +151,16 @@ class ProactorImpl implements Proactor {
     }
 
     @Override
-    public void socket(BiConsumer<Result<FileDescriptor>, Proactor> completion, AddressFamily addressFamily,
+    public void socket(Consumer<Result<FileDescriptor>> completion, AddressFamily addressFamily,
                        SocketType socketType, Set<SocketFlag> openFlags, Set<SocketOption> options) {
-        uringApi.submit(uringApi.factory().forSocket(completion, addressFamily, socketType, openFlags, options));
+        completion.accept(UringApi.socket(addressFamily, socketType, openFlags, options));
     }
 
     @Override
-    public <T extends InetAddress> void listen(BiConsumer<Result<ListenContext<T>>, Proactor> completion,
+    public <T extends InetAddress> void listen(Consumer<Result<ListenContext<T>>> completion,
                                                SocketAddress<T> socketAddress, SocketType socketType,
                                                Set<SocketFlag> openFlags, SizeT queueDepth, Set<SocketOption> options) {
-        uringApi.submit(uringApi.factory().forListen(completion, socketAddress, socketType, openFlags, queueDepth, options));
+        completion.accept(UringApi.listen(socketAddress, socketType, openFlags, options, queueDepth));
     }
 
     @Override

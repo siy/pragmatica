@@ -60,8 +60,6 @@ public class ExchangeEntryFactory {
     private final PlainObjectPool<DelayExchangeEntry> delayPool;
     private final PlainObjectPool<FAllocExchangeEntry> fallocPool;
     private final PlainObjectPool<FSyncExchangeEntry> fsyncPool;
-    @SuppressWarnings({"rawtypes"})
-    private final PlainObjectPool<ListenExchangeEntry> listenPool;
     private final PlainObjectPool<NopExchangeEntry> nopPool;
     private final PlainObjectPool<OpenExchangeEntry> openPool;
     private final PlainObjectPool<ReadExchangeEntry> readPool;
@@ -69,7 +67,6 @@ public class ExchangeEntryFactory {
     private final PlainObjectPool<ReadVectorExchangeEntry> readVectorPool;
     private final PlainObjectPool<RecvExchangeEntry> recvPool;
     private final PlainObjectPool<SendExchangeEntry> sendPool;
-    private final PlainObjectPool<SocketExchangeEntry> socketPool;
     private final PlainObjectPool<SpliceExchangeEntry> splicePool;
     private final PlainObjectPool<StatExchangeEntry> statPool;
     private final PlainObjectPool<TimeoutExchangeEntry> timeoutPool;
@@ -85,7 +82,6 @@ public class ExchangeEntryFactory {
         delayPool = objectPool(DelayExchangeEntry::new, exchangeRegistry);
         fallocPool = objectPool(FAllocExchangeEntry::new, exchangeRegistry);
         fsyncPool = objectPool(FSyncExchangeEntry::new, exchangeRegistry);
-        listenPool = objectPool(ListenExchangeEntry::new, exchangeRegistry);
         nopPool = objectPool(NopExchangeEntry::new, exchangeRegistry);
         openPool = objectPool(OpenExchangeEntry::new, exchangeRegistry);
         readPool = objectPool(ReadExchangeEntry::new, exchangeRegistry);
@@ -93,7 +89,6 @@ public class ExchangeEntryFactory {
         readVectorPool = objectPool(ReadVectorExchangeEntry::new, exchangeRegistry);
         recvPool = objectPool(RecvExchangeEntry::new, exchangeRegistry);
         sendPool = objectPool(SendExchangeEntry::new, exchangeRegistry);
-        socketPool = objectPool(SocketExchangeEntry::new, exchangeRegistry);
         splicePool = objectPool(SpliceExchangeEntry::new, exchangeRegistry);
         statPool = objectPool(StatExchangeEntry::new, exchangeRegistry);
         timeoutPool = objectPool(TimeoutExchangeEntry::new, exchangeRegistry);
@@ -101,9 +96,9 @@ public class ExchangeEntryFactory {
         writeFixedPool = objectPool(WriteFixedExchangeEntry::new, exchangeRegistry);
         writeVectorPool = objectPool(WriteVectorExchangeEntry::new, exchangeRegistry);
 
-        pools = List.of(acceptPool, closePool, connectPool, delayPool, fallocPool, fsyncPool, listenPool,
-                        nopPool, openPool, readPool, readFixedPool, readVectorPool, socketPool, splicePool,
-                        statPool, timeoutPool, writePool, writeFixedPool, writeVectorPool);
+        pools = List.of(acceptPool, closePool, connectPool, delayPool, fallocPool, fsyncPool, nopPool, openPool,
+                        readPool, readFixedPool, readVectorPool, splicePool, statPool, timeoutPool, writePool,
+                        writeFixedPool, writeVectorPool);
     }
 
     public NopExchangeEntry forNop(BiConsumer<Result<Unit>, Proactor> completion) {
@@ -151,20 +146,6 @@ public class ExchangeEntryFactory {
                                      Set<FilePermission> mode, Option<Timeout> timeout) {
         return openPool.alloc()
                        .prepare(completion, path, Bitmask.combine(openFlags), Bitmask.combine(mode), calculateFlags(timeout));
-    }
-
-    public SocketExchangeEntry forSocket(BiConsumer<Result<FileDescriptor>, Proactor> completion, AddressFamily addressFamily,
-                                         SocketType socketType, Set<SocketFlag> openFlags, Set<SocketOption> options) {
-        return socketPool.alloc()
-                         .prepare(completion, addressFamily, socketType, openFlags, options);
-    }
-
-    @SuppressWarnings("unchecked")
-    public <T extends InetAddress> ListenExchangeEntry<T> forListen(BiConsumer<Result<ListenContext<T>>, Proactor> completion,
-                                                                    SocketAddress<T> socketAddress, SocketType socketType,
-                                                                    Set<SocketFlag> openFlags, SizeT queueDepth, Set<SocketOption> options) {
-        return listenPool.alloc()
-                         .prepare(completion, socketAddress, socketType, openFlags, queueDepth, options);
     }
 
     @SuppressWarnings("unchecked")
