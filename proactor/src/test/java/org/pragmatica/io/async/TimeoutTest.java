@@ -1,17 +1,17 @@
 /*
- * Copyright (c) 2020 Sergiy Yevtushenko
+ *  Copyright (c) 2020-2022 Sergiy Yevtushenko.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 
 package org.pragmatica.io.async;
@@ -25,12 +25,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class TimeoutTest {
     @Test
     void timeoutCreatedProperly() {
-        assertEquals(1234, Timeout.timeout(1_234_000_000L).nanos().asMillis());
-        assertEquals(1234, Timeout.timeout(1_234_000L).micros().asMillis());
-        assertEquals(TimeUnit.SECONDS.toMillis(123), Timeout.timeout(123).seconds().asMillis());
-        assertEquals(TimeUnit.MINUTES.toMillis(12), Timeout.timeout(12).minutes().asMillis());
-        assertEquals(TimeUnit.HOURS.toMillis(32), Timeout.timeout(32).hours().asMillis());
-        assertEquals(TimeUnit.NANOSECONDS.toNanos(32), Timeout.timeout(32).nanos().asNanos());
+        assertEquals(1234, Timeout.timeout(1_234_000_000L).nanos().milliseconds());
+        assertEquals(1234, Timeout.timeout(1_234_000L).micros().milliseconds());
+        assertEquals(TimeUnit.SECONDS.toMillis(123), Timeout.timeout(123).seconds().milliseconds());
+        assertEquals(TimeUnit.MINUTES.toMillis(12), Timeout.timeout(12).minutes().milliseconds());
+        assertEquals(TimeUnit.HOURS.toMillis(32), Timeout.timeout(32).hours().milliseconds());
+        assertEquals(TimeUnit.NANOSECONDS.toNanos(32), Timeout.timeout(32).nanos().nanoseconds());
     }
 
     @Test

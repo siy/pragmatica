@@ -59,7 +59,7 @@ public sealed interface Result<T> permits Success, Failure {
      * @return transformed value (in case of success) or current instance (in case of failure)
      */
     @SuppressWarnings("unchecked")
-    default <R> Result<R> map(Supplier<R> supplier) {
+    default <R> Result<R> replace(Supplier<R> supplier) {
         return fold(__ -> (Result<R>) this, __ -> success(supplier.get()));
     }
 
@@ -89,7 +89,7 @@ public sealed interface Result<T> permits Success, Failure {
      * @return replacement result (in case of success) or current instance (in case of failure)
      */
     @SuppressWarnings("unchecked")
-    default <R> Result<R> flatMap(Supplier<Result<R>> mapper) {
+    default <R> Result<R> flatReplace(Supplier<Result<R>> mapper) {
         return fold(__ -> (Result<R>) this, __ -> mapper.get());
     }
 

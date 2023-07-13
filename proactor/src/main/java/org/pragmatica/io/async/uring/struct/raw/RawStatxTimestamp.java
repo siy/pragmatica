@@ -1,17 +1,17 @@
 /*
- * Copyright (c) 2020 Sergiy Yevtushenko
+ *  Copyright (c) 2020-2022 Sergiy Yevtushenko.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 
 package org.pragmatica.io.async.uring.struct.raw;
@@ -20,9 +20,10 @@ import org.pragmatica.io.async.file.stat.StatTimestamp;
 import org.pragmatica.io.async.uring.struct.AbstractExternalRawStructure;
 import org.pragmatica.io.async.uring.struct.shape.StatxTimestampOffsets;
 
-import static org.pragmatica.io.async.uring.struct.shape.StatxTimestampOffsets.tv_nsec;
-import static org.pragmatica.io.async.uring.struct.shape.StatxTimestampOffsets.tv_sec;
-
+/**
+ * Storage for timestamps used in file status information. Used to represent last access time (atime), birth time (btime),
+ * last metadata change time (ctime) and last content modification time (mtime).
+ */
 public class RawStatxTimestamp extends AbstractExternalRawStructure<RawStatxTimestamp> {
     private RawStatxTimestamp(final long address) {
         super(address, StatxTimestampOffsets.SIZE);
@@ -33,11 +34,11 @@ public class RawStatxTimestamp extends AbstractExternalRawStructure<RawStatxTime
     }
 
     public long seconds() {
-        return getLong(tv_sec);
+        return getLong(StatxTimestampOffsets.tv_sec);
     }
 
     public int nanos() {
-        return getInt(tv_nsec);
+        return getInt(StatxTimestampOffsets.tv_nsec);
     }
 
     public StatTimestamp detach() {

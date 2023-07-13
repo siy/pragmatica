@@ -1,17 +1,17 @@
 /*
- * Copyright (c) 2020 Sergiy Yevtushenko
+ *  Copyright (c) 2020-2022 Sergiy Yevtushenko.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 
 package org.pragmatica.io;
@@ -26,10 +26,8 @@ import org.pragmatica.io.async.file.FileDescriptor;
 import org.pragmatica.io.async.file.FilePermission;
 import org.pragmatica.io.async.file.OpenFlags;
 import org.pragmatica.io.async.net.*;
-import org.pragmatica.io.async.util.OffHeapBuffer;
-import org.pragmatica.lang.Option;
-import org.pragmatica.lang.Result;
-import org.pragmatica.lang.Unit;
+import org.pragmatica.io.async.util.OffHeapSlice;
+import org.pragmatica.lang.*;
 
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
@@ -39,51 +37,54 @@ import java.util.EnumSet;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
-import static org.pragmatica.io.async.net.InetAddress.inet4Address;
-import static org.pragmatica.io.async.net.SocketAddress.socketAddress;
+import static org.pragmatica.io.async.util.Units._1KiB;
+import static org.pragmatica.io.async.util.allocator.ChunkedAllocator.allocator;
 import static org.pragmatica.lang.Option.empty;
 import static org.pragmatica.lang.Option.option;
 
 //TODO: remaining tests
 class ProactorTest {
-    private final Proactor proactor = Proactor.proactor();
+    private final Proactor proactor = Proactor.proactor(allocator(16 * _1KiB));
 
     @Test
     void nopCanBeSubmitted() {
-        var finalResult = new AtomicReference<Result<?>>();
+//        var finalResult = new AtomicReference<Result<?>>();
+        var promise = Promise.<Unit>promise(p -> proactor.nop(p::resolve));
 
-        proactor.nop((result, __) -> finalResult.set(result));
+        promise.onSuccess(Assertions::assertNotNull)
+               .onSuccess(System.out::println)
+               .onFailure(ProactorTest::fail)
+               .join();
 
-        waitForResult(finalResult);
-
-        finalResult.get()
-                   .onSuccess(Assertions::assertNotNull)
-                   .onSuccess(System.out::println)
-                   .onFailure(__ -> fail());
+//        proactor.nop(finalResult::set);
+//
+//        waitForResult(finalResult);
+//
+//        finalResult.get()
+//                   .onSuccess(Assertions::assertNotNull)
+//                   .onSuccess(System.out::println)
+//                   .onFailure(ProactorTest::fail);
     }
 
     @Test
     void delayCanBeSubmitted() {
         var finalResult = new AtomicReference<Result<Duration>>();
-        proactor.delay((result, __) -> finalResult.set(result), Timeout.timeout(100).millis());
+        proactor.delay(finalResult::set, Timeout.timeout(10).millis());
 
         waitForResult(finalResult);
 
         finalResult.get()
-                   .onFailure(failure -> fail(failure::message))
+                   .onFailure(ProactorTest::fail)
                    .onSuccess(duration -> System.out.println("Duration: " + duration.toMillis() + " milliseconds"))
-                   .onSuccess(duration -> assertTrue(duration.compareTo(Duration.ofMillis(100)) > 0));
+                   .onSuccess(duration -> assertTrue(duration.compareTo(Duration.ofMillis(10)) > 0));
     }
 
     @Test
-    void fileCanBeOpenedAndClosed() {
+    void fileCanBeOpenedReadAndClosed() {
         var fileDescriptor = new AtomicReference<Result<FileDescriptor>>();
-        var fileName = "target/classes/" + Proactor.class.getName().replace('.', '/') + ".class";
+        var fileName = "src/test/resources/english-wiki.test.data";
 
-        System.out.println("Trying to open " + fileName);
-
-        proactor.open((result, __) -> fileDescriptor.set(result),
+        proactor.open(fileDescriptor::set,
                       Path.of(fileName),
                       EnumSet.of(OpenFlags.READ_ONLY),
                       EnumSet.noneOf(FilePermission.class),
@@ -94,85 +95,104 @@ class ProactorTest {
         fileDescriptor.get()
                       .onSuccess(fd -> System.out.println("Open successful: " + fd))
                       .onSuccess(fd -> assertTrue(fd.descriptor() > 0))
-                      .onFailure(f -> fail(f::message));
+                      .onSuccess(fd -> {
+                          var readResult = new AtomicReference<Result<SizeT>>();
+
+                          try (var buffer1 = OffHeapSlice.fixedSize(_1KiB)) {
+                              proactor.readVector(readResult::set, fd, buffer1);
+                              waitForResult(readResult);
+
+                              readResult.get()
+                                        .onSuccess(sz -> System.out.println("Successfully read " + sz + " bytes"))
+                                        .onFailure(ProactorTest::fail);
+                          }
+                      })
+                      .onFailure(ProactorTest::fail);
+
 
         var closeResult = new AtomicReference<Result<Unit>>();
         fileDescriptor.get()
-                      .onSuccess(fd -> proactor.close(((result, __) -> closeResult.set(result)), fd, empty()));
+                      .onSuccess(fd -> proactor.close((closeResult::set), fd, empty()));
 
         waitForResult(closeResult);
 
         closeResult.get()
                    .onSuccess(unit -> System.out.println("Close successful " + unit))
-                   .onFailure(f -> fail(f::message));
+                   .onFailure(ProactorTest::fail);
     }
 
     @Test
     void externalHostCanBeConnectedAndRead() throws UnknownHostException {
         var addr = java.net.Inet4Address.getByName("www.google.com");
-        var address = inet4Address(addr.getAddress())
-                                  .fold(failure -> fail(failure::message), inetAddress -> socketAddress(InetPort.inetPort(80), inetAddress));
+        var address = InetAddress.inet4Address(addr.getAddress())
+                                 .fold(ProactorTest::throwIfError,
+                                       inetAddress -> SocketAddress.socketAddress(InetPort.inetPort(80), inetAddress));
 
         System.out.println("Address: " + address);
 
-        try (var preparedText = OffHeapBuffer.fromBytes("GET /\n".getBytes(StandardCharsets.US_ASCII))) {
-            try (var buffer = OffHeapBuffer.fixedSize(768)) {
-                buffer.clear().used(buffer.size());
+        try (var preparedText = OffHeapSlice.fromBytes("GET /\n".getBytes(StandardCharsets.US_ASCII));
+             var buffer = proactor.allocateFixedBuffer(768).fold(ProactorTest::throwIfError, Functions::id)) {
 
-                var socketResult = new AtomicReference<Result<FileDescriptor>>();
-                proactor.socket((result, __) -> socketResult.set(result),
-                                AddressFamily.INET,
-                                SocketType.STREAM,
-                                SocketFlag.none(),
-                                SocketOption.reuseAll());
+            var socketResult = new AtomicReference<Result<FileDescriptor>>();
+            proactor.socket(socketResult::set,
+                            AddressFamily.INET,
+                            SocketType.STREAM,
+                            SocketFlag.none(),
+                            SocketOption.reuseAll());
 
-                waitForResult(socketResult);
-                socketResult.get()
-                            .onFailure(failure -> Assertions.fail(failure::message))
-                            .onSuccess(fd -> {
-                                var connectResult = new AtomicReference<Result<FileDescriptor>>();
+            waitForResult(socketResult);
+            socketResult.get()
+                        .onFailure(failure -> Assertions.fail(failure::message))
+                        .onSuccess(fd -> {
+                            var connectResult = new AtomicReference<Result<FileDescriptor>>();
 
-                                proactor.connect((result, __) -> connectResult.set(result),
-                                                 fd, address, Option.option(Timeout.timeout(1).seconds()));
+                            proactor.connect(connectResult::set,
+                                             fd, address, Option.option(Timeout.timeout(1).seconds()));
 
-                                waitForResult(connectResult);
+                            waitForResult(connectResult);
 
-                                connectResult.get()
-                                             .onFailure(failure -> fail(failure::message))
-                                             .onSuccess(r1 -> System.out.println("Socket connected: " + r1));
+                            connectResult.get()
+                                         .onFailure(ProactorTest::fail)
+                                         .onSuccess(r1 -> System.out.println("Socket connected: " + r1));
 
-                                var writeResult = new AtomicReference<Result<SizeT>>();
-                                proactor.write(((result, __) -> writeResult.set(result)),
-                                               fd, preparedText, OffsetT.ZERO, option(Timeout.timeout(1).seconds()));
+                            var writeResult = new AtomicReference<Result<SizeT>>();
+                            proactor.write(writeResult::set,
+                                           fd, preparedText, OffsetT.ZERO, option(Timeout.timeout(1).seconds()));
 
-                                waitForResult(writeResult);
+                            waitForResult(writeResult);
 
-                                writeResult.get()
-                                           .onFailure(failure -> fail(failure::message))
-                                           .onSuccess(sizeT -> System.out.println("Wrote " + sizeT + " bytes"));
+                            writeResult.get()
+                                       .onFailure(ProactorTest::fail)
+                                       .onSuccess(sizeT -> System.out.println("Wrote " + sizeT + " bytes"));
 
-                                var readResult = new AtomicReference<Result<SizeT>>();
+                            var readResult = new AtomicReference<Result<SizeT>>();
 
-                                proactor.read(((result, __) -> readResult.set(result)),
-                                              fd, buffer, OffsetT.ZERO, option(Timeout.timeout(1).seconds()));
+                            proactor.readFixed(readResult::set,
+                                               fd, buffer, OffsetT.ZERO, option(Timeout.timeout(1).seconds()));
 
-                                waitForResult(readResult);
+                            waitForResult(readResult);
 
-                                var closeResult = new AtomicReference<Result<Unit>>();
-                                proactor.close(((result, __) -> closeResult.set(result)), fd, empty());
+                            var closeResult = new AtomicReference<Result<Unit>>();
+                            proactor.close(closeResult::set, fd, empty());
 
-                                waitForResult(closeResult);
+                            waitForResult(closeResult);
 
-                                System.out.println("Content: [" + new String(buffer.export(), StandardCharsets.UTF_8) + "]");
-                            });
-            }
+                            System.out.println("Content: [" + new String(buffer.export(), StandardCharsets.UTF_8) + "]");
+                        });
         }
+    }
+
+    private static <T> T throwIfError(Result.Cause f) {
+        fail(f);
+        return null;
     }
 
     private void waitForResult(AtomicReference<?> reference) {
         do {
-            proactor.processIO(); //For submission
-            proactor.processIO(); //For completion
         } while (reference.get() == null);
+    }
+
+    private static void fail(Result.Cause failure) {
+        Assertions.fail(failure.message());
     }
 }

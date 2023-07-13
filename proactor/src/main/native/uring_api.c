@@ -1,4 +1,3 @@
-#include <liburing.h>
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
@@ -8,39 +7,58 @@
 #include <netinet/in.h>
 #include <linux/stat.h>
 
+#include <liburing.h>
+#include <syscall.h>
+
+
 #define RING_PTR        ((struct io_uring *) base_address)
 #define CQE_BATCH_PTR   ((struct io_uring_cqe **) completions_address)
 #define COUNT           ((unsigned) count)
 
-int native_init(int num_entries, long base_address, int flags) {
+/* Initialize the ring */
+int ring_init(int num_entries, long base_address, int flags) {
     return io_uring_queue_init((unsigned) num_entries, RING_PTR, (unsigned) flags);
+//
+//    if (rc == 0) {
+//        io_uring_dontfork(RING_PTR);
+//    }
+//
+//    return rc;
 }
 
-void native_close(long base_address) {
+/* Shutdown the ring */
+void ring_exit(long base_address) {
     io_uring_queue_exit(RING_PTR);
 }
 
-int native_peekCQ(long base_address, long completions_address, long count) {
+/* Retrieve batch of ready completions */
+int ring_peek_batch_cqe(long base_address, long completions_address, long count) {
     return io_uring_peek_batch_cqe(RING_PTR, CQE_BATCH_PTR, COUNT);
 }
 
-void native_advanceCQ(long base_address, long count) {
+/* Advance completion queue */
+void ring_cq_advance(long base_address, long count) {
     io_uring_cq_advance(RING_PTR, COUNT);
 }
 
-long native_nextSQEntry(long base_address) {
-    if (io_uring_sq_space_left(RING_PTR) < 1) {
-        io_uring_submit_and_wait(RING_PTR, 1);
+/* Retrieve batch of ready completions and advance completion queue */
+int ring_peek_batch_and_advance_cqe(long base_address, long completions_address, long count) {
+    int rc = io_uring_peek_batch_cqe(RING_PTR, CQE_BATCH_PTR, COUNT);
+
+    if (rc > 0) {
+        io_uring_cq_advance(RING_PTR, rc);
     }
 
+    return rc;
+}
+
+/* Get next available submission entry (0L if queue full) */
+long ring_get_sqe(long base_address) {
     return (long) io_uring_get_sqe(RING_PTR);
 }
 
-int native_peekSQEntries(long base_address, long submissions_address, long space) {
-    if (io_uring_sq_space_left(RING_PTR) < 1) {
-        io_uring_submit_and_wait(RING_PTR, 1);
-    }
-
+/* Get array of available submissions entries */
+int ring_peek_batch_sqe(long base_address, long submissions_address, long space) {
     int count = 0;
     struct io_uring_sqe** buffer = (struct io_uring_sqe **) submissions_address;
 
@@ -57,8 +75,16 @@ int native_peekSQEntries(long base_address, long submissions_address, long space
     return count;
 }
 
-long native_submitAndWait(long base_address, int count) {
+/* Submit filled entries and wait for at lest specified number of available events */
+long ring_submit_and_wait(long base_address, int count) {
     return io_uring_submit_and_wait(RING_PTR, COUNT);
+}
+
+/* Perform register operation */
+int ring_register(long base_address, int opcode, long arg, long nr_args) {
+    int rc = __sys_io_uring_register(RING_PTR->ring_fd, (unsigned) opcode, (const void*) arg, (unsigned) nr_args);
+
+    return (rc < 0) ? -errno : rc;
 }
 
 //-----------------------------------------------------
@@ -79,7 +105,8 @@ static int set_binary_option(int sock, int option) {
     return setsockopt(sock, SOL_SOCKET, option, &val, sizeof(val));
 }
 
-int native_socket(int domain, int socket_type, int socket_options) {
+/* Open socket */
+int ring_socket(int domain, int socket_type, int socket_options) {
     int sock = socket((int) domain, (int) socket_type, 0);
 
     if (sock < 0) {
@@ -111,7 +138,8 @@ int native_socket(int domain, int socket_type, int socket_options) {
     return sock;
 }
 
-int native_prepareForListen(int sock, long address, int len, int queue_depth) {
+/* Configure socket for listen operation */
+int ring_listen(int sock, long address, int len, int queue_depth) {
     if(bind((int) sock, (struct sockaddr *)address, len)) {
         return get_errno();
     }

@@ -1,17 +1,17 @@
 /*
- * Copyright (c) 2020 Sergiy Yevtushenko
+ *  Copyright (c) 2020-2022 Sergiy Yevtushenko.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 
 package org.pragmatica.io.async.uring.struct.raw;
@@ -27,9 +27,11 @@ import static org.pragmatica.io.async.net.Inet6FlowInfo.inet6FlowInfo;
 import static org.pragmatica.io.async.net.Inet6ScopeId.inet6ScopeId;
 import static org.pragmatica.io.async.net.InetAddress.inet6Address;
 import static org.pragmatica.io.async.net.InetPort.inetPort;
-import static org.pragmatica.io.async.uring.struct.shape.SocketAddressIn6Offsets.*;
 import static org.pragmatica.lang.Result.success;
 
+/**
+ * IPv6 socket address storage.
+ */
 public final class RawSocketAddressIn6 extends AbstractExternalRawStructure<RawSocketAddressIn6>
     implements RawSocketAddress<Inet6Address> {
 
@@ -42,47 +44,47 @@ public final class RawSocketAddressIn6 extends AbstractExternalRawStructure<RawS
     }
 
     public short family() {
-        return getShort(sin6_family);
+        return getShort(SocketAddressIn6Offsets.sin6_family);
     }
 
     public short port() {
-        return getShortInNetOrder(sin6_port);
+        return getShortInNetOrder(SocketAddressIn6Offsets.sin6_port);
     }
 
-    public int flowinfo() {
-        return getInt(sin6_flowinfo);
+    public int flowInfo() {
+        return getInt(SocketAddressIn6Offsets.sin6_flowinfo);
     }
 
     public int scopeId() {
-        return getInt(sin6_scope_id);
+        return getInt(SocketAddressIn6Offsets.sin6_scope_id);
     }
 
     public byte[] addr() {
-        return getBytes(sin6_addr);
+        return getBytes(SocketAddressIn6Offsets.sin6_addr);
     }
 
     public RawSocketAddressIn6 family(short family) {
-        putShort(sin6_family, family);
+        putShort(SocketAddressIn6Offsets.sin6_family, family);
         return this;
     }
 
     public RawSocketAddressIn6 port(short port) {
-        putShortInNetOrder(sin6_port, port);
+        putShortInNetOrder(SocketAddressIn6Offsets.sin6_port, port);
         return this;
     }
 
-    public RawSocketAddressIn6 flowinfo(int flowinfo) {
-        putInt(sin6_flowinfo, flowinfo);
+    public RawSocketAddressIn6 flowInfo(int flowInfo) {
+        putInt(SocketAddressIn6Offsets.sin6_flowinfo, flowInfo);
         return this;
     }
 
     public RawSocketAddressIn6 scopeId(int scopeId) {
-        putInt(sin6_scope_id, scopeId);
+        putInt(SocketAddressIn6Offsets.sin6_scope_id, scopeId);
         return this;
     }
 
     public RawSocketAddressIn6 addr(byte[] addr) {
-        putBytes(sin6_addr, addr);
+        putBytes(SocketAddressIn6Offsets.sin6_addr, addr);
         return this;
     }
 
@@ -93,7 +95,7 @@ public final class RawSocketAddressIn6 extends AbstractExternalRawStructure<RawS
         addr(input.address().asBytes());
 
         if (input instanceof SocketAddress.SocketAddressIn6 in6) {
-            flowinfo(in6.flowInfo().value());
+            flowInfo(in6.flowInfo().value());
             scopeId(in6.scopeId().scopeId());
         }
     }
@@ -103,11 +105,12 @@ public final class RawSocketAddressIn6 extends AbstractExternalRawStructure<RawS
         return Result.all(addressFamily(family()),
                           success(inetPort(port())),
                           inet6Address(addr()),
-                          success(inet6FlowInfo(flowinfo())),
+                          success(inet6FlowInfo(flowInfo())),
                           success(inet6ScopeId(scopeId())))
                      .map(SocketAddress::socketAddress);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public RawSocketAddressIn6 shape() {
         return this;

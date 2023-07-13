@@ -1,17 +1,17 @@
 /*
- * Copyright (c) 2020 Sergiy Yevtushenko
+ *  Copyright (c) 2020-2022 Sergiy Yevtushenko.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 
 package org.pragmatica.io.async.common;
@@ -19,21 +19,11 @@ package org.pragmatica.io.async.common;
 /**
  * Representation of the various values meaning 'offset' inside something, for example offset from beginning of the file.
  */
-public class OffsetT implements Comparable<OffsetT> {
-    private final long value;
-
-    private OffsetT(final long value) {
-        this.value = value;
-    }
-
+public record OffsetT(long value) implements Comparable<OffsetT> {
     public static final OffsetT ZERO = offsetT(0L);
 
     public static OffsetT offsetT(final long value) {
         return new OffsetT(value);
-    }
-
-    public long value() {
-        return value;
     }
 
     @Override

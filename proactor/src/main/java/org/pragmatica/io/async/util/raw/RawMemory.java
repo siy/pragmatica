@@ -1,17 +1,17 @@
 /*
- * Copyright (c) 2020 Sergiy Yevtushenko
+ *  Copyright (c) 2020-2022 Sergiy Yevtushenko.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 
 package org.pragmatica.io.async.util.raw;
@@ -43,21 +43,45 @@ public final class RawMemory {
         instance.putIntUnaligned(null, address, value, true);
     }
 
+    public static void putLongInNetOrder(long address, long value) {
+        instance.putLongUnaligned(null, address, value, true);
+    }
+
+    public static long getLongInNetOrder(long address) {
+        return instance.getLongUnaligned(null, address, true);
+    }
+
     // Raw access of different size
     public static long getLong(long address) {
-        return instance.getLong(address);
+        return instance.getLong(null, address);
+    }
+
+    public static long getLongVolatile(long address) {
+        return instance.getLongVolatile(null, address);
     }
 
     public static int getInt(long address) {
-        return instance.getInt(address);
+        return instance.getInt(null, address);
+    }
+
+    public static int getIntVolatile(long address) {
+        return instance.getIntVolatile(null, address);
     }
 
     public static short getShort(long address) {
-        return instance.getShort(address);
+        return instance.getShort(null, address);
+    }
+
+    public static short getShortVolatile(long address) {
+        return instance.getShortVolatile(null, address);
     }
 
     public static byte getByte(long address) {
-        return instance.getByte(address);
+        return instance.getByte(null, address);
+    }
+
+    public static byte getByteVolatile(long address) {
+        return instance.getByteVolatile(null, address);
     }
 
     public static byte[] getByteArray(long address, int length) {
@@ -67,19 +91,35 @@ public final class RawMemory {
     }
 
     public static void putLong(long address, long value) {
-        instance.putLong(address, value);
+        instance.putLong(null, address, value);
+    }
+
+    public static void putLongVolatile(long address, long value) {
+        instance.putLongVolatile(null, address, value);
     }
 
     public static void putInt(long address, int value) {
-        instance.putInt(address, value);
+        instance.putInt(null, address, value);
+    }
+
+    public static void putIntVolatile(long address, int value) {
+        instance.putIntVolatile(null, address, value);
     }
 
     public static void putShort(long address, short value) {
-        instance.putShort(address, value);
+        instance.putShort(null, address, value);
+    }
+
+    public static void putShortVolatile(long address, short value) {
+        instance.putShortVolatile(null, address, value);
     }
 
     public static void putByte(long address, byte value) {
-        instance.putByte(address, value);
+        instance.putByte(null, address, value);
+    }
+
+    public static void putByteVolatile(long address, byte value) {
+        instance.putByteVolatile(null, address, value);
     }
 
     public static void putByteArray(long address, byte[] input) {
@@ -106,5 +146,14 @@ public final class RawMemory {
 
     public static void clear(long address, long size) {
         instance.setMemory(address, size, (byte) 0);
+    }
+
+    // Thread management
+    public static void park(boolean isAbsolute, long time) {
+        instance.park(isAbsolute, time);
+    }
+
+    public static void unpark(Object thread) {
+        instance.unpark(thread);
     }
 }

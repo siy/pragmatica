@@ -1,17 +1,17 @@
 /*
- * Copyright (c) 2020 Sergiy Yevtushenko
+ *  Copyright (c) 2020-2022 Sergiy Yevtushenko.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 
 package org.pragmatica.io.async.uring.utils;
@@ -19,15 +19,9 @@ package org.pragmatica.io.async.uring.utils;
 import java.util.Arrays;
 
 /**
- * Temporary storage for objects. Main use case - storing object corresponding to in-flight requests and obtaining integer index which can be passed
- * instead of the whole object to external entity. Upon request completion object then is released from the heap by using corresponding integer
- * index.
- *
- * @param <T>
+ * Temporary storage for objects which maps instances to integer keys.
  */
 public class ObjectHeap<T> {
-    private static final int INITIAL_SIZE = 256;
-
     private Object[] elements;
     private int[] indexes;
     private int firstFree = -1;
@@ -39,26 +33,23 @@ public class ObjectHeap<T> {
         indexes = new int[initialCapacity];
     }
 
-    public static <T> ObjectHeap<T> objectHeap() {
-        return objectHeap(INITIAL_SIZE);
-    }
-
     public static <T> ObjectHeap<T> objectHeap(int initialCapacity) {
         return new ObjectHeap<>(initialCapacity);
     }
 
     @SuppressWarnings("unchecked")
     public T releaseUnsafe(int key) {
-        if (key < 0 || key >= nextFree || elements[key] == null || key == firstFree) {
-            return null;
-        }
-
         indexes[key] = firstFree;
         firstFree = key;
         T result = (T) elements[key];
         elements[key] = null;
         count--;
         return result;
+    }
+
+    @SuppressWarnings("unchecked")
+    public T elementUnsafe(int key) {
+        return (T) elements[key];
     }
 
     public int allocKey(T value) {
@@ -92,9 +83,5 @@ public class ObjectHeap<T> {
         firstFree = indexes[result];
         count++;
         return result;
-    }
-
-    public int count() {
-        return count;
     }
 }

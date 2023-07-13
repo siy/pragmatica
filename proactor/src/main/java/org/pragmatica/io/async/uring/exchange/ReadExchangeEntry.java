@@ -1,43 +1,44 @@
 /*
- * Copyright (c) 2020 Sergiy Yevtushenko
+ *  Copyright (c) 2020-2022 Sergiy Yevtushenko.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 
 package org.pragmatica.io.async.uring.exchange;
 
 import org.pragmatica.io.async.Proactor;
-import org.pragmatica.io.async.SystemError;
 import org.pragmatica.io.async.common.SizeT;
-import org.pragmatica.io.async.uring.struct.raw.SubmitQueueEntry;
+import org.pragmatica.io.async.uring.struct.raw.SQEntry;
 import org.pragmatica.io.async.uring.utils.PlainObjectPool;
-import org.pragmatica.io.async.util.OffHeapBuffer;
+import org.pragmatica.io.async.util.OffHeapSlice;
 import org.pragmatica.lang.Result;
 
 import java.util.function.BiConsumer;
 
-import static org.pragmatica.io.async.uring.AsyncOperation.IORING_OP_READ;
+import static org.pragmatica.io.async.uring.AsyncOperation.READ;
 
+/**
+ * Exchange entry for {@code read} request.
+ */
 public class ReadExchangeEntry extends AbstractExchangeEntry<ReadExchangeEntry, SizeT> {
-    private static final Result<SizeT> EOF_RESULT = SystemError.ENODATA.result();
 
     private int descriptor;
     private byte flags;
-    private OffHeapBuffer buffer;
+    private OffHeapSlice buffer;
     private long offset;
 
     protected ReadExchangeEntry(PlainObjectPool<ReadExchangeEntry> pool) {
-        super(IORING_OP_READ, pool);
+        super(READ, pool);
     }
 
     @Override
@@ -49,7 +50,7 @@ public class ReadExchangeEntry extends AbstractExchangeEntry<ReadExchangeEntry, 
     }
 
     @Override
-    public SubmitQueueEntry apply(SubmitQueueEntry entry) {
+    public SQEntry apply(SQEntry entry) {
         return super.apply(entry)
                     .fd(descriptor)
                     .flags(flags)
@@ -58,17 +59,11 @@ public class ReadExchangeEntry extends AbstractExchangeEntry<ReadExchangeEntry, 
                     .off(offset);
     }
 
-    public ReadExchangeEntry prepare(BiConsumer<Result<SizeT>, Proactor> completion, int descriptor, OffHeapBuffer buffer, long offset, byte flags) {
+    public ReadExchangeEntry prepare(BiConsumer<Result<SizeT>, Proactor> completion, int descriptor, OffHeapSlice buffer, long offset, byte flags) {
         this.descriptor = descriptor;
         this.flags = flags;
         this.buffer = buffer;
         this.offset = offset;
         return super.prepare(completion);
-    }
-
-    private Result<SizeT> bytesReadToResult(int res) {
-        return res == 0 ? EOF_RESULT
-                        : res > 0 ? sizeResult(res)
-                                  : SystemError.result(res);
     }
 }

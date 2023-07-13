@@ -37,19 +37,19 @@ final class UringNative {
     private UringNative() {
     }
 
-    // Actual size of struct io_uring is 160 bytes at the moment of writing: May 2020
-    public static final long SIZE = 256;
+    public static final int SIZE = 256;
 
     private static MethodHandle initHandle;
-    private static MethodHandle closeHandle;
-    private static MethodHandle peekCQHandle;
-    private static MethodHandle advanceCQHandle;
-    private static MethodHandle nextSQEntryHandle;
-    private static MethodHandle peekSQEntriesHandle;
+    private static MethodHandle exitHandle;
+    private static MethodHandle peekBatchCQEHandle;
+    private static MethodHandle cqAdvanceHandle;
+    private static MethodHandle peekBatchAndAdvanceCQEHandle;
+    private static MethodHandle getSQEHandle;
+    private static MethodHandle peekBatchSQEHandle;
     private static MethodHandle submitAndWaitHandle;
-
+    private static MethodHandle registerHandle;
     private static MethodHandle socketHandle;
-    private static MethodHandle prepareForListenHandle;
+    private static MethodHandle listenHandle;
 
     static {
         try {
@@ -57,118 +57,121 @@ final class UringNative {
 
             var lookup = SymbolLookup.loaderLookup();
 
-            var initAddress = lookup.find("native_init").orElseThrow(IllegalStateException::new);
-            var closeAddress = lookup.find("native_close").orElseThrow(IllegalStateException::new);
-            var peekCQAddress = lookup.find("native_peekCQ").orElseThrow(IllegalStateException::new);
-            var advanceCQAddress = lookup.find("native_advanceCQ").orElseThrow(IllegalStateException::new);
-            var nextSQEntryAddress = lookup.find("native_nextSQEntry").orElseThrow(IllegalStateException::new);
-            var peekSQEntriesAddress = lookup.find("native_peekSQEntries").orElseThrow(IllegalStateException::new);
-            var submitAndWaitAddress = lookup.find("native_submitAndWait").orElseThrow(IllegalStateException::new);
-            var socketAddress = lookup.find("native_socket").orElseThrow(IllegalStateException::new);
-            var prepareForListenAddress = lookup.find("native_prepareForListen").orElseThrow(IllegalStateException::new);
-
-            var linker = Linker.nativeLinker();
-
-//            initHandle = linker.downcallHandle(initAddress, FunctionDescriptor.of(JAVA_INT, JAVA_INT, JAVA_LONG, JAVA_INT), Linker.Option.isTrivial());
-//            closeHandle = linker.downcallHandle(closeAddress, FunctionDescriptor.ofVoid(JAVA_LONG), Linker.Option.isTrivial());
-//            peekCQHandle = linker.downcallHandle(peekCQAddress, FunctionDescriptor.of(JAVA_INT, JAVA_LONG, JAVA_LONG, JAVA_LONG), Linker.Option.isTrivial());
-//            advanceCQHandle = linker.downcallHandle(advanceCQAddress, FunctionDescriptor.ofVoid(JAVA_LONG, JAVA_LONG), Linker.Option.isTrivial());
-//            nextSQEntryHandle = linker.downcallHandle(nextSQEntryAddress, FunctionDescriptor.of(JAVA_LONG, JAVA_LONG), Linker.Option.isTrivial());
-//            peekSQEntriesHandle = linker.downcallHandle(peekSQEntriesAddress, FunctionDescriptor.of(JAVA_INT, JAVA_LONG, JAVA_LONG, JAVA_LONG), Linker.Option.isTrivial());
-//            submitAndWaitHandle = linker.downcallHandle(submitAndWaitAddress, FunctionDescriptor.of(JAVA_LONG, JAVA_LONG, JAVA_INT), Linker.Option.isTrivial());
-//            socketHandle = linker.downcallHandle(socketAddress, FunctionDescriptor.of(JAVA_INT, JAVA_INT, JAVA_INT, JAVA_INT), Linker.Option.isTrivial());
-//            prepareForListenHandle = linker.downcallHandle(prepareForListenAddress, FunctionDescriptor.of(JAVA_INT, JAVA_INT, JAVA_LONG, JAVA_INT, JAVA_INT), Linker.Option.isTrivial());
-            initHandle = linker.downcallHandle(initAddress, FunctionDescriptor.of(JAVA_INT, JAVA_INT, JAVA_LONG, JAVA_INT));
-            closeHandle = linker.downcallHandle(closeAddress, FunctionDescriptor.ofVoid(JAVA_LONG));
-            peekCQHandle = linker.downcallHandle(peekCQAddress, FunctionDescriptor.of(JAVA_INT, JAVA_LONG, JAVA_LONG, JAVA_LONG));
-            advanceCQHandle = linker.downcallHandle(advanceCQAddress, FunctionDescriptor.ofVoid(JAVA_LONG, JAVA_LONG));
-            nextSQEntryHandle = linker.downcallHandle(nextSQEntryAddress, FunctionDescriptor.of(JAVA_LONG, JAVA_LONG));
-            peekSQEntriesHandle = linker.downcallHandle(peekSQEntriesAddress, FunctionDescriptor.of(JAVA_INT, JAVA_LONG, JAVA_LONG, JAVA_LONG));
-            submitAndWaitHandle = linker.downcallHandle(submitAndWaitAddress, FunctionDescriptor.of(JAVA_LONG, JAVA_LONG, JAVA_INT));
-            socketHandle = linker.downcallHandle(socketAddress, FunctionDescriptor.of(JAVA_INT, JAVA_INT, JAVA_INT, JAVA_INT));
-            prepareForListenHandle = linker.downcallHandle(prepareForListenAddress, FunctionDescriptor.of(JAVA_INT, JAVA_INT, JAVA_LONG, JAVA_INT, JAVA_INT));
-
+            initHandle = prepare(lookup, "ring_init", FunctionDescriptor.of(JAVA_INT, JAVA_INT, JAVA_LONG, JAVA_INT));
+            exitHandle = prepare(lookup, "ring_exit", FunctionDescriptor.ofVoid(JAVA_LONG));
+            peekBatchCQEHandle = prepare(lookup, "ring_peek_batch_cqe", FunctionDescriptor.of(JAVA_INT, JAVA_LONG, JAVA_LONG, JAVA_LONG));
+            cqAdvanceHandle = prepare(lookup, "ring_cq_advance", FunctionDescriptor.ofVoid(JAVA_LONG, JAVA_LONG));
+            peekBatchAndAdvanceCQEHandle = prepare(lookup,
+                                                   "ring_peek_batch_and_advance_cqe",
+                                                   FunctionDescriptor.of(JAVA_INT, JAVA_LONG, JAVA_LONG, JAVA_LONG));
+            getSQEHandle = prepare(lookup, "ring_get_sqe", FunctionDescriptor.of(JAVA_LONG, JAVA_LONG));
+            peekBatchSQEHandle = prepare(lookup, "ring_peek_batch_sqe", FunctionDescriptor.of(JAVA_INT, JAVA_LONG, JAVA_LONG, JAVA_LONG));
+            submitAndWaitHandle = prepare(lookup, "ring_submit_and_wait", FunctionDescriptor.of(JAVA_LONG, JAVA_LONG, JAVA_INT));
+            registerHandle = prepare(lookup, "ring_register", FunctionDescriptor.of(JAVA_INT, JAVA_LONG, JAVA_INT, JAVA_LONG, JAVA_LONG));
+            socketHandle = prepare(lookup, "ring_socket", FunctionDescriptor.of(JAVA_INT, JAVA_INT, JAVA_INT, JAVA_INT));
+            listenHandle = prepare(lookup, "ring_listen", FunctionDescriptor.of(JAVA_INT, JAVA_INT, JAVA_LONG, JAVA_INT, JAVA_INT));
         } catch (final Exception e) {
             LOG.error("Error while loading JNI library for Uring class: ", e);
             System.exit(-1);
         }
     }
 
-    // Start/Stop
-    public static int init(int numEntries, long baseAddress, int flags) {
+    private static MethodHandle prepare(SymbolLookup lookup, String symbol, FunctionDescriptor descriptor) throws Exception {
+        var address = lookup.find(symbol).orElseThrow(IllegalStateException::new);
+
+        return Linker.nativeLinker().downcallHandle(address, descriptor, Linker.Option.isTrivial());
+    }
+
+    public static int init(int num_entries, long base_address, int flags) {
         try {
-            return (int) initHandle.invokeExact(numEntries, baseAddress, flags);
+            return (int) initHandle.invokeExact(num_entries, base_address, flags);
         } catch (Throwable e) {
-            LOG.error("Error while invoking method ", e);
+            LOG.error("Attempt to invoke method init failed", e);
             throw new RuntimeException(e);
         }
     }
 
-    public static void close(long baseAddress) {
+    public static void exit(long base_address) {
         try {
-            closeHandle.invokeExact(baseAddress);
+            exitHandle.invokeExact(base_address);
         } catch (Throwable e) {
-            LOG.error("Error while invoking method ", e);
+            LOG.error("Attempt to invoke method exit failed", e);
             throw new RuntimeException(e);
         }
     }
 
-    // Completion
-    public static int peekCQ(long baseAddress, long completionsAddress, long count) {
+    public static int peekBatchCQE(long base_address, long completions_address, long count) {
         try {
-            return (int) peekCQHandle.invokeExact(baseAddress, completionsAddress, count);
+            return (int) peekBatchCQEHandle.invokeExact(base_address, completions_address, count);
         } catch (Throwable e) {
-            LOG.error("Error while invoking method ", e);
+            LOG.error("Attempt to invoke method peek_batch_cqe failed", e);
             throw new RuntimeException(e);
         }
     }
 
-    public static void advanceCQ(long baseAddress, long count) {
+    public static void cqAdvance(long base_address, long count) {
         try {
-            advanceCQHandle.invokeExact(baseAddress, count);
+            cqAdvanceHandle.invokeExact(base_address, count);
         } catch (Throwable e) {
-            LOG.error("Error while invoking method ", e);
+            LOG.error("Attempt to invoke method cq_advance failed", e);
             throw new RuntimeException(e);
         }
     }
 
-    // Submissions
-    public static long nextSQEntry(long baseAddress) {
+    public static int peekBatchAndAdvanceCQE(long base_address, long completions_address, long count) {
         try {
-            return (long) nextSQEntryHandle.invokeExact(baseAddress);
+            return (int) peekBatchAndAdvanceCQEHandle.invokeExact(base_address, completions_address, count);
         } catch (Throwable e) {
-            LOG.error("Error while invoking method ", e);
+            LOG.error("Attempt to invoke method peek_batch_and_advance_cqe failed",
+                      e);
             throw new RuntimeException(e);
         }
     }
 
-    public static int peekSQEntries(long baseAddress, long submissionsAddress, long count) {
+    public static long getSQE(long base_address) {
         try {
-            return (int) peekSQEntriesHandle.invokeExact(baseAddress, submissionsAddress, count);
+            return (long) getSQEHandle.invokeExact(base_address);
         } catch (Throwable e) {
-            LOG.error("Error while invoking method ", e);
+            LOG.error("Attempt to invoke method get_sqe failed", e);
             throw new RuntimeException(e);
         }
     }
 
-    public static long submitAndWait(long baseAddress, int waitNr) {
+    public static int peekBatchSQE(long base_address, long submissions_address, long space) {
         try {
-            return (long) submitAndWaitHandle.invokeExact(baseAddress, waitNr);
+            return (int) peekBatchSQEHandle.invokeExact(base_address, submissions_address, space);
         } catch (Throwable e) {
-            LOG.error("Error while invoking method ", e);
+            LOG.error("Attempt to invoke method peek_batch_sqe failed", e);
             throw new RuntimeException(e);
         }
     }
 
-    // Socket API
+    public static long submitAndWait(long base_address, int count) {
+        try {
+            return (long) submitAndWaitHandle.invokeExact(base_address, count);
+        } catch (Throwable e) {
+            LOG.error("Attempt to invoke method submit_and_wait failed", e);
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static int register(long base_address, int opcode, long arg, long nr_args) {
+        try {
+            return (int) registerHandle.invokeExact(base_address, opcode, arg, nr_args);
+        } catch (Throwable e) {
+            LOG.error("Attempt to invoke method register failed", e);
+            throw new RuntimeException(e);
+        }
+    }
 
     /**
      * Create socket. This call is a combination of socket(2) and setsockopt(2).
      *
      * @param domain  Socket domain. Refer to {@link org.pragmatica.io.async.net.AddressFamily} for set of recognized values.
-     * @param type    Socket type and open flags. Refer to {@link org.pragmatica.io.async.net.SocketType} for possible types. The {@link
-     *                org.pragmatica.io.async.net.SocketFlag} flags can be OR-ed if necessary.
-     * @param options Socket option1s. Only subset of possible options are supported. Refer to {@link org.pragmatica.io.async.net.SocketOption} for details.
+     * @param type    Socket type and open flags. Refer to {@link org.pragmatica.io.async.net.SocketType} for possible types. The
+     *                {@link org.pragmatica.io.async.net.SocketFlag} flags can be OR-ed if necessary.
+     * @param options Socket option1s. Only subset of possible options are supported. Refer to {@link org.pragmatica.io.async.net.SocketOption} for
+     *                details.
      *
      * @return socket (>0) or error (<0)
      */
@@ -176,7 +179,7 @@ final class UringNative {
         try {
             return (int) socketHandle.invokeExact(domain, type, options);
         } catch (Throwable e) {
-            LOG.error("Error while invoking method ", e);
+            LOG.error("Attempt to invoke method socket failed", e);
             throw new RuntimeException(e);
         }
     }
@@ -186,18 +189,19 @@ final class UringNative {
      * listen(2) calls.
      *
      * @param socket     Socket to configure.
-     * @param address    Memory address with prepared socket address structure (See {@link org.pragmatica.io.async.uring.struct.raw.RawSocketAddressIn} and
+     * @param address    Memory address with prepared socket address structure (See
+     *                   {@link org.pragmatica.io.async.uring.struct.raw.RawSocketAddressIn} and
      *                   {@link org.pragmatica.io.async.uring.struct.raw.RawSocketAddressIn6} for more details}.
      * @param len        Size of the prepared socket address structure.
      * @param queueDepth Set backlog queue dept.
      *
      * @return 0 for success and negative value of error code in case of error.
      */
-    public static int prepareForListen(int socket, long address, int len, int queueDepth) {
+    public static int listen(int socket, long address, int len, int queueDepth) {
         try {
-            return (int) prepareForListenHandle.invokeExact(socket, address, len, queueDepth);
+            return (int) listenHandle.invokeExact(socket, address, len, queueDepth);
         } catch (Throwable e) {
-            LOG.error("Error while invoking method ", e);
+            LOG.error("Attempt to invoke method listen failed", e);
             throw new RuntimeException(e);
         }
     }

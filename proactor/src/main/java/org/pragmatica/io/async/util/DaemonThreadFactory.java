@@ -20,19 +20,11 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Implementation of {@link ThreadFactory} which creates threads in <code>daemon</code> mode, i.e. threads which while running do not prevent
- * application to stop.
+ * Implementation of {@link ThreadFactory} which creates threads in <code>daemon</code> mode, i.e. threads which do not prevent application to stop.
  */
-public class DaemonThreadFactory implements ThreadFactory {
-    private final AtomicInteger counter = new AtomicInteger();
-    private final String pattern;
-
-    private DaemonThreadFactory(String pattern) {
-        this.pattern = pattern;
-    }
-
+public record DaemonThreadFactory(AtomicInteger counter, String pattern) implements ThreadFactory {
     public static DaemonThreadFactory threadFactory(String pattern) {
-        return new DaemonThreadFactory(pattern);
+        return new DaemonThreadFactory(new AtomicInteger(), pattern);
     }
 
     @Override
@@ -42,4 +34,10 @@ public class DaemonThreadFactory implements ThreadFactory {
         result.setDaemon(true);
         return result;
     }
+
+    public static ThreadFactory shutdownThreadFactory() {
+        return SHUTDOWN_HOOK_THREAD_FACTORY;
+    }
+
+    private static final ThreadFactory SHUTDOWN_HOOK_THREAD_FACTORY = DaemonThreadFactory.threadFactory("Shutdown Hook");
 }

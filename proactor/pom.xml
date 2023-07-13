@@ -11,6 +11,11 @@
 
     <artifactId>proactor</artifactId>
     <name>Async I/O Proactor</name>
+    <packaging>jar</packaging>
+
+    <properties>
+        <jar.finalName>${project.artifactId}-${project.version}</jar.finalName>
+    </properties>
 
     <profiles>
         <profile>
@@ -36,20 +41,23 @@
         </dependency>
 
         <!-- Logging -->
-        <!-- At present logging is specific to this module. Later it might be changed. -->
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
-            <version>1.7.32</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.logging.log4j</groupId>
-            <artifactId>log4j-slf4j-impl</artifactId>
-            <version>2.17.1</version>
         </dependency>
 
         <!-- Testing -->
+        <dependency>
+            <groupId>org.tinylog</groupId>
+            <artifactId>slf4j-tinylog</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.tinylog</groupId>
+            <artifactId>tinylog-impl</artifactId>
+            <scope>test</scope>
+        </dependency>
 
         <dependency>
             <groupId>org.openjdk.jol</groupId>
@@ -176,8 +184,8 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
+                    <reuseForks>false</reuseForks>
                     <argLine>
-                        --enable-native-access=ALL-UNNAMED
                         --add-opens java.base/jdk.internal.misc=ALL-UNNAMED
                         --add-exports java.base/jdk.internal.misc=ALL-UNNAMED
                         ${java.enable-preview}

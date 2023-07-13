@@ -1,17 +1,17 @@
 /*
- * Copyright (c) 2020 Sergiy Yevtushenko
+ *  Copyright (c) 2020-2022 Sergiy Yevtushenko.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 
 package org.pragmatica.io.async.file;
@@ -24,21 +24,21 @@ import java.util.EnumSet;
  * File permission bits.
  */
 public enum FilePermission implements Bitmask {
-    USER_R(00400),      /* user has read permission */
-    USER_W(00200),      /* user has write permission */
-    USER_X(00100),      /* user has execute permission */
+    USER_R(00_400),      /* user has read permission */
+    USER_W(00_200),      /* user has write permission */
+    USER_X(00_100),      /* user has execute permission */
 
-    GROUP_R(00040),     /* group has read permission */
-    GROUP_W(00020),     /* group has write permission */
-    GROUP_X(00010),     /* group has execute permission */
+    GROUP_R(00_040),     /* group has read permission */
+    GROUP_W(00_020),     /* group has write permission */
+    GROUP_X(00_010),     /* group has execute permission */
 
-    OTHER_R(00004),     /* others have read permission */
-    OTHER_W(00002),     /* others have write permission */
-    OTHER_X(00001),     /* others have execute permission */
+    OTHER_R(00_004),     /* others have read permission */
+    OTHER_W(00_002),     /* others have write permission */
+    OTHER_X(00_001),     /* others have execute permission */
 
-    SUID_BIT(04000),    /* set-user-ID bit */
-    SGID_BIT(02000),    /* set-group-ID bit */
-    STICKY_BIT(01000);  /* sticky bit */
+    SUID_BIT(04_000),    /* set-user-ID bit */
+    SGID_BIT(02_000),    /* set-group-ID bit */
+    STICKY_BIT(01_000);  /* sticky bit */
 
     private static final EnumSet<FilePermission> USER_RWX = EnumSet.of(USER_R, USER_W, USER_X);
     private static final EnumSet<FilePermission> GROUP_RWX = EnumSet.of(GROUP_R, GROUP_W, GROUP_X);
@@ -88,7 +88,7 @@ public enum FilePermission implements Bitmask {
     }
 
     public static EnumSet<FilePermission> fromShort(final short value) {
-        final EnumSet<FilePermission> result = EnumSet.noneOf(FilePermission.class);
+        final var result = EnumSet.noneOf(FilePermission.class);
 
         for (var permission : values()) {
             if ((value & permission.mask()) != 0) {

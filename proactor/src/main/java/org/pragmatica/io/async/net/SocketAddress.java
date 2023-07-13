@@ -1,17 +1,17 @@
 /*
- * Copyright (c) 2020 Sergiy Yevtushenko
+ *  Copyright (c) 2020-2022 Sergiy Yevtushenko.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 
 package org.pragmatica.io.async.net;
@@ -19,6 +19,9 @@ package org.pragmatica.io.async.net;
 import org.pragmatica.io.async.net.InetAddress.Inet4Address;
 import org.pragmatica.io.async.net.InetAddress.Inet6Address;
 
+/**
+ * Generic IP socket address.
+ */
 public sealed interface SocketAddress<T extends InetAddress> {
     AddressFamily family();
 
@@ -56,8 +59,14 @@ public sealed interface SocketAddress<T extends InetAddress> {
         };
     }
 
+    /**
+     * Socket Address for IPv4.
+     */
     record SocketAddressIn(AddressFamily family, InetPort port, Inet4Address address) implements SocketAddress<Inet4Address> {}
 
+    /**
+     * Socket Address for IPv6.
+     */
     record SocketAddressIn6(AddressFamily family, InetPort port, Inet6Address address,
                             Inet6FlowInfo flowInfo, Inet6ScopeId scopeId) implements SocketAddress<Inet6Address> {}
 

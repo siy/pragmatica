@@ -1,17 +1,17 @@
 /*
- * Copyright (c) 2020 Sergiy Yevtushenko
+ *  Copyright (c) 2020-2022 Sergiy Yevtushenko.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 
 package org.pragmatica.io.async.uring.struct;
@@ -56,8 +56,20 @@ public abstract class AbstractRawStructure<T extends RawStructure<T>> implements
     }
 
     @SuppressWarnings("unchecked")
+    protected T putByteVolatile(final RawProperty property, final byte value) {
+        RawMemory.putByteVolatile(address + property.offset(), value);
+        return (T) this;
+    }
+
+    @SuppressWarnings("unchecked")
     protected T putShort(final RawProperty property, final short value) {
         RawMemory.putShort(address + property.offset(), value);
+        return (T) this;
+    }
+
+    @SuppressWarnings("unchecked")
+    protected T putShortVolatile(final RawProperty property, final short value) {
+        RawMemory.putShortVolatile(address + property.offset(), value);
         return (T) this;
     }
 
@@ -68,8 +80,20 @@ public abstract class AbstractRawStructure<T extends RawStructure<T>> implements
     }
 
     @SuppressWarnings("unchecked")
+    protected T putIntVolatile(final RawProperty property, final int value) {
+        RawMemory.putIntVolatile(address + property.offset(), value);
+        return (T) this;
+    }
+
+    @SuppressWarnings("unchecked")
     protected T putLong(final RawProperty property, final long value) {
         RawMemory.putLong(address + property.offset(), value);
+        return (T) this;
+    }
+
+    @SuppressWarnings("unchecked")
+    protected T putLongVolatile(final RawProperty property, final long value) {
+        RawMemory.putLongVolatile(address + property.offset(), value);
         return (T) this;
     }
 
@@ -95,16 +119,32 @@ public abstract class AbstractRawStructure<T extends RawStructure<T>> implements
         return RawMemory.getByte(address + property.offset());
     }
 
+    protected byte getByteVolatile(final RawProperty property) {
+        return RawMemory.getByteVolatile(address + property.offset());
+    }
+
     protected short getShort(final RawProperty property) {
         return RawMemory.getShort(address + property.offset());
+    }
+
+    protected short getShortVolatile(final RawProperty property) {
+        return RawMemory.getShortVolatile(address + property.offset());
     }
 
     protected int getInt(final RawProperty property) {
         return RawMemory.getInt(address + property.offset());
     }
 
+    protected int getIntVolatile(final RawProperty property) {
+        return RawMemory.getIntVolatile(address + property.offset());
+    }
+
     protected long getLong(final RawProperty property) {
         return RawMemory.getLong(address + property.offset());
+    }
+
+    protected long getLongVolatile(final RawProperty property) {
+        return RawMemory.getLongVolatile(address + property.offset());
     }
 
     protected short getShortInNetOrder(final RawProperty property) {

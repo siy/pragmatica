@@ -1,17 +1,17 @@
 /*
- * Copyright (c) 2019, 2020 Sergiy Yevtushenko
+ *  Copyright (c) 2020-2022 Sergiy Yevtushenko.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 
 package org.pragmatica.io.async.util;
@@ -23,25 +23,10 @@ import java.util.function.Consumer;
  * Helper class used to track number of events along with results and trigger action once threshold is reached. The action is triggered only once,
  * when number of events exactly matches configured threshold. All collected results are passed to action.
  * <p>
- * Note that this is fairly low level class and for performance reasons it omits some checks. In particular, it's the caller responsibility that each
+ * Note that this is fairly low level class and for performance reasons it omits most checks. In particular, it's the caller responsibility that each
  * expected event assign its own result (i.e. uses correct index value).
  */
-public class ResultCollector {
-    private final Object[] results;
-    private final AtomicInteger counter;
-    private final Consumer<Object[]> action;
-
-    private ResultCollector(int count, Consumer<Object[]> action) {
-        this.counter = new AtomicInteger(count);
-        this.action = action;
-        this.results = new Object[count];
-    }
-
-    public ResultCollector apply(Consumer<ResultCollector> setup) {
-        setup.accept(this);
-        return this;
-    }
-
+public record ResultCollector(Object[] results, AtomicInteger counter, Consumer<Object[]> action) {
     /**
      * Create an instance configured for threshold and action.
      *
@@ -52,7 +37,19 @@ public class ResultCollector {
      */
     public static ResultCollector resultCollector(int count, Consumer<Object[]> action) {
         assert count >= 0;
-        return new ResultCollector(count, action);
+        return new ResultCollector(new Object[count], new AtomicInteger(count), action);
+    }
+
+    /**
+     * Perform operation on current instance.
+     *
+     * @param setup action to perform.
+     *
+     * @return Current instance
+     */
+    public ResultCollector apply(Consumer<ResultCollector> setup) {
+        setup.accept(this);
+        return this;
     }
 
     /**
