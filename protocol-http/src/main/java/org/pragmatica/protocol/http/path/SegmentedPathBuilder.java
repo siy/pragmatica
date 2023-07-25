@@ -35,7 +35,7 @@ public final class SegmentedPathBuilder {
         return new Builder0();
     }
 
-    public final class Builder0 {
+    static public final class Builder0 {
         private final List<Segment> segments = new ArrayList<>();
 
         Builder0 plain(Plain segment) {
@@ -44,7 +44,8 @@ public final class SegmentedPathBuilder {
         }
 
         <T1> Builder1<T1> typed(Typed<T1> segment) {
-
+            segments.add(segment);
+            return null;
         }
 
         SegmentedPath<Unit> build() {
@@ -54,18 +55,23 @@ public final class SegmentedPathBuilder {
 
     public interface Builder1<T1> {
         Builder1<T1> plain(Segment segment);
+
         <T2> Builder2<T1, T2> typed(Typed<T2> segment);
+
         SegmentedPath<Tuple1<T1>> build();
     }
 
     public interface Builder2<T1, T2> {
         Builder2<T1, T2> plain(Segment segment);
+
         <T3> Builder3<T1, T2, T3> typed(Typed<T3> segment);
+
         SegmentedPath<Tuple2<T1, T2>> build();
     }
 
     public interface Builder3<T1, T2, T3> {
         Builder3<T1, T2, T3> plain(Segment segment);
+
         SegmentedPath<Tuple3<T1, T2, T3>> build();
     }
 }
