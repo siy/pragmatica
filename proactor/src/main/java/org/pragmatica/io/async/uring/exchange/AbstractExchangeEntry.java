@@ -20,10 +20,8 @@ import org.pragmatica.io.async.Proactor;
 import org.pragmatica.io.async.SystemError;
 import org.pragmatica.io.async.common.SizeT;
 import org.pragmatica.io.async.uring.AsyncOperation;
-import org.pragmatica.io.async.uring.CompletionHandler;
 import org.pragmatica.io.async.uring.struct.raw.SQEntry;
-import org.pragmatica.io.async.uring.utils.ObjectHeap;
-import org.pragmatica.io.async.uring.utils.PlainObjectPool;
+import org.pragmatica.io.async.uring.utils.ExchangeEntryPool;
 import org.pragmatica.lang.Result;
 
 import java.util.function.BiConsumer;
@@ -34,7 +32,6 @@ import static org.pragmatica.lang.Result.success;
 /**
  * Base type for containers used to store callback information for in-flight requests.
  */
-@SuppressWarnings("rawtypes")
 public abstract class AbstractExchangeEntry<T extends AbstractExchangeEntry<T, R>, R> implements ExchangeEntry<T> {
     private static final int RESULT_SIZET_POOL_SIZE = 65536;
     @SuppressWarnings("rawtypes")
@@ -49,49 +46,74 @@ public abstract class AbstractExchangeEntry<T extends AbstractExchangeEntry<T, R
         }
     }
 
-    private final PlainObjectPool pool;
     private final AsyncOperation operation;
-    public T next;
+    private volatile T next;
     private int key;
-    protected BiConsumer<Result<R>, Proactor> completion;
 
-    protected AbstractExchangeEntry(AsyncOperation operation, PlainObjectPool pool) {
+    private ExchangeEntryPool<T> pool;
+
+    protected volatile BiConsumer<Result<R>, Proactor> completion = null;
+
+    protected AbstractExchangeEntry(AsyncOperation operation) {
         this.operation = operation;
-        this.pool = pool;
     }
 
     @Override
+    public boolean isUsable() {
+        return completion != null;
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
     public final void accept(int result, int flags, Proactor proactor) {
         doAccept(result, flags, proactor);
         completion = null;
+        pool.release((T) this);
     }
 
     protected abstract void doAccept(int result, int flags, Proactor proactor);
 
     @Override
     public void close() {
-        pool.release(this);
     }
 
+    @Override
     public int key() {
         return key;
     }
 
     @Override
     @SuppressWarnings("unchecked")
-    public T register(ObjectHeap<CompletionHandler> heap) {
-        key = heap.allocKey(this);
+    public T key(int key, ExchangeEntryPool<T> pool) {
+        this.key = key;
+        this.pool = pool;
+        return (T) this;
+    }
+
+    @Override
+    public T next() {
+        return next;
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public T next(T next) {
+        this.next = next;
         return (T) this;
     }
 
     @Override
     public SQEntry apply(SQEntry entry) {
-        return entry.userData(key)
+        return entry.userData(key())
                     .opcode(operation.opcode());
     }
 
     @SuppressWarnings("unchecked")
     public T prepare(BiConsumer<Result<R>, Proactor> completion) {
+        if (this.completion != null) {
+            throw new IllegalStateException("Entry is already in use");
+        }
+
         this.completion = completion;
         return (T) this;
     }

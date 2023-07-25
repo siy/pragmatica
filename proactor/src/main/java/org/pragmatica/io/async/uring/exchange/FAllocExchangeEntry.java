@@ -20,7 +20,6 @@ package org.pragmatica.io.async.uring.exchange;
 import org.pragmatica.io.async.Proactor;
 import org.pragmatica.io.async.SystemError;
 import org.pragmatica.io.async.uring.struct.raw.SQEntry;
-import org.pragmatica.io.async.uring.utils.PlainObjectPool;
 import org.pragmatica.lang.Result;
 import org.pragmatica.lang.Unit;
 
@@ -39,13 +38,23 @@ public class FAllocExchangeEntry extends AbstractExchangeEntry<FAllocExchangeEnt
     private long len;
     private byte flags;
 
-    protected FAllocExchangeEntry(final PlainObjectPool<FAllocExchangeEntry> pool) {
-        super(FALLOCATE, pool);
+    protected FAllocExchangeEntry() {
+        super(FALLOCATE);
     }
 
     @Override
     protected void doAccept(final int res, final int flags, final Proactor proactor) {
         completion.accept(res == 0 ? unitResult() : SystemError.result(res), proactor);
+    }
+
+    @Override
+    public SQEntry apply(final SQEntry entry) {
+        return super.apply(entry)
+                    .flags(flags)
+                    .addr(len)
+                    .len(allocFlags)
+                    .off(offset)
+                    .fd(descriptor);
     }
 
     public FAllocExchangeEntry prepare(final BiConsumer<Result<Unit>, Proactor> completion,
@@ -61,15 +70,5 @@ public class FAllocExchangeEntry extends AbstractExchangeEntry<FAllocExchangeEnt
         this.flags = flags;
 
         return super.prepare(completion);
-    }
-
-    @Override
-    public SQEntry apply(final SQEntry entry) {
-        return super.apply(entry)
-                    .flags(flags)
-                    .addr(len)
-                    .len(allocFlags)
-                    .off(offset)
-                    .fd(descriptor);
     }
 }

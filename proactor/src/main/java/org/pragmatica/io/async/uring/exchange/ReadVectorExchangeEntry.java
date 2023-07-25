@@ -20,7 +20,6 @@ import org.pragmatica.io.async.Proactor;
 import org.pragmatica.io.async.common.SizeT;
 import org.pragmatica.io.async.uring.struct.offheap.OffHeapIoVector;
 import org.pragmatica.io.async.uring.struct.raw.SQEntry;
-import org.pragmatica.io.async.uring.utils.PlainObjectPool;
 import org.pragmatica.lang.Result;
 
 import java.util.function.BiConsumer;
@@ -36,8 +35,8 @@ public class ReadVectorExchangeEntry extends AbstractExchangeEntry<ReadVectorExc
     private int descriptor;
     private long offset;
 
-    protected ReadVectorExchangeEntry(PlainObjectPool<ReadVectorExchangeEntry> pool) {
-        super(READV, pool);
+    protected ReadVectorExchangeEntry() {
+        super(READV);
     }
 
     @Override

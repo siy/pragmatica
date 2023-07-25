@@ -19,7 +19,6 @@ package org.pragmatica.io.async.uring.exchange;
 import org.pragmatica.io.async.Proactor;
 import org.pragmatica.io.async.SystemError;
 import org.pragmatica.io.async.uring.struct.raw.SQEntry;
-import org.pragmatica.io.async.uring.utils.PlainObjectPool;
 import org.pragmatica.lang.Result;
 import org.pragmatica.lang.Unit;
 
@@ -35,13 +34,20 @@ public class CloseExchangeEntry extends AbstractExchangeEntry<CloseExchangeEntry
     private int descriptor;
     private byte flags;
 
-    protected CloseExchangeEntry(final PlainObjectPool<CloseExchangeEntry> pool) {
-        super(CLOSE, pool);
+    protected CloseExchangeEntry() {
+        super(CLOSE);
     }
 
     @Override
     protected void doAccept(final int res, final int flags, final Proactor proactor) {
         completion.accept(res == 0 ? unitResult() : SystemError.result(res), proactor);
+    }
+
+    @Override
+    public SQEntry apply(final SQEntry entry) {
+        return super.apply(entry)
+                    .flags(flags)
+                    .fd(descriptor);
     }
 
     public CloseExchangeEntry prepare(final BiConsumer<Result<Unit>, Proactor> completion,
@@ -50,12 +56,5 @@ public class CloseExchangeEntry extends AbstractExchangeEntry<CloseExchangeEntry
         this.descriptor = descriptor;
         this.flags = flags;
         return super.prepare(completion);
-    }
-
-    @Override
-    public SQEntry apply(final SQEntry entry) {
-        return super.apply(entry)
-                    .flags(flags)
-                    .fd(descriptor);
     }
 }

@@ -21,7 +21,6 @@ import org.pragmatica.io.async.SystemError;
 import org.pragmatica.io.async.file.FileDescriptor;
 import org.pragmatica.io.async.uring.struct.offheap.OffHeapCString;
 import org.pragmatica.io.async.uring.struct.raw.SQEntry;
-import org.pragmatica.io.async.uring.utils.PlainObjectPool;
 import org.pragmatica.lang.Result;
 
 import java.nio.file.Path;
@@ -41,8 +40,8 @@ public class OpenExchangeEntry extends AbstractExchangeEntry<OpenExchangeEntry, 
     private int openFlags;
     private int mode;
 
-    protected OpenExchangeEntry(PlainObjectPool<OpenExchangeEntry> pool) {
-        super(OPENAT, pool);
+    protected OpenExchangeEntry() {
+        super(OPENAT);
     }
 
     @Override

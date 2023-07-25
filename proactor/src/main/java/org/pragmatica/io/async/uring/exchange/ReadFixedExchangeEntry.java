@@ -20,7 +20,6 @@ package org.pragmatica.io.async.uring.exchange;
 import org.pragmatica.io.async.Proactor;
 import org.pragmatica.io.async.common.SizeT;
 import org.pragmatica.io.async.uring.struct.raw.SQEntry;
-import org.pragmatica.io.async.uring.utils.PlainObjectPool;
 import org.pragmatica.io.async.util.allocator.FixedBuffer;
 import org.pragmatica.lang.Result;
 
@@ -37,8 +36,8 @@ public class ReadFixedExchangeEntry extends AbstractExchangeEntry<ReadFixedExcha
     private FixedBuffer buffer;
     private long offset;
 
-    protected ReadFixedExchangeEntry(PlainObjectPool<ReadFixedExchangeEntry> pool) {
-        super(READ_FIXED, pool);
+    protected ReadFixedExchangeEntry() {
+        super(READ_FIXED);
     }
 
     @Override

@@ -219,12 +219,12 @@ public interface Proactor {
      * Create listener bound to specified address/port and ready to accept incoming connection. Upon completion provided callback is invoked with the
      * filled listen context instance.
      *
-     * @param completion    Callback which is invoked once operation is finished.
-     * @param socketAddress Socket address
-     * @param socketType    Socket type
-     * @param openFlags     Socket open flags
-     * @param queueDepth    Length of the listening queue
-     * @param options       Socket options. See {@link SocketOption} for more details
+     * @param completion Callback which is invoked once operation is finished.
+     * @param address    Socket address
+     * @param type       Socket type
+     * @param flags      Socket open flags
+     * @param len        Length of the listening queue
+     * @param options    Socket options. See {@link SocketOption} for more details
      *
      * @see ListenContext
      */
@@ -605,12 +605,14 @@ public interface Proactor {
         private static final int DEFAULT_QUEUE_SIZE = 128;
 
         ProactorHolder() {
-            Runtime.getRuntime().availableProcessors();
+            var numCores = Runtime.getRuntime().availableProcessors();
+//            var numCores = 1;
+            var allocator = ChunkedAllocator.allocator(Units._1MiB);
 
-            proactors = IntStream.range(0, Runtime.getRuntime().availableProcessors())
+            proactors = IntStream.range(0, numCores)
                                  .mapToObj(__ -> ProactorImpl.proactor(DEFAULT_QUEUE_SIZE,
                                                                        UringSetupFlags.defaultFlags(),
-                                                                       ChunkedAllocator.allocator(Units._1MiB)))
+                                                                       allocator))
                                  .collect(Collectors.toList());
         }
 

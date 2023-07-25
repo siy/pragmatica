@@ -20,7 +20,6 @@ import org.pragmatica.io.async.Proactor;
 import org.pragmatica.io.async.Timeout;
 import org.pragmatica.io.async.uring.struct.offheap.OffHeapTimeSpec;
 import org.pragmatica.io.async.uring.struct.raw.SQEntry;
-import org.pragmatica.io.async.uring.utils.PlainObjectPool;
 import org.pragmatica.lang.Unit;
 
 import static org.pragmatica.io.async.uring.AsyncOperation.LINK_TIMEOUT;
@@ -31,8 +30,8 @@ import static org.pragmatica.io.async.uring.AsyncOperation.LINK_TIMEOUT;
 public class TimeoutExchangeEntry extends AbstractExchangeEntry<TimeoutExchangeEntry, Unit> {
     private final OffHeapTimeSpec timeSpec = OffHeapTimeSpec.uninitialized();
 
-    protected TimeoutExchangeEntry(PlainObjectPool<TimeoutExchangeEntry> pool) {
-        super(LINK_TIMEOUT, pool);
+    protected TimeoutExchangeEntry() {
+        super(LINK_TIMEOUT);
     }
 
     @Override
@@ -44,18 +43,18 @@ public class TimeoutExchangeEntry extends AbstractExchangeEntry<TimeoutExchangeE
     protected void doAccept(int res, int flags, Proactor proactor) {
     }
 
-    public TimeoutExchangeEntry prepare(Timeout timeout) {
-        timeout.secondsAndNanos()
-               .map(timeSpec::setSecondsNanos);
-
-        return this;
-    }
-
     @Override
     public SQEntry apply(SQEntry entry) {
         return super.apply(entry)
                     .addr(timeSpec.address())
                     .fd(-1)
                     .len(1);
+    }
+
+    public TimeoutExchangeEntry prepare(Timeout timeout) {
+        timeout.secondsAndNanos()
+               .map(timeSpec::setSecondsNanos);
+
+        return this;
     }
 }

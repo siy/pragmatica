@@ -19,7 +19,6 @@ package org.pragmatica.io.async.uring.exchange;
 import org.pragmatica.io.async.Proactor;
 import org.pragmatica.io.async.common.SizeT;
 import org.pragmatica.io.async.uring.struct.raw.SQEntry;
-import org.pragmatica.io.async.uring.utils.PlainObjectPool;
 import org.pragmatica.io.async.util.OffHeapSlice;
 import org.pragmatica.lang.Result;
 
@@ -37,8 +36,8 @@ public class ReadExchangeEntry extends AbstractExchangeEntry<ReadExchangeEntry, 
     private OffHeapSlice buffer;
     private long offset;
 
-    protected ReadExchangeEntry(PlainObjectPool<ReadExchangeEntry> pool) {
-        super(READ, pool);
+    protected ReadExchangeEntry() {
+        super(READ);
     }
 
     @Override

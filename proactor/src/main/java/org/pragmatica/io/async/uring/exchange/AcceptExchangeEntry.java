@@ -22,7 +22,6 @@ import org.pragmatica.io.async.net.ConnectionContext;
 import org.pragmatica.io.async.net.InetAddress;
 import org.pragmatica.io.async.uring.struct.offheap.OffHeapSocketAddress;
 import org.pragmatica.io.async.uring.struct.raw.SQEntry;
-import org.pragmatica.io.async.uring.utils.PlainObjectPool;
 import org.pragmatica.lang.Result;
 
 import java.util.function.BiConsumer;
@@ -38,9 +37,8 @@ public class AcceptExchangeEntry<T extends InetAddress> extends AbstractExchange
     private int descriptor;
     private int acceptFlags;
 
-    @SuppressWarnings("rawtypes")
-    protected AcceptExchangeEntry(PlainObjectPool<AcceptExchangeEntry> pool) {
-        super(ACCEPT, pool);
+    protected AcceptExchangeEntry() {
+        super(ACCEPT);
     }
 
     @Override
@@ -53,9 +51,9 @@ public class AcceptExchangeEntry<T extends InetAddress> extends AbstractExchange
     protected void doAccept(int res, int flags, Proactor proactor) {
         if (res <= 0) {
             completion.accept(SystemError.result(res), proactor);
+        } else {
+            completion.accept(clientAddress.extract().map(address -> (ConnectionContext<T>) connection(res, address)), proactor);
         }
-
-        completion.accept(clientAddress.extract().map(address -> (ConnectionContext<T>) connection(res, address)), proactor);
     }
 
     @Override
@@ -67,7 +65,10 @@ public class AcceptExchangeEntry<T extends InetAddress> extends AbstractExchange
                     .acceptFlags(acceptFlags);
     }
 
-    public AcceptExchangeEntry<T> prepare(BiConsumer<Result<ConnectionContext<T>>, Proactor> completion, int descriptor, int acceptFlags, boolean v6) {
+    public AcceptExchangeEntry<T> prepare(BiConsumer<Result<ConnectionContext<T>>, Proactor> completion,
+                                          int descriptor,
+                                          int acceptFlags,
+                                          boolean v6) {
         this.descriptor = descriptor;
         this.acceptFlags = acceptFlags;
         clientAddress.protocolVersion(v6);

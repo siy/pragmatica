@@ -20,7 +20,6 @@ package org.pragmatica.io.async.uring.exchange;
 import org.pragmatica.io.async.Proactor;
 import org.pragmatica.io.async.SystemError;
 import org.pragmatica.io.async.uring.struct.raw.SQEntry;
-import org.pragmatica.io.async.uring.utils.PlainObjectPool;
 import org.pragmatica.lang.Result;
 import org.pragmatica.lang.Unit;
 
@@ -37,13 +36,21 @@ public class FSyncExchangeEntry extends AbstractExchangeEntry<FSyncExchangeEntry
     private int fsyncFlags;
     private byte flags;
 
-    protected FSyncExchangeEntry(final PlainObjectPool<FSyncExchangeEntry> pool) {
-        super(FSYNC, pool);
+    protected FSyncExchangeEntry() {
+        super(FSYNC);
     }
 
     @Override
     protected void doAccept(final int res, final int flags, final Proactor proactor) {
         completion.accept(res == 0 ? unitResult() : SystemError.result(res), proactor);
+    }
+
+    @Override
+    public SQEntry apply(final SQEntry entry) {
+        return super.apply(entry)
+                    .flags(flags)
+                    .fsyncFlags(fsyncFlags)
+                    .fd(descriptor);
     }
 
     public FSyncExchangeEntry prepare(final BiConsumer<Result<Unit>, Proactor> completion,
@@ -55,13 +62,5 @@ public class FSyncExchangeEntry extends AbstractExchangeEntry<FSyncExchangeEntry
         this.flags = flags;
 
         return super.prepare(completion);
-    }
-
-    @Override
-    public SQEntry apply(final SQEntry entry) {
-        return super.apply(entry)
-                    .flags(flags)
-                    .fsyncFlags(fsyncFlags)
-                    .fd(descriptor);
     }
 }

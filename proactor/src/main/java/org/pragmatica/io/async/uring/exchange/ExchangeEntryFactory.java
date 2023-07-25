@@ -22,15 +22,17 @@ import org.pragmatica.io.async.common.OffsetT;
 import org.pragmatica.io.async.common.SizeT;
 import org.pragmatica.io.async.file.*;
 import org.pragmatica.io.async.file.stat.FileStat;
-import org.pragmatica.io.async.net.*;
+import org.pragmatica.io.async.net.ConnectionContext;
+import org.pragmatica.io.async.net.InetAddress;
+import org.pragmatica.io.async.net.MessageFlags;
+import org.pragmatica.io.async.net.SocketFlag;
 import org.pragmatica.io.async.uring.Bitmask;
-import org.pragmatica.io.async.uring.CompletionHandler;
 import org.pragmatica.io.async.uring.struct.offheap.OffHeapCString;
 import org.pragmatica.io.async.uring.struct.offheap.OffHeapIoVector;
 import org.pragmatica.io.async.uring.struct.offheap.OffHeapSocketAddress;
 import org.pragmatica.io.async.uring.struct.raw.SQEntryFlags;
-import org.pragmatica.io.async.uring.utils.ObjectHeap;
-import org.pragmatica.io.async.uring.utils.PlainObjectPool;
+import org.pragmatica.io.async.uring.utils.ExchangeEntryPool;
+import org.pragmatica.io.async.uring.utils.ExchangeEntryRegistry;
 import org.pragmatica.io.async.util.OffHeapSlice;
 import org.pragmatica.io.async.util.allocator.FixedBuffer;
 import org.pragmatica.lang.Option;
@@ -44,7 +46,8 @@ import java.util.Set;
 import java.util.function.BiConsumer;
 
 import static org.pragmatica.io.async.uring.struct.raw.SQEntry.IORING_FSYNC_DATASYNC;
-import static org.pragmatica.io.async.uring.utils.PlainObjectPool.objectPool;
+import static org.pragmatica.io.async.uring.utils.ExchangeEntryPool.exchangeEntryPool;
+import static org.pragmatica.io.async.uring.utils.ExchangeEntryRegistry.exchangeEntryRegistry;
 
 /**
  * Factory for the different types of exchange entries.
@@ -54,51 +57,61 @@ import static org.pragmatica.io.async.uring.utils.PlainObjectPool.objectPool;
  */
 public class ExchangeEntryFactory {
     @SuppressWarnings({"rawtypes"})
-    private final PlainObjectPool<AcceptExchangeEntry> acceptPool;
-    private final PlainObjectPool<CloseExchangeEntry> closePool;
-    private final PlainObjectPool<ConnectExchangeEntry> connectPool;
-    private final PlainObjectPool<DelayExchangeEntry> delayPool;
-    private final PlainObjectPool<FAllocExchangeEntry> fallocPool;
-    private final PlainObjectPool<FSyncExchangeEntry> fsyncPool;
-    private final PlainObjectPool<NopExchangeEntry> nopPool;
-    private final PlainObjectPool<OpenExchangeEntry> openPool;
-    private final PlainObjectPool<ReadExchangeEntry> readPool;
-    private final PlainObjectPool<ReadFixedExchangeEntry> readFixedPool;
-    private final PlainObjectPool<ReadVectorExchangeEntry> readVectorPool;
-    private final PlainObjectPool<RecvExchangeEntry> recvPool;
-    private final PlainObjectPool<SendExchangeEntry> sendPool;
-    private final PlainObjectPool<SpliceExchangeEntry> splicePool;
-    private final PlainObjectPool<StatExchangeEntry> statPool;
-    private final PlainObjectPool<TimeoutExchangeEntry> timeoutPool;
-    private final PlainObjectPool<WriteExchangeEntry> writePool;
-    private final PlainObjectPool<WriteFixedExchangeEntry> writeFixedPool;
-    private final PlainObjectPool<WriteVectorExchangeEntry> writeVectorPool;
-    private final List<PlainObjectPool<?>> pools;
+    private final ExchangeEntryPool acceptPool;
+    private final ExchangeEntryPool<CloseExchangeEntry> closePool;
+    private final ExchangeEntryPool<ConnectExchangeEntry> connectPool;
+    private final ExchangeEntryPool<DelayExchangeEntry> delayPool;
+    private final ExchangeEntryPool<FAllocExchangeEntry> fallocPool;
+    private final ExchangeEntryPool<FSyncExchangeEntry> fsyncPool;
+    private final ExchangeEntryPool<NopExchangeEntry> nopPool;
+    private final ExchangeEntryPool<OpenExchangeEntry> openPool;
+    private final ExchangeEntryPool<ReadExchangeEntry> readPool;
+    private final ExchangeEntryPool<ReadFixedExchangeEntry> readFixedPool;
+    private final ExchangeEntryPool<ReadVectorExchangeEntry> readVectorPool;
+    private final ExchangeEntryPool<RecvExchangeEntry> recvPool;
+    private final ExchangeEntryPool<SendExchangeEntry> sendPool;
+    private final ExchangeEntryPool<SpliceExchangeEntry> splicePool;
+    private final ExchangeEntryPool<StatExchangeEntry> statPool;
+    private final ExchangeEntryPool<TimeoutExchangeEntry> timeoutPool;
+    private final ExchangeEntryPool<WriteExchangeEntry> writePool;
+    private final ExchangeEntryPool<WriteFixedExchangeEntry> writeFixedPool;
+    private final ExchangeEntryPool<WriteVectorExchangeEntry> writeVectorPool;
+    @SuppressWarnings({"rawtypes"})
+    private final List<ExchangeEntryPool> pools;
+    private final ExchangeEntryRegistry registry = exchangeEntryRegistry();
 
-    public ExchangeEntryFactory(ObjectHeap<CompletionHandler> exchangeRegistry) {
-        acceptPool = objectPool(AcceptExchangeEntry::new, exchangeRegistry);
-        closePool = objectPool(CloseExchangeEntry::new, exchangeRegistry);
-        connectPool = objectPool(ConnectExchangeEntry::new, exchangeRegistry);
-        delayPool = objectPool(DelayExchangeEntry::new, exchangeRegistry);
-        fallocPool = objectPool(FAllocExchangeEntry::new, exchangeRegistry);
-        fsyncPool = objectPool(FSyncExchangeEntry::new, exchangeRegistry);
-        nopPool = objectPool(NopExchangeEntry::new, exchangeRegistry);
-        openPool = objectPool(OpenExchangeEntry::new, exchangeRegistry);
-        readPool = objectPool(ReadExchangeEntry::new, exchangeRegistry);
-        readFixedPool = objectPool(ReadFixedExchangeEntry::new, exchangeRegistry);
-        readVectorPool = objectPool(ReadVectorExchangeEntry::new, exchangeRegistry);
-        recvPool = objectPool(RecvExchangeEntry::new, exchangeRegistry);
-        sendPool = objectPool(SendExchangeEntry::new, exchangeRegistry);
-        splicePool = objectPool(SpliceExchangeEntry::new, exchangeRegistry);
-        statPool = objectPool(StatExchangeEntry::new, exchangeRegistry);
-        timeoutPool = objectPool(TimeoutExchangeEntry::new, exchangeRegistry);
-        writePool = objectPool(WriteExchangeEntry::new, exchangeRegistry);
-        writeFixedPool = objectPool(WriteFixedExchangeEntry::new, exchangeRegistry);
-        writeVectorPool = objectPool(WriteVectorExchangeEntry::new, exchangeRegistry);
+    private ExchangeEntryFactory() {
+        acceptPool = exchangeEntryPool(AcceptExchangeEntry::new, registry);
+        closePool = exchangeEntryPool(CloseExchangeEntry::new, registry);
+        connectPool = exchangeEntryPool(ConnectExchangeEntry::new, registry);
+        delayPool = exchangeEntryPool(DelayExchangeEntry::new, registry);
+        fallocPool = exchangeEntryPool(FAllocExchangeEntry::new, registry);
+        fsyncPool = exchangeEntryPool(FSyncExchangeEntry::new, registry);
+        nopPool = exchangeEntryPool(NopExchangeEntry::new, registry);
+        openPool = exchangeEntryPool(OpenExchangeEntry::new, registry);
+        readPool = exchangeEntryPool(ReadExchangeEntry::new, registry);
+        readFixedPool = exchangeEntryPool(ReadFixedExchangeEntry::new, registry);
+        readVectorPool = exchangeEntryPool(ReadVectorExchangeEntry::new, registry);
+        recvPool = exchangeEntryPool(RecvExchangeEntry::new, registry);
+        sendPool = exchangeEntryPool(SendExchangeEntry::new, registry);
+        splicePool = exchangeEntryPool(SpliceExchangeEntry::new, registry);
+        statPool = exchangeEntryPool(StatExchangeEntry::new, registry);
+        timeoutPool = exchangeEntryPool(TimeoutExchangeEntry::new, registry);
+        writePool = exchangeEntryPool(WriteExchangeEntry::new, registry);
+        writeFixedPool = exchangeEntryPool(WriteFixedExchangeEntry::new, registry);
+        writeVectorPool = exchangeEntryPool(WriteVectorExchangeEntry::new, registry);
 
         pools = List.of(acceptPool, closePool, connectPool, delayPool, fallocPool, fsyncPool, nopPool, openPool,
                         readPool, readFixedPool, readVectorPool, splicePool, statPool, timeoutPool, writePool,
                         writeFixedPool, writeVectorPool);
+    }
+
+    public static ExchangeEntryFactory exchangeEntryFactory() {
+        return new ExchangeEntryFactory();
+    }
+
+    public ExchangeEntryRegistry registry() {
+        return registry;
     }
 
     public NopExchangeEntry forNop(BiConsumer<Result<Unit>, Proactor> completion) {
@@ -151,8 +164,8 @@ public class ExchangeEntryFactory {
     @SuppressWarnings("unchecked")
     public <T extends InetAddress> AcceptExchangeEntry<T> forAccept(BiConsumer<Result<ConnectionContext<T>>, Proactor> completion,
                                                                     FileDescriptor socket, Set<SocketFlag> flags, boolean v6) {
-        return acceptPool.alloc()
-                         .prepare(completion, socket.descriptor(), Bitmask.combine(flags), v6);
+        return ((AcceptExchangeEntry<T>) acceptPool.alloc())
+            .prepare(completion, socket.descriptor(), Bitmask.combine(flags), v6);
     }
 
     public ConnectExchangeEntry forConnect(BiConsumer<Result<FileDescriptor>, Proactor> completion,
@@ -217,6 +230,6 @@ public class ExchangeEntryFactory {
     }
 
     public void clear() {
-        pools.forEach(PlainObjectPool::clear);
+        pools.forEach(ExchangeEntryPool::clear);
     }
 }

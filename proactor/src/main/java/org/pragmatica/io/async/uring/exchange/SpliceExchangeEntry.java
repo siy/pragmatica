@@ -21,7 +21,6 @@ import org.pragmatica.io.async.common.SizeT;
 import org.pragmatica.io.async.file.SpliceDescriptor;
 import org.pragmatica.io.async.uring.Bitmask;
 import org.pragmatica.io.async.uring.struct.raw.SQEntry;
-import org.pragmatica.io.async.uring.utils.PlainObjectPool;
 import org.pragmatica.lang.Result;
 
 import java.util.function.BiConsumer;
@@ -35,8 +34,8 @@ public class SpliceExchangeEntry extends AbstractExchangeEntry<SpliceExchangeEnt
     private SpliceDescriptor descriptor;
     private byte flags;
 
-    protected SpliceExchangeEntry(final PlainObjectPool<SpliceExchangeEntry> pool) {
-        super(SPLICE, pool);
+    protected SpliceExchangeEntry() {
+        super(SPLICE);
     }
 
     @Override

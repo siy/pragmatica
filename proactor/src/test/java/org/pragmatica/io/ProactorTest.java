@@ -45,22 +45,12 @@ import static org.pragmatica.lang.Option.option;
 class ProactorTest {
     @Test
     void nopCanBeSubmitted() {
-//        var finalResult = new AtomicReference<Result<?>>();
         var promise = Promise.<Unit>promise(p -> proactor().nop(p::resolve));
 
         promise.onSuccess(Assertions::assertNotNull)
                .onSuccess(System.out::println)
                .onFailure(ProactorTest::fail)
                .join();
-
-//        proactor.nop(finalResult::set);
-//
-//        waitForResult(finalResult);
-//
-//        finalResult.get()
-//                   .onSuccess(Assertions::assertNotNull)
-//                   .onSuccess(System.out::println)
-//                   .onFailure(ProactorTest::fail);
     }
 
     @Test

@@ -27,16 +27,19 @@ import org.pragmatica.io.async.uring.struct.offheap.OffHeapIoVector;
 import org.pragmatica.io.async.uring.struct.offheap.OffHeapSocketAddress;
 import org.pragmatica.io.async.uring.struct.raw.CQEntry;
 import org.pragmatica.io.async.uring.struct.raw.SQEntry;
-import org.pragmatica.io.async.uring.utils.ObjectHeap;
 import org.pragmatica.io.async.util.OffHeapSlice;
 import org.pragmatica.io.async.util.raw.RawMemory;
+import org.pragmatica.lang.Functions.FN1;
 import org.pragmatica.lang.Result;
 import org.pragmatica.lang.Unit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Queue;
 import java.util.Set;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.LinkedTransferQueue;
+
+import static org.pragmatica.io.async.uring.exchange.ExchangeEntryFactory.exchangeEntryFactory;
 
 /**
  * Low-level IO URING API
@@ -53,9 +56,8 @@ public class UringApi {
     private final CQEntry cqEntry;
     private final SQEntry sqEntry;
     private final int entriesCount;
-    private final ObjectHeap<CompletionHandler> exchangeRegistry;
     private final ExchangeEntryFactory factory;
-    private final ReentrantLock submitLock = new ReentrantLock();
+    private final Queue<ExchangeEntry<?>> queue = new LinkedTransferQueue<>();
 
     private boolean closed = false;
 
@@ -68,8 +70,7 @@ public class UringApi {
         this.completionBuffer = OffHeapSlice.fixedSize(entriesCount * 2 * ENTRY_SIZE);
         this.cqEntry = CQEntry.at(0);
         this.sqEntry = SQEntry.at(0);
-        this.exchangeRegistry = ObjectHeap.objectHeap(entriesCount * 2);
-        this.factory = new ExchangeEntryFactory(exchangeRegistry);
+        this.factory = exchangeEntryFactory();
     }
 
     public static Result<UringApi> uringApi(int requestedEntries, Set<UringSetupFlags> openFlags) {
@@ -86,10 +87,6 @@ public class UringApi {
 
     private int init(Set<UringSetupFlags> openFlags) {
         return UringNative.init(entriesCount, ringBuffer.address(), Bitmask.combine(openFlags));
-    }
-
-    public ExchangeEntryFactory factory() {
-        return factory;
     }
 
     public int register(RegisterOperation op, long arg1, long arg2) {
@@ -136,27 +133,40 @@ public class UringApi {
 
         for (long i = 0, address = completionBuffer.address(); i < ready; i++, address += ENTRY_SIZE) {
             cqEntry.reposition(RawMemory.getLong(address));
-            exchangeRegistry.elementUnsafe((int) cqEntry.userData())
-                            .accept(cqEntry.res(), cqEntry.flags(), proactor);
+
+            var element = factory.registry().lookup((int) cqEntry.userData());
+
+            if (!element.isUsable()) {
+                LOG.warn("Received completion for already finished element: {}", cqEntry.userData());
+                continue;
+            }
+
+//            if (element instanceof AbstractExchangeEntry<?, ?> xe) {
+//                if (xe.completion == null) {
+//                    LOG.warn("No element found for user data: {}", cqEntry.userData());
+//                    continue;
+//                }
+//            }
+
+            element.accept(cqEntry.res(), cqEntry.flags(), proactor);
         }
     }
 
-    public void submit(ExchangeEntry<?> entry) {
-        try {
-            while (true) {
-                var sqe = UringNative.getSQE(ringBuffer.address());
+    public void processSubmissions() {
+        int available = UringNative.peekBatchSQE(ringBuffer.address(),
+                                                 submissionBuffer.address(),
+                                                 Math.min(queue.size(), entriesCount));
 
-                if (sqe == 0) {
-                    continue;
-                }
-
-                sqEntry.reposition(sqe);
-                entry.apply(sqEntry.clear());
-                break;
-            }
-        } finally {
-            UringNative.submitAndWait(ringBuffer.address(), 0);
+        for (long i = 0, address = submissionBuffer.address(); i < available; i++, address += ENTRY_SIZE) {
+            sqEntry.reposition(RawMemory.getLong(address));
+            queue.remove().apply(sqEntry.clear());
         }
+        //UringNative.submitAndWait(ringBuffer.address(), 0);
+    }
+
+    //public void submit(ExchangeEntry<?> entry) {
+    public void submit(FN1<ExchangeEntry<?>, ExchangeEntryFactory> fn) {
+        queue.add(fn.apply(factory));
     }
 
     public static Result<FileDescriptor> socket(AddressFamily af, SocketType type, Set<SocketFlag> flags, Set<SocketOption> options) {

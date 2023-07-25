@@ -21,7 +21,6 @@ import org.pragmatica.io.async.SystemError;
 import org.pragmatica.io.async.Timeout;
 import org.pragmatica.io.async.uring.struct.offheap.OffHeapTimeSpec;
 import org.pragmatica.io.async.uring.struct.raw.SQEntry;
-import org.pragmatica.io.async.uring.utils.PlainObjectPool;
 import org.pragmatica.lang.Result;
 
 import java.time.Duration;
@@ -38,8 +37,8 @@ public class DelayExchangeEntry extends AbstractExchangeEntry<DelayExchangeEntry
     private final OffHeapTimeSpec timeSpec = OffHeapTimeSpec.uninitialized();
     private long startNanos;
 
-    protected DelayExchangeEntry(PlainObjectPool<DelayExchangeEntry> pool) {
-        super(TIMEOUT, pool);
+    protected DelayExchangeEntry() {
+        super(TIMEOUT);
     }
 
     @Override
@@ -58,15 +57,6 @@ public class DelayExchangeEntry extends AbstractExchangeEntry<DelayExchangeEntry
         completion.accept(result, proactor);
     }
 
-    public DelayExchangeEntry prepare(BiConsumer<Result<Duration>, Proactor> completion, Timeout timeout) {
-        startNanos = System.nanoTime();
-
-        timeout.secondsAndNanos()
-               .map(timeSpec::setSecondsNanos);
-
-        return super.prepare(completion);
-    }
-
     @Override
     public SQEntry apply(SQEntry entry) {
         return super.apply(entry)
@@ -74,5 +64,14 @@ public class DelayExchangeEntry extends AbstractExchangeEntry<DelayExchangeEntry
                     .fd(-1)
                     .len(1)
                     .off(1);
+    }
+
+    public DelayExchangeEntry prepare(BiConsumer<Result<Duration>, Proactor> completion, Timeout timeout) {
+        startNanos = System.nanoTime();
+
+        timeout.secondsAndNanos()
+               .map(timeSpec::setSecondsNanos);
+
+        return super.prepare(completion);
     }
 }

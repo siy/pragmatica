@@ -21,7 +21,6 @@ import org.pragmatica.io.async.SystemError;
 import org.pragmatica.io.async.file.FileDescriptor;
 import org.pragmatica.io.async.uring.struct.offheap.OffHeapSocketAddress;
 import org.pragmatica.io.async.uring.struct.raw.SQEntry;
-import org.pragmatica.io.async.uring.utils.PlainObjectPool;
 import org.pragmatica.lang.Result;
 
 import java.util.function.BiConsumer;
@@ -37,8 +36,8 @@ public class ConnectExchangeEntry extends AbstractExchangeEntry<ConnectExchangeE
     private byte flags;
     private FileDescriptor descriptor;
 
-    protected ConnectExchangeEntry(PlainObjectPool<ConnectExchangeEntry> pool) {
-        super(CONNECT, pool);
+    protected ConnectExchangeEntry() {
+        super(CONNECT);
     }
 
     @Override
