@@ -380,20 +380,20 @@ public interface PromiseIO {
         return writeFixed(fd, fixedBuffer, OffsetT.ZERO, empty());
     }
 
-    static Promise<Unit> fsync(FileDescriptor fd, boolean syncMetadata, Option<Timeout> timeout) {
-        return Promise.promise(promise -> proactor().fsync(promise::resolve, fd, syncMetadata, timeout));
+    static Promise<Unit> fileSync(FileDescriptor fd, boolean syncMetadata, Option<Timeout> timeout) {
+        return Promise.promise(promise -> proactor().fileSync(promise::resolve, fd, syncMetadata, timeout));
     }
 
-    static Promise<Unit> fsync(FileDescriptor fd, boolean syncMetadata) {
-        return fsync(fd, syncMetadata, empty());
+    static Promise<Unit> fileSync(FileDescriptor fd, boolean syncMetadata) {
+        return fileSync(fd, syncMetadata, empty());
     }
 
-    static Promise<Unit> falloc(FileDescriptor fd, Set<FileAllocFlags> flags, long offset, long len, Option<Timeout> timeout) {
-        return Promise.promise(promise -> proactor().falloc(promise::resolve, fd, flags, offset, len, timeout));
+    static Promise<Unit> fileAlloc(FileDescriptor fd, Set<FileAllocFlags> flags, OffsetT offset, long len, Option<Timeout> timeout) {
+        return Promise.promise(promise -> proactor().fileAlloc(promise::resolve, fd, flags, offset, len, timeout));
     }
 
-    static Promise<Unit> falloc(FileDescriptor fd, Set<FileAllocFlags> flags, long offset, long len) {
-        return falloc(fd, flags, offset, len, empty());
+    static Promise<Unit> fileAlloc(FileDescriptor fd, Set<FileAllocFlags> flags, OffsetT offset, long len) {
+        return fileAlloc(fd, flags, offset, len, empty());
     }
 
     static Promise<FixedBuffer> fixedBuffer(int size) {

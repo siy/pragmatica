@@ -85,13 +85,16 @@ class ProactorTest {
                       .onSuccess(fd -> {
                           var readResult = new AtomicReference<Result<SizeT>>();
 
-                          try (var buffer1 = OffHeapSlice.fixedSize(_1KiB)) {
+                          var buffer1 = OffHeapSlice.fixedSize(_1KiB);
+                          try {
                               proactor().readVector(readResult::set, fd, buffer1);
                               waitForResult(readResult);
 
                               readResult.get()
                                         .onSuccess(sz -> System.out.println("Successfully read " + sz + " bytes"))
                                         .onFailure(ProactorTest::fail);
+                          } finally {
+                                buffer1.close();
                           }
                       })
                       .onFailure(ProactorTest::fail);
@@ -117,8 +120,10 @@ class ProactorTest {
 
         System.out.println("Address: " + address);
 
-        try (var preparedText = OffHeapSlice.fromBytes("GET /\n".getBytes(StandardCharsets.US_ASCII));
-             var buffer = proactor().allocateFixedBuffer(768).fold(ProactorTest::throwIfError, Functions::id)) {
+        var preparedText = OffHeapSlice.fromBytes("GET /\n".getBytes(StandardCharsets.US_ASCII));
+        var buffer = proactor().allocateFixedBuffer(768).fold(ProactorTest::throwIfError, Functions::id);
+
+        try {
 
             var socketResult = new AtomicReference<Result<FileDescriptor>>();
             proactor().socket(socketResult::set,
@@ -166,6 +171,9 @@ class ProactorTest {
 
                             System.out.println("Content: [" + new String(buffer.export(), StandardCharsets.UTF_8) + "]");
                         });
+        } finally {
+            preparedText.close();
+            buffer.close();
         }
     }
 
@@ -176,6 +184,7 @@ class ProactorTest {
 
     private void waitForResult(AtomicReference<?> reference) {
         do {
+            //Intentionally empty block
         } while (reference.get() == null);
     }
 

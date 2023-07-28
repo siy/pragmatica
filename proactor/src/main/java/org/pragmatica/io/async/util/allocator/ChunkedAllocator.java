@@ -36,7 +36,7 @@ import static org.pragmatica.io.async.util.Units._1KiB;
  * <p>
  * Default chunk size is 16K, which should be good enough for most I/O buffers.
  */
-public class ChunkedAllocator implements AutoCloseable {
+public class ChunkedAllocator {
     public static final int CHUNK_SIZE = 16 * _1KiB;
 
     private final OffHeapSlice arena;
@@ -64,7 +64,6 @@ public class ChunkedAllocator implements AutoCloseable {
         return this;
     }
 
-    @Override
     public void close() {
         arena.close();
     }

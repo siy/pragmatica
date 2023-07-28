@@ -40,6 +40,7 @@ import static java.util.Comparator.comparingLong;
 import static org.pragmatica.dns.codec.DnsIoErrors.NO_RESULTS_FOUND;
 import static org.pragmatica.io.async.Timeout.timeout;
 import static org.pragmatica.io.async.net.SocketAddress.socketAddress;
+import static org.pragmatica.lang.Functions.FN1.id;
 import static org.pragmatica.lang.Promise.all;
 import static org.pragmatica.lang.Promise.anySuccess;
 import static org.pragmatica.lang.Unit.unitResult;
@@ -66,14 +67,19 @@ public class DomainNameResolver implements AsyncCloseable {
     private final PriorityBlockingQueue<TtlEntry> queue = new PriorityBlockingQueue<>(1024, comparingLong(TtlEntry::expirationTime));
     private final PeriodicTaskRunner taskRunner = PeriodicTaskRunner.periodicTaskRunner(timeout(1).seconds(), this::ttlProcessor);
 
-    //TODO: better error handling
     private DomainNameResolver(List<Inet4Address> serverList) {
         this.sockets = serverList
             .stream()
             .map(inetAddress -> socketAddress(DNS_PORT, inetAddress))
             .map(address -> PromiseIO.udpSocket().flatMap(fd -> PromiseIO.connect(fd, address)).join())
-            .map(Result::unwrap)
+            .filter(Result::isSuccess)
+            .map(res -> res.fold(err -> null, id()))
             .toList();
+
+        if (sockets.isEmpty()) {
+            throw new IllegalStateException("No DNS servers available");
+        }
+
         taskRunner.start();
     }
 
@@ -101,14 +107,14 @@ public class DomainNameResolver implements AsyncCloseable {
 
         sockets.forEach(fd -> PromiseIO.close(fd).onResultDo(threshold::registerEvent));
 
-        return all(runnerPromise, socketPromise).map(Unit::unit);
+        return all(runnerPromise, socketPromise)
+            .map(Unit::unit);
     }
 
     private Promise<DomainAddress> resolveDomain(DomainName domainName) {
         return Promise.promise(promise -> startResolve(promise, domainName));
     }
 
-    @SuppressWarnings("resource")
     private void startResolve(Promise<DomainAddress> promise, DomainName domainName) {
         var requestBuffer = encodeQuery(domainName);
 
@@ -135,7 +141,6 @@ public class DomainNameResolver implements AsyncCloseable {
         return requestBuffer;
     }
 
-    @SuppressWarnings("resource")
     private Promise<DomainAddress> querySingleServer(FileDescriptor socket, OffHeapSlice requestBuffer, DomainName domainName) {
         var promise = Promise.<DomainAddress>promise();
         var responseBuffer = OffHeapSlice.fixedSize(4096);
@@ -163,7 +168,7 @@ public class DomainNameResolver implements AsyncCloseable {
             .stream()
             .map(ResourceRecord::toDomainAddress)
             .filter(Result::isSuccess)
-            .map(Result::unwrap)
+            .map(res -> res.fold(err -> null, id()))
             .map(address -> address.replaceDomain(domainName))
             .findFirst()
             .map(Result::success)

@@ -27,7 +27,9 @@ import static org.pragmatica.io.async.util.allocator.ChunkedAllocator.allocator;
 class ChunkedAllocatorTest {
     @Test
     void allocationCanBeDoneSuccessfully() {
-        try(var allocator = allocator(128 * _1KiB)) {
+        var allocator = allocator(128 * _1KiB);
+
+        try {
             assertEquals("........", allocator.allocationMap());
 
             var buf1 = allocator.allocate(1);
@@ -53,12 +55,16 @@ class ChunkedAllocatorTest {
 
             buf3.onSuccess(FixedBuffer::dispose);
             assertEquals("U..UU...", allocator.allocationMap());
+        } finally {
+            allocator.close();
         }
     }
 
     @Test
     void allocationFailsIfNotEnoughSpace() {
-        try(var allocator = allocator(128 * _1KiB)) {
+        var allocator = allocator(128 * _1KiB);
+
+        try {
             assertEquals("........", allocator.allocationMap());
 
             var buf1 = allocator.allocate(128 * _1KiB);
@@ -68,6 +74,8 @@ class ChunkedAllocatorTest {
                      .onSuccessDo(Assertions::fail);
 
             assertEquals("UUUUUUUU", allocator.allocationMap());
+        } finally {
+            allocator.close();
         }
     }
 }

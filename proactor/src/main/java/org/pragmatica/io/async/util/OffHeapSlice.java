@@ -17,12 +17,13 @@
 
 package org.pragmatica.io.async.util;
 
+import org.pragmatica.io.async.common.SizeT;
 import org.pragmatica.io.async.uring.struct.RawStructure;
 
 /**
  * Memory buffer allocated outside Java heap.
  */
-public interface OffHeapSlice extends RawStructure<OffHeapSlice>, AutoCloseable {
+public interface OffHeapSlice extends RawStructure<OffHeapSlice> {
     static OffHeapSlice fromBytes(byte[] input) {
         return OffHeapBuffer.fromBytes(input);
     }
@@ -34,6 +35,9 @@ public interface OffHeapSlice extends RawStructure<OffHeapSlice>, AutoCloseable 
     int used();
 
     OffHeapSlice used(int used);
+    default OffHeapSlice used(SizeT usedSize) {
+        return used((int) usedSize.value());
+    }
 
     OffHeapSlice slice(int offset, int length);
 
@@ -41,6 +45,5 @@ public interface OffHeapSlice extends RawStructure<OffHeapSlice>, AutoCloseable 
 
     String hexDump();
 
-    @Override
     void close();
 }

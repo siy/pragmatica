@@ -16,6 +16,7 @@
 
 package org.pragmatica.io.async.uring.struct.raw;
 
+import org.pragmatica.io.async.uring.exchange.Opcode;
 import org.pragmatica.io.async.uring.struct.AbstractExternalRawStructure;
 import org.pragmatica.io.async.uring.struct.shape.SubmitQueueEntryOffsets;
 
@@ -35,8 +36,8 @@ public class SQEntry extends AbstractExternalRawStructure<SQEntry> {
         return new SQEntry(address);
     }
 
-    public SQEntry opcode(final byte data) {
-        return putByte(SubmitQueueEntryOffsets.opcode, data);
+    public SQEntry opcode(Opcode opcode) {
+        return putByte(SubmitQueueEntryOffsets.opcode, opcode.opcode());
     }
 
     public SQEntry flags(final byte data) {
@@ -75,7 +76,7 @@ public class SQEntry extends AbstractExternalRawStructure<SQEntry> {
         return putInt(SubmitQueueEntryOffsets.rw_flags, data);
     }
 
-    public SQEntry fsyncFlags(final int data) {
+    public SQEntry syncFlags(final int data) {
         return putInt(SubmitQueueEntryOffsets.fsync_flags, data);
     }
 

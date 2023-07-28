@@ -26,16 +26,16 @@ import org.pragmatica.io.async.net.*;
 import org.pragmatica.io.async.uring.UringSetupFlags;
 import org.pragmatica.io.async.util.OffHeapSlice;
 import org.pragmatica.io.async.util.Units;
-import org.pragmatica.io.async.util.allocator.FixedBuffer;
 import org.pragmatica.io.async.util.allocator.ChunkedAllocator;
+import org.pragmatica.io.async.util.allocator.FixedBuffer;
 import org.pragmatica.lang.Option;
 import org.pragmatica.lang.Result;
 import org.pragmatica.lang.Unit;
 
 import java.nio.file.Path;
 import java.time.Duration;
-import java.util.Set;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -442,12 +442,12 @@ public interface Proactor {
      * @param syncMetadata   Flag which controls flushing of file metadata: {@code true} enables syncing metadata
      * @param timeout        Optional operation timeout
      */
-    void fsync(BiConsumer<Result<Unit>, Proactor> completion, FileDescriptor fileDescriptor,
-               boolean syncMetadata, Option<Timeout> timeout);
+    void fileSync(BiConsumer<Result<Unit>, Proactor> completion, FileDescriptor fileDescriptor,
+                  boolean syncMetadata, Option<Timeout> timeout);
 
-    default void fsync(Consumer<Result<Unit>> completion, FileDescriptor fileDescriptor,
-                       boolean syncMetadata, Option<Timeout> timeout) {
-        fsync((result, __) -> completion.accept(result), fileDescriptor, syncMetadata, timeout);
+    default void fileSync(Consumer<Result<Unit>> completion, FileDescriptor fileDescriptor,
+                          boolean syncMetadata, Option<Timeout> timeout) {
+        fileSync((result, __) -> completion.accept(result), fileDescriptor, syncMetadata, timeout);
     }
 
     /**
@@ -460,12 +460,12 @@ public interface Proactor {
      * @param len            Length of the affected part of the file.
      * @param timeout        Optional operation timeout
      */
-    void falloc(BiConsumer<Result<Unit>, Proactor> completion, FileDescriptor fileDescriptor,
-                Set<FileAllocFlags> allocFlags, long offset, long len, Option<Timeout> timeout);
+    void fileAlloc(BiConsumer<Result<Unit>, Proactor> completion, FileDescriptor fileDescriptor,
+                   Set<FileAllocFlags> allocFlags, OffsetT offset, long len, Option<Timeout> timeout);
 
-    default void falloc(Consumer<Result<Unit>> completion, FileDescriptor fileDescriptor,
-                        Set<FileAllocFlags> allocFlags, long offset, long len, Option<Timeout> timeout) {
-        falloc((result, __) -> completion.accept(result), fileDescriptor, allocFlags, offset, len, timeout);
+    default void fileAlloc(Consumer<Result<Unit>> completion, FileDescriptor fileDescriptor,
+                           Set<FileAllocFlags> allocFlags, OffsetT offset, long len, Option<Timeout> timeout) {
+        fileAlloc((result, __) -> completion.accept(result), fileDescriptor, allocFlags, offset, len, timeout);
     }
 
     /**
@@ -600,14 +600,15 @@ public interface Proactor {
     enum ProactorHolder {
         INSTANCE;
 
-        private AtomicInteger counter = new AtomicInteger(0);
+        private final AtomicInteger counter = new AtomicInteger(0);
         private final List<Proactor> proactors;
+
+        private final ChunkedAllocator allocator = ChunkedAllocator.allocator(Units._1MiB);
         private static final int DEFAULT_QUEUE_SIZE = 128;
 
         ProactorHolder() {
             var numCores = Runtime.getRuntime().availableProcessors();
 //            var numCores = 1;
-            var allocator = ChunkedAllocator.allocator(Units._1MiB);
 
             proactors = IntStream.range(0, numCores)
                                  .mapToObj(__ -> ProactorImpl.proactor(DEFAULT_QUEUE_SIZE,
@@ -616,13 +617,13 @@ public interface Proactor {
                                  .collect(Collectors.toList());
         }
 
-
         Proactor get() {
             return proactors.get(counter.incrementAndGet() % proactors.size());
         }
 
         public void shutdown() {
             proactors.forEach(Proactor::shutdown);
+            allocator.close();
         }
     }
 }

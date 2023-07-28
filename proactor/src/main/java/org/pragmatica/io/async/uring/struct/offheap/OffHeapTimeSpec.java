@@ -34,6 +34,11 @@ public class OffHeapTimeSpec extends AbstractOffHeapStructure<OffHeapTimeSpec> {
         return putLong(tv_sec, seconds).putLong(tv_nsec, nanos);
     }
 
+    public OffHeapTimeSpec set(Timeout timeout) {
+        return timeout.secondsAndNanos()
+                      .map(this::setSecondsNanos);
+    }
+
     public static OffHeapTimeSpec uninitialized() {
         return new OffHeapTimeSpec();
     }

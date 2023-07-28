@@ -45,9 +45,9 @@ public class RequestTest {
                                         .questionRecord(QuestionRecord.addressV4ByName("www.google.com"))
                                         .build();
 
-
-        try (var query = OffHeapSlice.fixedSize(4096);
-             var buffer = OffHeapSlice.fixedSize(4096)) {
+        var query = OffHeapSlice.fixedSize(4096);
+        var buffer = OffHeapSlice.fixedSize(4096);
+        try {
 
             dnsQuery.encode(query);
 
@@ -73,6 +73,8 @@ public class RequestTest {
         } finally {
             option(socket.get())
                 .onPresent(fd -> PromiseIO.close(fd).join());
+            query.close();
+            buffer.close();
         }
     }
 }

@@ -19,7 +19,8 @@ package org.pragmatica.task;
 
 import org.junit.jupiter.api.Test;
 import org.pragmatica.io.async.Proactor;
-import org.pragmatica.lang.Promise;
+import org.pragmatica.lang.Result;
+import org.pragmatica.lang.Unit;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
@@ -27,6 +28,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.IntStream;
+
+import static org.pragmatica.lang.Unit.unitResult;
 
 public class NopThroughputTest {
     record SingleTask(int id, AtomicLong count, AtomicLong start, AtomicLong stop) {}
@@ -43,8 +46,8 @@ public class NopThroughputTest {
         IntStream.range(0, tasks).forEach(ndx -> runNop(ndx, list, shutdown, latch));
 
         Thread.sleep(3_000);
-        shutdown.setRelease(true);
-        latch.await(5, TimeUnit.SECONDS);
+        shutdown.set(true);
+        latch.await(15, TimeUnit.SECONDS);
 
         var minTime = list.stream().mapToLong(task -> task.start().get()).min().orElseThrow();
         var maxTime = list.stream().mapToLong(task -> task.stop().get()).max().orElseThrow();
@@ -64,31 +67,25 @@ public class NopThroughputTest {
         list.offer(task);
 
         var runnableTask = new RunnableTask(task, shutdown, latch);
-//        Promise.runAsync(runnableTask);
-        Proactor.proactor().nop(__ -> {
-//            runnableTask.run();
-            Promise.runAsync(runnableTask);
-        });
+
+        runnableTask.run(unitResult(), Proactor.proactor());
     }
 
     record RunnableTask(SingleTask task, AtomicBoolean shutdown, CountDownLatch latch) implements Runnable {
+
+        public void run(Result<Unit> ignored, Proactor proactor) {
+            if (shutdown.get()) {
+                task.stop().set(System.nanoTime());
+                latch.countDown();
+            } else {
+                run();
+                proactor.nop(this::run);
+            }
+        }
+
         @Override
         public void run() {
-            try {
-                task.count().incrementAndGet();
-//            System.out.println("" + task.id() + " " + Thread.currentThread().threadId() + " " + task.count().get());
-
-                if (shutdown.getAcquire()) {
-                    task.stop().set(System.nanoTime());
-//                    System.out.println("Shutting down " + task.id());
-                    latch.countDown();
-                    return;
-                }
-
-                Proactor.proactor().nop(__ -> run());
-            } catch (Throwable e) {
-                e.printStackTrace();
-            }
+            task.count().incrementAndGet();
         }
     }
 }

@@ -32,6 +32,13 @@ public sealed interface InetAddress {
     byte[] asBytes();
 
     /**
+     * Return protocol version of the address.
+     *
+     * @return protocol version of the address.
+     */
+    ProtocolVersion version();
+
+    /**
      * Convert byte representation of the IPv4 address into the address.
      *
      * @param address The byte representation of the address.
@@ -70,6 +77,11 @@ public sealed interface InetAddress {
                                  (int) asBytes[0] & 0xFF, (int) asBytes[1] & 0xFF,
                                  (int) asBytes[2] & 0xFF, (int) asBytes[3] & 0xFF);
         }
+
+        @Override
+        public ProtocolVersion version() {
+            return ProtocolVersion.IPV4;
+        }
     }
 
     /**
@@ -90,6 +102,11 @@ public sealed interface InetAddress {
                                  (int) asBytes[10] & 0xFF, (int) asBytes[11] & 0xFF,
                                  (int) asBytes[12] & 0xFF, (int) asBytes[13] & 0xFF,
                                  (int) asBytes[14] & 0xFF, (int) asBytes[15] & 0xFF);
+        }
+
+        @Override
+        public ProtocolVersion version() {
+            return ProtocolVersion.IPV6;
         }
     }
 }

@@ -17,16 +17,17 @@
 
 package org.pragmatica.io.async.file;
 
+import org.pragmatica.io.async.common.OffsetT;
 import org.pragmatica.io.async.uring.Bitmask;
 import org.pragmatica.lang.Option;
 
 import java.util.Set;
-import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 /**
  * File allocation flags.
  * <p>
- * These flags control behavior of {@link org.pragmatica.io.async.Proactor#falloc(BiConsumer, FileDescriptor, Set, long, long, Option)} method.
+ * These flags control behavior of {@link org.pragmatica.io.async.Proactor#fileAlloc(Consumer, FileDescriptor, Set, OffsetT, long, Option)} method.
  */
 public enum FileAllocFlags implements Bitmask {
     KEEP_SIZE(0x01),    /* default is extend size */
@@ -45,6 +46,6 @@ public enum FileAllocFlags implements Bitmask {
 
     @Override
     public int mask() {
-        return 0;
+        return mask;
     }
 }

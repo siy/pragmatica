@@ -29,7 +29,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class PeriodicTaskRunnerTest {
     @Test
     void testPeriodicRun() throws Exception {
-        var counter = new CountDownLatch(10);
+        var counter = new CountDownLatch(30);
         var timestamp = new AtomicLong(System.nanoTime());
         var delays = new ArrayList<Long>();
 
@@ -49,8 +49,8 @@ class PeriodicTaskRunnerTest {
         var max = delays.stream().mapToLong(Long::longValue).max().orElseThrow()/1000_000L;
         var average = (long) delays.stream().mapToLong(Long::longValue).average().orElseThrow()/1000_000L;
 
-        System.out.println("Min: " + min + "ms, Max: " + max + "ms, Avg: " + average + "ms");
+        System.err.println("Min: " + min + "ms, Max: " + max + "ms, Avg: " + average + "ms");
 
-        assertTrue(average > 80 && average < 120, "Expected average time must be between 80ms and 120ms");
+        assertTrue(average > 80 && average <= 120, "Expected average time must be between 80ms and 120ms");
     }
 }

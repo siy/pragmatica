@@ -19,6 +19,7 @@ package org.pragmatica.io.async.uring.struct.offheap;
 import org.pragmatica.io.async.net.InetAddress;
 import org.pragmatica.io.async.net.InetAddress.Inet4Address;
 import org.pragmatica.io.async.net.InetAddress.Inet6Address;
+import org.pragmatica.io.async.net.ProtocolVersion;
 import org.pragmatica.io.async.net.SocketAddress;
 import org.pragmatica.io.async.uring.struct.raw.RawSocketAddress;
 import org.pragmatica.io.async.uring.struct.raw.RawSocketAddressIn;
@@ -40,13 +41,17 @@ public class OffHeapSocketAddress extends AbstractOffHeapStructure<OffHeapSocket
     private final RawSocketAddressIn shapeV4 = RawSocketAddressIn.at(0);
     private final RawSocketAddressIn6 shapeV6 = RawSocketAddressIn6.at(0);
 
-    private OffHeapSocketAddress(boolean v6) {
+    private OffHeapSocketAddress(ProtocolVersion version) {
         super(SIZE);
-        protocolVersion(v6);
+        protocolVersion(version);
     }
 
-    public final void protocolVersion(boolean v6) {
-        this.shape = v6 ? shapeV6 : shapeV4;
+    public final void protocolVersion(ProtocolVersion version) {
+        this.shape = switch (version) {
+            case IPV4 -> shapeV4;
+            case IPV6 -> shapeV6;
+        };
+
         reset();
     }
 
@@ -76,9 +81,8 @@ public class OffHeapSocketAddress extends AbstractOffHeapStructure<OffHeapSocket
     @SuppressWarnings("unchecked")
     public <T extends InetAddress> OffHeapSocketAddress assign(SocketAddress<T> input) {
         switch (input.address()) {
-            case Inet4Address __1 -> protocolVersion(false);
-            case Inet6Address __2 -> protocolVersion(true);
-            default -> throw new IllegalStateException("Unexpected value: " + input.address());
+            case Inet4Address __1 -> protocolVersion(ProtocolVersion.IPV4);
+            case Inet6Address __2 -> protocolVersion(ProtocolVersion.IPV6);
         }
 
         shape.assign(input);
@@ -86,18 +90,17 @@ public class OffHeapSocketAddress extends AbstractOffHeapStructure<OffHeapSocket
     }
 
     public static OffHeapSocketAddress v4() {
-        return new OffHeapSocketAddress(false);
+        return new OffHeapSocketAddress(ProtocolVersion.IPV4);
     }
 
     public static OffHeapSocketAddress v6() {
-        return new OffHeapSocketAddress(true);
+        return new OffHeapSocketAddress(ProtocolVersion.IPV6);
     }
 
     public static <T extends InetAddress> OffHeapSocketAddress unsafeSocketAddress(SocketAddress<T> address) {
         return switch (address.address()) {
-            case Inet4Address __1 -> new OffHeapSocketAddress(false).assign(address);
-            case Inet6Address __2 -> new OffHeapSocketAddress(true).assign(address);
-            default -> null;
+            case Inet4Address __1 -> new OffHeapSocketAddress(ProtocolVersion.IPV4).assign(address);
+            case Inet6Address __2 -> new OffHeapSocketAddress(ProtocolVersion.IPV6).assign(address);
         };
     }
 }

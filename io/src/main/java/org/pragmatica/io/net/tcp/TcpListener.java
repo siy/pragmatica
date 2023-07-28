@@ -17,7 +17,6 @@
 
 package org.pragmatica.io.net.tcp;
 
-import org.pragmatica.io.async.Proactor;
 import org.pragmatica.io.async.SystemError;
 import org.pragmatica.io.async.net.ConnectionContext;
 import org.pragmatica.io.async.net.InetAddress;

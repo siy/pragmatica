@@ -22,31 +22,24 @@ import org.pragmatica.io.async.common.SizeT;
 import org.pragmatica.io.async.file.FileDescriptor;
 import org.pragmatica.io.async.net.*;
 import org.pragmatica.io.async.uring.exchange.ExchangeEntry;
-import org.pragmatica.io.async.uring.exchange.ExchangeEntryFactory;
+import org.pragmatica.io.async.uring.exchange.ExchangeEntryPool;
 import org.pragmatica.io.async.uring.struct.offheap.OffHeapIoVector;
 import org.pragmatica.io.async.uring.struct.offheap.OffHeapSocketAddress;
 import org.pragmatica.io.async.uring.struct.raw.CQEntry;
 import org.pragmatica.io.async.uring.struct.raw.SQEntry;
 import org.pragmatica.io.async.util.OffHeapSlice;
 import org.pragmatica.io.async.util.raw.RawMemory;
-import org.pragmatica.lang.Functions.FN1;
 import org.pragmatica.lang.Result;
 import org.pragmatica.lang.Unit;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.LinkedTransferQueue;
 
-import static org.pragmatica.io.async.uring.exchange.ExchangeEntryFactory.exchangeEntryFactory;
-
 /**
  * Low-level IO URING API
  */
 public class UringApi {
-    private static final Logger LOG = LoggerFactory.getLogger(UringApi.class);
-
     public static final int MIN_QUEUE_SIZE = 128;
     private static final int ENTRY_SIZE = 8;    // each entry is a 64-bit pointer
 
@@ -56,12 +49,13 @@ public class UringApi {
     private final CQEntry cqEntry;
     private final SQEntry sqEntry;
     private final int entriesCount;
-    private final ExchangeEntryFactory factory;
+    private final ExchangeEntryPool pool;
     private final Queue<ExchangeEntry<?>> queue = new LinkedTransferQueue<>();
 
     private boolean closed = false;
 
-    private UringApi(int numEntries) {
+    private UringApi(int numEntries, ExchangeEntryPool pool) {
+        this.pool = pool;
         this.entriesCount = (numEntries <= MIN_QUEUE_SIZE) ?
                             MIN_QUEUE_SIZE : 1 << (32 - Integer.numberOfLeadingZeros(numEntries - 1));
 
@@ -70,15 +64,15 @@ public class UringApi {
         this.completionBuffer = OffHeapSlice.fixedSize(entriesCount * 2 * ENTRY_SIZE);
         this.cqEntry = CQEntry.at(0);
         this.sqEntry = SQEntry.at(0);
-        this.factory = exchangeEntryFactory();
     }
 
-    public static Result<UringApi> uringApi(int requestedEntries, Set<UringSetupFlags> openFlags) {
-        var uringApi = new UringApi(requestedEntries);
+    public static Result<UringApi> uringApi(int requestedEntries, Set<UringSetupFlags> openFlags, ExchangeEntryPool pool) {
+        var uringApi = new UringApi(requestedEntries, pool);
         var rc = uringApi.init(openFlags);
 
         if (rc != 0) {
             uringApi.shutdown();
+            pool.clear();
             return SystemError.fromCode(rc).result();
         }
 
@@ -94,7 +88,8 @@ public class UringApi {
     }
 
     public Result<OffHeapSlice[]> registerBuffers(OffHeapSlice... buffers) {
-        try (var vector = OffHeapIoVector.withReadBuffers(buffers)) {
+        var vector = OffHeapIoVector.withReadBuffers(buffers);
+        try {
             int rc = register(RegisterOperation.IORING_REGISTER_BUFFERS, vector.address(), vector.length());
 
             if (rc < 0) {
@@ -102,6 +97,8 @@ public class UringApi {
             }
 
             return Result.success(buffers);
+        } finally {
+            vector.close();
         }
     }
 
@@ -120,7 +117,7 @@ public class UringApi {
         submissionBuffer.close();
         completionBuffer.close();
         ringBuffer.close();
-        factory.clear();
+        pool.clear();
         closed = true;
     }
 
@@ -133,22 +130,7 @@ public class UringApi {
 
         for (long i = 0, address = completionBuffer.address(); i < ready; i++, address += ENTRY_SIZE) {
             cqEntry.reposition(RawMemory.getLong(address));
-
-            var element = factory.registry().lookup((int) cqEntry.userData());
-
-            if (!element.isUsable()) {
-                LOG.warn("Received completion for already finished element: {}", cqEntry.userData());
-                continue;
-            }
-
-//            if (element instanceof AbstractExchangeEntry<?, ?> xe) {
-//                if (xe.completion == null) {
-//                    LOG.warn("No element found for user data: {}", cqEntry.userData());
-//                    continue;
-//                }
-//            }
-
-            element.accept(cqEntry.res(), cqEntry.flags(), proactor);
+            pool.completeRequest(cqEntry, proactor);
         }
     }
 
@@ -159,14 +141,36 @@ public class UringApi {
 
         for (long i = 0, address = submissionBuffer.address(); i < available; i++, address += ENTRY_SIZE) {
             sqEntry.reposition(RawMemory.getLong(address));
-            queue.remove().apply(sqEntry.clear());
+            queue.remove().fill(sqEntry.clear());
         }
-        //UringNative.submitAndWait(ringBuffer.address(), 0);
+        UringNative.submitAndWait(ringBuffer.address(), 0);
     }
 
-    //public void submit(ExchangeEntry<?> entry) {
-    public void submit(FN1<ExchangeEntry<?>, ExchangeEntryFactory> fn) {
-        queue.add(fn.apply(factory));
+    //FIXME: operation timeouts are not working
+    public void submit(ExchangeEntry<?> entry) {
+        queue.add(entry);
+//        int cnt = entry.hasTimeout() ? 2 : 1;
+//        int available;
+//
+//        //TODO: better waiting strategy?
+//        do {
+//            available = UringNative.peekBatchSQE(ringBuffer.address(),
+//                                                 submissionBuffer.address(),
+//                                                 cnt);
+//        } while (available < cnt);
+//
+//        var address = submissionBuffer.address();
+//
+//        sqEntry.reposition(RawMemory.getLong(address));
+//
+//        entry.fill(sqEntry.clear());
+//
+//        if (entry.hasTimeout()) {
+//            sqEntry.reposition(RawMemory.getLong(address + ENTRY_SIZE));
+//            entry.fillTimeout(sqEntry.clear());
+//        }
+//
+//        UringNative.submitAndWait(ringBuffer.address(), 0);
     }
 
     public static Result<FileDescriptor> socket(AddressFamily af, SocketType type, Set<SocketFlag> flags, Set<SocketOption> options) {
@@ -188,10 +192,12 @@ public class UringApi {
             return SystemError.ENOTSOCK.result();
         }
 
-        try (var offHeapAddress = OffHeapSocketAddress.unsafeSocketAddress(address)) {
+        var offHeapAddress = OffHeapSocketAddress.unsafeSocketAddress(address);
+        try {
             var rc = UringNative.listen(fd.descriptor(), offHeapAddress.sockAddrPtr(), offHeapAddress.sockAddrSize(), queueLen);
-
             return SystemError.result(rc, __ -> fd);
+        } finally {
+            offHeapAddress.close();
         }
     }
 }

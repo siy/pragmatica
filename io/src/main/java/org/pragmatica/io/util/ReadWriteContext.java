@@ -17,7 +17,6 @@
 
 package org.pragmatica.io.util;
 
-import org.pragmatica.io.AsyncCloseable;
 import org.pragmatica.io.PromiseIO;
 import org.pragmatica.io.async.common.SizeT;
 import org.pragmatica.io.async.net.InetAddress;
@@ -30,7 +29,7 @@ import org.pragmatica.lang.Unit;
 
 import java.util.function.Consumer;
 
-public final class ReadWriteContext<T extends InetAddress> implements AsyncCloseable {
+public final class ReadWriteContext<T extends InetAddress> {
     private final ClientConnectionContext<T> connectionContext;
     private final OffHeapSlice readBuffer;
     private final OffHeapSlice writeBuffer;
@@ -70,7 +69,6 @@ public final class ReadWriteContext<T extends InetAddress> implements AsyncClose
             .flatMap(() -> PromiseIO.write(connectionContext.socket(), writeBuffer));
     }
 
-    @Override
     public Promise<Unit> close() {
         return connectionContext.close()
                                 .onResultDo(() -> {
