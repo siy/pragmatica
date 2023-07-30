@@ -24,6 +24,7 @@ import org.pragmatica.io.async.file.stat.StatFlag;
 import org.pragmatica.io.async.file.stat.StatMask;
 import org.pragmatica.io.async.net.*;
 import org.pragmatica.io.async.uring.UringSetupFlags;
+import org.pragmatica.io.async.util.DaemonThreadFactory;
 import org.pragmatica.io.async.util.OffHeapSlice;
 import org.pragmatica.io.async.util.Units;
 import org.pragmatica.io.async.util.allocator.ChunkedAllocator;
@@ -608,12 +609,14 @@ public interface Proactor {
 
         ProactorHolder() {
             var numCores = Runtime.getRuntime().availableProcessors();
+            var factory = DaemonThreadFactory.threadFactory("Proactor Worker %d");
 //            var numCores = 1;
 
             proactors = IntStream.range(0, numCores)
                                  .mapToObj(__ -> ProactorImpl.proactor(DEFAULT_QUEUE_SIZE,
                                                                        UringSetupFlags.defaultFlags(),
-                                                                       allocator))
+                                                                       allocator,
+                                                                       factory))
                                  .collect(Collectors.toList());
         }
 

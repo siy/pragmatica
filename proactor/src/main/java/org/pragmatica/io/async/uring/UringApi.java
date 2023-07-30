@@ -34,7 +34,7 @@ import org.pragmatica.lang.Unit;
 
 import java.util.Queue;
 import java.util.Set;
-import java.util.concurrent.LinkedTransferQueue;
+import java.util.concurrent.ArrayBlockingQueue;
 
 /**
  * Low-level IO URING API
@@ -50,9 +50,15 @@ public class UringApi {
     private final SQEntry sqEntry;
     private final int entriesCount;
     private final ExchangeEntryPool pool;
-    private final Queue<ExchangeEntry<?>> queue = new LinkedTransferQueue<>();
+    private final Queue<ExchangeEntry<?>> queue = new ArrayBlockingQueue<>(MIN_QUEUE_SIZE * MIN_QUEUE_SIZE);
 
     private boolean closed = false;
+    private int idleCounter = 0;
+
+
+    private int maxQueueLen = 0;
+    private int maxSQBatchSize = 0;
+    private int maxCQBatchSize = 0;
 
     private UringApi(int numEntries, ExchangeEntryPool pool) {
         this.pool = pool;
@@ -125,8 +131,16 @@ public class UringApi {
         UringNative.submitAndWait(ringBuffer.address(), count);
     }
 
+    public record UringApiStats(int maxQueueLen, int maxSQBatchSize, int maxCQBatchSize, int maxRetries, int poolSize) {}
+
+    public UringApiStats stats() {
+        return new UringApiStats(maxQueueLen, maxSQBatchSize, maxCQBatchSize, pool.maxRetries(), pool.size());
+    }
+
     public void processCompletions(Proactor proactor) {
         long ready = UringNative.peekBatchAndAdvanceCQE(ringBuffer.address(), completionBuffer.address(), completionBuffer.size() / ENTRY_SIZE);
+
+        this.maxCQBatchSize = Math.max(maxCQBatchSize, (int) ready);
 
         for (long i = 0, address = completionBuffer.address(); i < ready; i++, address += ENTRY_SIZE) {
             cqEntry.reposition(RawMemory.getLong(address));
@@ -139,38 +153,19 @@ public class UringApi {
                                                  submissionBuffer.address(),
                                                  Math.min(queue.size(), entriesCount));
 
+        this.maxSQBatchSize = Math.max(maxSQBatchSize, available);
+
         for (long i = 0, address = submissionBuffer.address(); i < available; i++, address += ENTRY_SIZE) {
             sqEntry.reposition(RawMemory.getLong(address));
             queue.remove().fill(sqEntry.clear());
         }
-        UringNative.submitAndWait(ringBuffer.address(), 0);
+        UringNative.submitAndWait(ringBuffer.address(), available);
     }
 
     //FIXME: operation timeouts are not working
     public void submit(ExchangeEntry<?> entry) {
         queue.add(entry);
-//        int cnt = entry.hasTimeout() ? 2 : 1;
-//        int available;
-//
-//        //TODO: better waiting strategy?
-//        do {
-//            available = UringNative.peekBatchSQE(ringBuffer.address(),
-//                                                 submissionBuffer.address(),
-//                                                 cnt);
-//        } while (available < cnt);
-//
-//        var address = submissionBuffer.address();
-//
-//        sqEntry.reposition(RawMemory.getLong(address));
-//
-//        entry.fill(sqEntry.clear());
-//
-//        if (entry.hasTimeout()) {
-//            sqEntry.reposition(RawMemory.getLong(address + ENTRY_SIZE));
-//            entry.fillTimeout(sqEntry.clear());
-//        }
-//
-//        UringNative.submitAndWait(ringBuffer.address(), 0);
+        this.maxQueueLen = Math.max(maxQueueLen, queue.size());
     }
 
     public static Result<FileDescriptor> socket(AddressFamily af, SocketType type, Set<SocketFlag> flags, Set<SocketOption> options) {

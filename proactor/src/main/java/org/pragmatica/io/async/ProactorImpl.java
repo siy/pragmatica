@@ -30,7 +30,6 @@ import org.pragmatica.io.async.uring.exchange.AsyncOperation;
 import org.pragmatica.io.async.uring.exchange.ExchangeEntryPool;
 import org.pragmatica.io.async.uring.struct.offheap.OffHeapCString;
 import org.pragmatica.io.async.uring.struct.offheap.OffHeapSocketAddress;
-import org.pragmatica.io.async.util.DaemonThreadFactory;
 import org.pragmatica.io.async.util.OffHeapSlice;
 import org.pragmatica.io.async.util.allocator.ChunkedAllocator;
 import org.pragmatica.io.async.util.allocator.FixedBuffer;
@@ -48,6 +47,7 @@ import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -75,7 +75,7 @@ class ProactorImpl implements Proactor {
     private final AtomicBoolean shutdown = new AtomicBoolean(false);
     private final CountDownLatch shutdownLatch = new CountDownLatch(1);
 
-    private ProactorImpl(UringApi uringApi, ChunkedAllocator sharedAllocator, ExchangeEntryPool pool) {
+    private ProactorImpl(UringApi uringApi, ChunkedAllocator sharedAllocator, ExchangeEntryPool pool, ThreadFactory factory) {
         this.uringApi = uringApi;
         this.pool = pool;
 
@@ -84,7 +84,7 @@ class ProactorImpl implements Proactor {
                             .completion(this::heartbeat).setDelayTime(HEARTBEAT_INTERVAL));
 
         this.sharedAllocator = sharedAllocator.register(uringApi);
-        this.executor = Executors.newSingleThreadExecutor(DaemonThreadFactory.threadFactory("Proactor Worker %d"));
+        this.executor = Executors.newSingleThreadExecutor(factory);
         this.executor.submit(this::processCompletions);
     }
 
@@ -92,12 +92,12 @@ class ProactorImpl implements Proactor {
         proactor.delay(this::heartbeat, HEARTBEAT_INTERVAL);
     }
 
-    static Proactor proactor(int queueSize, Set<UringSetupFlags> openFlags, ChunkedAllocator sharedAllocator) {
+    static Proactor proactor(int queueSize, Set<UringSetupFlags> openFlags, ChunkedAllocator sharedAllocator, ThreadFactory factory) {
         var pool = exchangeEntryPool();
         var api = UringApi.uringApi(queueSize, openFlags, pool)
                           .fold(ProactorImpl::fail, Functions::id);
 
-        return new ProactorImpl(api, sharedAllocator, pool);
+        return new ProactorImpl(api, sharedAllocator, pool, factory);
     }
 
     private static <R> R fail(Cause cause) {
@@ -171,7 +171,8 @@ class ProactorImpl implements Proactor {
                       OffsetT offset, Option<Timeout> timeout) {
         uringApi.submit(pool.<SizeT>acquire()
                             .operation(WRITE)
-                            .completion(completion).descriptor(fd)
+                            .completion(completion)
+                            .descriptor(fd)
                             .buffer(buffer)
                             .offset(offset)
                             .setOperationTimeout(timeout));

@@ -20,7 +20,7 @@ import org.pragmatica.io.async.Proactor;
 import org.pragmatica.io.async.uring.struct.raw.CQEntry;
 
 import java.util.Arrays;
-import java.util.concurrent.atomic.AtomicMarkableReference;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.pragmatica.io.async.uring.exchange.ExchangeEntry.exchangeEntry;
 
@@ -31,48 +31,68 @@ import static org.pragmatica.io.async.uring.exchange.ExchangeEntry.exchangeEntry
  * requests are issued.
  */
 public class ExchangeEntryPool {
+    private static class ExchangeEntryCell {
+
+        final ExchangeEntry<?> entry;
+
+        final AtomicBoolean inUse = new AtomicBoolean(false);
+        private ExchangeEntryCell(int index) {
+            this.entry = exchangeEntry(index);
+        }
+
+    }
+
     private static final int INITIAL_POOL_SIZE = 1024;
+
     private static final int MAX_RETRIES = 7;
-    private static final Xoshiro256PlusPlus random = Xoshiro256PlusPlus.xoshiro256PlusPlus();
+    private static final WyRand random = WyRand.wyRand();
     private final transient Object lock = new Object();
+    private transient volatile ExchangeEntryCell[] array;
 
-    private transient volatile Object[] array;
-
-    private Object[] getArray() {
+    private volatile int maxRetries;
+    private ExchangeEntryCell[] getArray() {
         return array;
     }
 
     /**
      * Sets the array.
      */
-    private void setArray(Object[] a) {
+    private void setArray(ExchangeEntryCell[] a) {
         array = a;
     }
 
     private ExchangeEntryPool() {
-        setArray(populate(new Object[INITIAL_POOL_SIZE]));
+        setArray(populate(new ExchangeEntryCell[INITIAL_POOL_SIZE]));
     }
 
-    private Object[] populate(Object[] objects) {
+    private ExchangeEntryCell[] populate(ExchangeEntryCell[] objects) {
         for (int i = 0; i < objects.length; i++) {
-            objects[i] = new AtomicMarkableReference<>(exchangeEntry(i), false);
+            if (objects[i] != null) {
+                continue;
+            }
+            objects[i] = new ExchangeEntryCell(i);
         }
         return objects;
     }
 
-    @SuppressWarnings("unchecked")
-    private static <E> AtomicMarkableReference<ExchangeEntry<E>> elementAt(Object[] a, int index) {
-        return (AtomicMarkableReference<ExchangeEntry<E>>) a[index];
+    private static ExchangeEntryCell elementAt(ExchangeEntryCell[] a, int index) {
+        return a[index];
     }
 
     public static ExchangeEntryPool exchangeEntryPool() {
         return new ExchangeEntryPool();
     }
 
-    public <T> ExchangeEntry<T> lookup(int key) {
-        return ExchangeEntryPool.<T>elementAt(getArray(), key).getReference();
+    public int size() {
+        return getArray().length;
     }
 
+    @SuppressWarnings("unchecked")
+    public <T> ExchangeEntry<T> lookup(int key) {
+        return (ExchangeEntry<T>) ExchangeEntryPool.elementAt(getArray(), key).entry;
+    }
+
+    @SuppressWarnings("unchecked")
     public <T> ExchangeEntry<T> acquire() {
         var array = getArray();
 
@@ -80,17 +100,18 @@ public class ExchangeEntryPool {
             var index = (int) (random.next() & (array.length - 1));
             var element = ExchangeEntryPool.<T>elementAt(array, index);
 
-            if (element.isMarked()) {
+            if (element.inUse.get()) {
                 continue;
             }
 
-            if (element.attemptMark(element.getReference(), true)) {
-                return element.getReference();
+            if (element.inUse.compareAndSet(false, true)) {
+                this.maxRetries = Math.max(this.maxRetries, i);
+                return (ExchangeEntry<T>) element.entry;
             }
         }
 
         synchronized (lock) {
-            Object[] es = getArray();
+            ExchangeEntryCell[] es = getArray();
             int len = es.length;
             es = Arrays.copyOf(es, len * 2);
             populate(es);
@@ -101,7 +122,7 @@ public class ExchangeEntryPool {
     }
 
     private <T> void release(ExchangeEntry<T> entry) {
-        ExchangeEntryPool.<T>elementAt(getArray(), entry.key()).attemptMark(entry, false);
+        ExchangeEntryPool.elementAt(getArray(), entry.key()).inUse.lazySet(false);
     }
 
     public void clear() {
@@ -109,11 +130,13 @@ public class ExchangeEntryPool {
             var array = getArray();
 
             for (int i = 0; i < array.length; i++) {
-                var entry = elementAt(array, i).getReference();
-                entry.close();
-                elementAt(array, i).set(null, false);
+                elementAt(array, i).entry.close();
             }
         }
+    }
+
+    public int maxRetries() {
+        return maxRetries;
     }
 
     public void completeRequest(CQEntry cqEntry, Proactor proactor) {
