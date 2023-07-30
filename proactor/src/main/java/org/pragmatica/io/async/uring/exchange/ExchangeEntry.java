@@ -340,7 +340,9 @@ public class ExchangeEntry<R> {
 
     public ExchangeEntry<R> setOperationTimeout(Option<Timeout> timeout) {
         timeout.onPresent(operationTimeout::set);
-        flags = timeout.fold(() -> (byte) 0, __ -> (byte) SQEntryFlags.IO_LINK.mask());
+        flags = timeout.isEmpty()
+                ? SQEntryFlags.NONE.byteMask()
+                : SQEntryFlags.IO_LINK.byteMask();
         return this;
     }
 

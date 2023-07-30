@@ -79,9 +79,9 @@ class ProactorImpl implements Proactor {
         this.uringApi = uringApi;
         this.pool = pool;
 
-        uringApi.submit(pool.<Duration>acquire()
-                            .operation(TIMEOUT)
-                            .completion(this::heartbeat).setDelayTime(HEARTBEAT_INTERVAL));
+//        uringApi.submit(pool.<Duration>acquire()
+//                            .operation(TIMEOUT)
+//                            .completion(this::heartbeat).setDelayTime(HEARTBEAT_INTERVAL));
 
         this.sharedAllocator = sharedAllocator.register(uringApi);
         this.executor = Executors.newSingleThreadExecutor(factory);

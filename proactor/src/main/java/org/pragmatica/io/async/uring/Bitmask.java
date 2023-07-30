@@ -23,6 +23,9 @@ import java.util.Set;
  */
 public interface Bitmask {
     int mask();
+    default byte byteMask() {
+        return (byte) (mask() & 0xFF);
+    }
 
     static int combine(final Set<? extends Bitmask> flags) {
         return flags.stream().mapToInt(Bitmask::mask).sum();

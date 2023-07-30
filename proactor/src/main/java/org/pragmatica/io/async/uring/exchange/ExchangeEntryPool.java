@@ -42,7 +42,7 @@ public class ExchangeEntryPool {
 
     }
 
-    private static final int INITIAL_POOL_SIZE = 1024;
+    private static final int INITIAL_POOL_SIZE = 4096;
 
     private static final int MAX_RETRIES = 7;
     private static final WyRand random = WyRand.wyRand();
@@ -98,7 +98,7 @@ public class ExchangeEntryPool {
 
         for (int i = 0; i < MAX_RETRIES; i++) {
             var index = (int) (random.next() & (array.length - 1));
-            var element = ExchangeEntryPool.<T>elementAt(array, index);
+            var element = ExchangeEntryPool.elementAt(array, index);
 
             if (element.inUse.get()) {
                 continue;

@@ -22,6 +22,7 @@ import org.pragmatica.io.async.uring.Bitmask;
  * Flags for submission queue entry.
  */
 public enum SQEntryFlags implements Bitmask {
+    NONE(0x000),
     FIXED_FILE(0x001),    /* use fixed fileset */
     IO_DRAIN(0x002),      /* issue after inflight IO */
     IO_LINK(0x004),       /* links next sqe */
