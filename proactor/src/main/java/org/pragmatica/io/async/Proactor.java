@@ -23,6 +23,7 @@ import org.pragmatica.io.async.file.stat.FileStat;
 import org.pragmatica.io.async.file.stat.StatFlag;
 import org.pragmatica.io.async.file.stat.StatMask;
 import org.pragmatica.io.async.net.*;
+import org.pragmatica.io.async.uring.UringApi;
 import org.pragmatica.io.async.uring.UringSetupFlags;
 import org.pragmatica.io.async.util.DaemonThreadFactory;
 import org.pragmatica.io.async.util.OffHeapSlice;
@@ -586,6 +587,10 @@ public interface Proactor {
         return ProactorHolder.INSTANCE.get();
     }
 
+    static List<UringApi.UringApiStats> stats() {
+        return ProactorHolder.INSTANCE.stats();
+    }
+
     /**
      * Shutdown current Proactor instance.
      */
@@ -602,7 +607,7 @@ public interface Proactor {
         INSTANCE;
 
         private final AtomicInteger counter = new AtomicInteger(0);
-        private final List<Proactor> proactors;
+        private final List<ProactorImpl> proactors;
 
         private final ChunkedAllocator allocator = ChunkedAllocator.allocator(Units._1MiB);
         private static final int DEFAULT_QUEUE_SIZE = 128;
@@ -622,6 +627,12 @@ public interface Proactor {
 
         Proactor get() {
             return proactors.get(counter.incrementAndGet() % proactors.size());
+        }
+
+        List<UringApi.UringApiStats> stats() {
+            return proactors.stream()
+                            .map(ProactorImpl::stats)
+                            .toList();
         }
 
         public void shutdown() {

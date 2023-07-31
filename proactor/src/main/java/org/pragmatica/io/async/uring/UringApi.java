@@ -131,10 +131,12 @@ public class UringApi {
         UringNative.submitAndWait(ringBuffer.address(), count);
     }
 
-    public record UringApiStats(int maxQueueLen, int maxSQBatchSize, int maxCQBatchSize, int maxRetries, int poolSize) {}
+    public record UringApiStats(int maxQueueLen, int maxSQBatchSize, int maxCQBatchSize, int poolSize) {}
+//    public record UringApiStats(int maxQueueLen, int maxSQBatchSize, int maxCQBatchSize, int maxRetries, int maxUsed, int poolSize) {}
 
     public UringApiStats stats() {
-        return new UringApiStats(maxQueueLen, maxSQBatchSize, maxCQBatchSize, pool.maxRetries(), pool.size());
+        return new UringApiStats(maxQueueLen, maxSQBatchSize, maxCQBatchSize, pool.size());
+//        return new UringApiStats(maxQueueLen, maxSQBatchSize, maxCQBatchSize, pool.maxRetries(), pool.maxUsed(), pool.size());
     }
 
     public void processCompletions(Proactor proactor) {
@@ -159,7 +161,7 @@ public class UringApi {
             sqEntry.reposition(RawMemory.getLong(address));
             queue.remove().fill(sqEntry.clear());
         }
-        UringNative.submitAndWait(ringBuffer.address(), available);
+        UringNative.submitAndWait(ringBuffer.address(), 0);
     }
 
     //FIXME: operation timeouts are not working

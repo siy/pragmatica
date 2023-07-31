@@ -25,6 +25,8 @@ import org.pragmatica.lang.io.Timeout;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -106,8 +108,8 @@ public interface Promise<T> {
      *
      * @return created and started thread
      */
-    static Thread runAsync(Runnable runnable) {
-        return Thread.ofVirtual().start(runnable);
+    static void runAsync(Runnable runnable) {
+        AsyncExecutor.INSTANCE.runAsync(runnable);
     }
 
     /**
@@ -968,5 +970,15 @@ public interface Promise<T> {
 
             return prev;
         }
+    }
+}
+
+enum AsyncExecutor {
+    INSTANCE;
+
+    private final ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
+
+    public void runAsync(Runnable runnable) {
+        executor.submit(runnable);
     }
 }

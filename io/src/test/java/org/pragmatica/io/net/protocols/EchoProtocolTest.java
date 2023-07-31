@@ -23,7 +23,6 @@ import org.pragmatica.lang.Result;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static org.pragmatica.io.async.net.InetAddress.Inet4Address.INADDR_ANY;
 import static org.pragmatica.io.net.Listener.listener;
 import static org.pragmatica.io.net.protocols.EchoProtocol.acceptEchoProtocol;
 import static org.pragmatica.io.net.tcp.ListenConfig.listenConfig;
@@ -35,7 +34,7 @@ class EchoProtocolTest {
 
     @Test
     void serverCanBeStarted() {
-        listener(listenConfig(acceptEchoProtocol(INADDR_ANY, 4096, empty()))
+        listener(listenConfig(acceptEchoProtocol(4096, empty()))
                      .withPort(12345)
                      .build())
             .listen()

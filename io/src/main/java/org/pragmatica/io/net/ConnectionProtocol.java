@@ -17,12 +17,13 @@
 
 package org.pragmatica.io.net;
 
-import org.pragmatica.io.async.Proactor;
 import org.pragmatica.io.async.net.InetAddress;
 
 /**
  * Basic connection-oriented protocol.
  */
+
+//TODO: cleanup methods
 public interface ConnectionProtocol<T extends InetAddress> {
     void process();
 }

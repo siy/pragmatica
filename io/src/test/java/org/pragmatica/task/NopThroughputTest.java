@@ -27,6 +27,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.BiConsumer;
 import java.util.stream.IntStream;
 
 import static org.pragmatica.lang.Unit.unitResult;
@@ -38,7 +39,7 @@ public class NopThroughputTest {
     void testPeakThroughput() throws InterruptedException {
         var list = new ConcurrentLinkedQueue<SingleTask>();
         var shutdown = new AtomicBoolean(false);
-        var multiplicationFactor = 25;
+        var multiplicationFactor = 50;
         var cores = Runtime.getRuntime().availableProcessors();
         var tasks = cores * multiplicationFactor;
         var latch = new CountDownLatch(tasks);
@@ -59,6 +60,7 @@ public class NopThroughputTest {
 
         System.out.printf("Total time: %.2fs\nTotal ops count: %d\nPerformance: %.2fM IOPS total, %.2fM IOPS per core (%d)\n",
                           time, totalCount, speed, speed / cores, latch.getCount());
+        Proactor.stats().forEach(System.out::println);
     }
 
     private void runNop(int id, ConcurrentLinkedQueue<SingleTask> list, AtomicBoolean shutdown, CountDownLatch latch) {
@@ -68,24 +70,20 @@ public class NopThroughputTest {
 
         var runnableTask = new RunnableTask(task, shutdown, latch);
 
-        runnableTask.run(unitResult(), Proactor.proactor());
+        runnableTask.accept(unitResult(), Proactor.proactor());
     }
 
-    record RunnableTask(SingleTask task, AtomicBoolean shutdown, CountDownLatch latch) implements Runnable {
+    record RunnableTask(SingleTask task, AtomicBoolean shutdown, CountDownLatch latch) implements BiConsumer<Result<Unit>, Proactor> {
 
-        public void run(Result<Unit> ignored, Proactor proactor) {
+        @Override
+        public void accept(Result<Unit> ignored, Proactor proactor) {
             if (shutdown.get()) {
                 task.stop().set(System.nanoTime());
                 latch.countDown();
             } else {
-                run();
-                proactor.nop(this::run);
+                task.count().incrementAndGet();
+                proactor.nop(this);
             }
-        }
-
-        @Override
-        public void run() {
-            task.count().incrementAndGet();
         }
     }
 }

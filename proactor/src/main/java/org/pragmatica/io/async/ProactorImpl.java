@@ -66,7 +66,7 @@ class ProactorImpl implements Proactor {
 
     // Special value used to indicate the openat/statx functions should use the current working directory.
     private static final FileDescriptor AT_FDCWD = FileDescriptor.file(-100);
-    private static final Timeout HEARTBEAT_INTERVAL = Timeout.timeout(1).millis();
+    private static final Timeout HEARTBEAT_INTERVAL = Timeout.timeout(1000).millis();
 
     private final UringApi uringApi;
     private final ExchangeEntryPool pool;
@@ -92,7 +92,7 @@ class ProactorImpl implements Proactor {
         proactor.delay(this::heartbeat, HEARTBEAT_INTERVAL);
     }
 
-    static Proactor proactor(int queueSize, Set<UringSetupFlags> openFlags, ChunkedAllocator sharedAllocator, ThreadFactory factory) {
+    static ProactorImpl proactor(int queueSize, Set<UringSetupFlags> openFlags, ChunkedAllocator sharedAllocator, ThreadFactory factory) {
         var pool = exchangeEntryPool();
         var api = UringApi.uringApi(queueSize, openFlags, pool)
                           .fold(ProactorImpl::fail, Functions::id);
@@ -366,5 +366,9 @@ class ProactorImpl implements Proactor {
     @Override
     public Result<FixedBuffer> allocateFixedBuffer(int size) {
         return sharedAllocator.allocate(size);
+    }
+
+    public UringApi.UringApiStats stats() {
+        return uringApi.stats();
     }
 }

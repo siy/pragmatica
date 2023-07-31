@@ -21,6 +21,7 @@ import org.pragmatica.io.async.uring.struct.raw.CQEntry;
 
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.pragmatica.io.async.uring.exchange.ExchangeEntry.exchangeEntry;
 
@@ -42,14 +43,15 @@ public class ExchangeEntryPool {
 
     }
 
-    private static final int INITIAL_POOL_SIZE = 4096;
+    private static final int INITIAL_POOL_SIZE = 2048;
 
-    private static final int MAX_RETRIES = 7;
-    private static final WyRand random = WyRand.wyRand();
+    private final AtomicInteger probeCount = new AtomicInteger(0);
     private final transient Object lock = new Object();
+    private final AtomicInteger usedCounter = new AtomicInteger(0);
+//    private final AtomicInteger maxUsedCounter = new AtomicInteger(0);
+//    private final AtomicInteger maxRetries = new AtomicInteger(0);
     private transient volatile ExchangeEntryCell[] array;
 
-    private volatile int maxRetries;
     private ExchangeEntryCell[] getArray() {
         return array;
     }
@@ -95,9 +97,10 @@ public class ExchangeEntryPool {
     @SuppressWarnings("unchecked")
     public <T> ExchangeEntry<T> acquire() {
         var array = getArray();
+        var maxRetries = size() - usedCounter.get();
 
-        for (int i = 0; i < MAX_RETRIES; i++) {
-            var index = (int) (random.next() & (array.length - 1));
+        for (int i = 0; i < maxRetries; i++) {
+            var index = probeCount.incrementAndGet() & (array.length - 1);
             var element = ExchangeEntryPool.elementAt(array, index);
 
             if (element.inUse.get()) {
@@ -105,14 +108,20 @@ public class ExchangeEntryPool {
             }
 
             if (element.inUse.compareAndSet(false, true)) {
-                this.maxRetries = Math.max(this.maxRetries, i);
+//                usedCounter.incrementAndGet();
+//                while (!this.maxUsedCounter.compareAndSet(this.maxUsedCounter.get(), this.usedCounter.get())) {
+//                    // spin
+//                }
+//                while (!this.maxRetries.compareAndSet(this.maxRetries.get(), Math.max(this.maxRetries.get(), i))) {
+//                    // spin
+//                }
                 return (ExchangeEntry<T>) element.entry;
             }
         }
 
         synchronized (lock) {
-            ExchangeEntryCell[] es = getArray();
-            int len = es.length;
+            var es = getArray();
+            var len = es.length;
             es = Arrays.copyOf(es, len * 2);
             populate(es);
             setArray(es);
@@ -123,6 +132,7 @@ public class ExchangeEntryPool {
 
     private <T> void release(ExchangeEntry<T> entry) {
         ExchangeEntryPool.elementAt(getArray(), entry.key()).inUse.lazySet(false);
+        this.usedCounter.decrementAndGet();
     }
 
     public void clear() {
@@ -135,9 +145,13 @@ public class ExchangeEntryPool {
         }
     }
 
-    public int maxRetries() {
-        return maxRetries;
-    }
+//    public int maxRetries() {
+//        return maxRetries.get();
+//    }
+
+//    public int maxUsed() {
+//        return maxUsedCounter.get();
+//    }
 
     public void completeRequest(CQEntry cqEntry, Proactor proactor) {
         int key = (int) cqEntry.userData();
