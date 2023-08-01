@@ -22,7 +22,7 @@ import org.pragmatica.io.async.util.raw.RawProperty;
  * Offsets/Sizes of the fields of the {@link org.pragmatica.io.async.uring.struct.raw.SQEntry}
  */
 public interface SubmitQueueEntryOffsets {
-    int SIZE = 64;
+    int SIZE = 48;
     RawProperty opcode = RawProperty.raw(0, 1);
     RawProperty flags = RawProperty.raw(1, 1);
     RawProperty ioprio = RawProperty.raw(2, 2);

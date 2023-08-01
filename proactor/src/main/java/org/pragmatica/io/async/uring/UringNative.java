@@ -47,6 +47,7 @@ final class UringNative {
     private static MethodHandle getSQEHandle;
     private static MethodHandle peekBatchSQEHandle;
     private static MethodHandle submitAndWaitHandle;
+    private static MethodHandle submitHandle;
     private static MethodHandle registerHandle;
     private static MethodHandle socketHandle;
     private static MethodHandle listenHandle;
@@ -66,6 +67,7 @@ final class UringNative {
                                                    FunctionDescriptor.of(JAVA_INT, JAVA_LONG, JAVA_LONG, JAVA_LONG));
             getSQEHandle = prepare(lookup, "ring_get_sqe", FunctionDescriptor.of(JAVA_LONG, JAVA_LONG));
             peekBatchSQEHandle = prepare(lookup, "ring_peek_batch_sqe", FunctionDescriptor.of(JAVA_INT, JAVA_LONG, JAVA_LONG, JAVA_LONG));
+            submitHandle = prepare(lookup, "ring_direct_submit", FunctionDescriptor.of(JAVA_INT, JAVA_LONG, JAVA_LONG, JAVA_INT, JAVA_INT));
             submitAndWaitHandle = prepare(lookup, "ring_submit_and_wait", FunctionDescriptor.of(JAVA_LONG, JAVA_LONG, JAVA_INT));
             registerHandle = prepare(lookup, "ring_register", FunctionDescriptor.of(JAVA_INT, JAVA_LONG, JAVA_INT, JAVA_LONG, JAVA_LONG));
             socketHandle = prepare(lookup, "ring_socket", FunctionDescriptor.of(JAVA_INT, JAVA_INT, JAVA_INT, JAVA_INT));
@@ -151,6 +153,15 @@ final class UringNative {
             return (long) submitAndWaitHandle.invokeExact(base_address, count);
         } catch (Throwable e) {
             LOG.error("Attempt to invoke method submit_and_wait failed", e);
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static int submit(long base_address, long entries_address, int count, int flags) {
+        try {
+            return (int) submitHandle.invokeExact(base_address, entries_address, count, flags);
+        } catch (Throwable e) {
+            LOG.error("Attempt to invoke method direct_submit failed", e);
             throw new RuntimeException(e);
         }
     }

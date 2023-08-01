@@ -27,6 +27,7 @@ import org.pragmatica.io.async.uring.struct.offheap.OffHeapIoVector;
 import org.pragmatica.io.async.uring.struct.offheap.OffHeapSocketAddress;
 import org.pragmatica.io.async.uring.struct.raw.CQEntry;
 import org.pragmatica.io.async.uring.struct.raw.SQEntry;
+import org.pragmatica.io.async.uring.struct.shape.SubmitQueueEntryOffsets;
 import org.pragmatica.io.async.util.OffHeapSlice;
 import org.pragmatica.io.async.util.raw.RawMemory;
 import org.pragmatica.lang.Result;
@@ -46,6 +47,7 @@ public class UringApi {
     private final OffHeapSlice ringBuffer;
     private final OffHeapSlice completionBuffer;
     private final OffHeapSlice submissionBuffer;
+    private final OffHeapSlice submissionEntriesBuffer;
     private final CQEntry cqEntry;
     private final SQEntry sqEntry;
     private final int entriesCount;
@@ -53,9 +55,6 @@ public class UringApi {
     private final Queue<ExchangeEntry<?>> queue = new ArrayBlockingQueue<>(MIN_QUEUE_SIZE * MIN_QUEUE_SIZE);
 
     private boolean closed = false;
-    private int idleCounter = 0;
-
-
     private int maxQueueLen = 0;
     private int maxSQBatchSize = 0;
     private int maxCQBatchSize = 0;
@@ -67,6 +66,7 @@ public class UringApi {
 
         this.ringBuffer = OffHeapSlice.fixedSize(UringNative.SIZE);
         this.submissionBuffer = OffHeapSlice.fixedSize(entriesCount * ENTRY_SIZE);
+        this.submissionEntriesBuffer = OffHeapSlice.fixedSize(entriesCount * SubmitQueueEntryOffsets.SIZE);
         this.completionBuffer = OffHeapSlice.fixedSize(entriesCount * 2 * ENTRY_SIZE);
         this.cqEntry = CQEntry.at(0);
         this.sqEntry = SQEntry.at(0);
@@ -111,7 +111,9 @@ public class UringApi {
     public Result<Unit> unregisterBuffers() {
         int rc = register(RegisterOperation.IORING_REGISTER_BUFFERS, 0L, 0L);
 
-        return rc < 0 ? SystemError.result(rc) : Unit.unitResult();
+        return rc < 0
+               ? SystemError.result(rc)
+               : Unit.unitResult();
     }
 
     public synchronized void shutdown() {
@@ -121,6 +123,7 @@ public class UringApi {
 
         UringNative.exit(ringBuffer.address());
         submissionBuffer.close();
+        submissionEntriesBuffer.close();
         completionBuffer.close();
         ringBuffer.close();
         pool.clear();
@@ -151,17 +154,40 @@ public class UringApi {
     }
 
     public void processSubmissions() {
-        int available = UringNative.peekBatchSQE(ringBuffer.address(),
-                                                 submissionBuffer.address(),
-                                                 Math.min(queue.size(), entriesCount));
+        submissionEntriesBuffer.clear();
+        var address = submissionEntriesBuffer.address();
+        int filled = 0;
 
-        this.maxSQBatchSize = Math.max(maxSQBatchSize, available);
+        while (true) {
+            var entry = queue.poll();
 
-        for (long i = 0, address = submissionBuffer.address(); i < available; i++, address += ENTRY_SIZE) {
-            sqEntry.reposition(RawMemory.getLong(address));
-            queue.remove().fill(sqEntry.clear());
+            if (entry == null) {
+                break;
+            }
+
+            if (filled > (entriesCount - 2)) { // entry may have timeout, so we need to ensure at least 2 empty slots
+                break;
+            }
+
+            sqEntry.reposition(address);
+            entry.fill(sqEntry);
+
+            address += SubmitQueueEntryOffsets.SIZE;
+            filled++;
+
+            if (entry.hasTimeout()) {
+                sqEntry.reposition(address);
+
+                entry.fillTimeout(sqEntry);
+
+                address += SubmitQueueEntryOffsets.SIZE;
+                filled++;
+            }
         }
-        UringNative.submitAndWait(ringBuffer.address(), 0);
+
+        this.maxSQBatchSize = Math.max(maxSQBatchSize, filled);
+
+        UringNative.submit(ringBuffer.address(), submissionEntriesBuffer.address(), filled, SubmissionFlags.IMMEDIATE.mask());
     }
 
     //FIXME: operation timeouts are not working

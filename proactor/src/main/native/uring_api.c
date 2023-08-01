@@ -15,15 +15,13 @@
 #define CQE_BATCH_PTR   ((struct io_uring_cqe **) completions_address)
 #define COUNT           ((unsigned) count)
 
+#define SQ_ENTRY_SIZE       48
+#define SUBMIT_IMMEDIATE    0x01
+#define SUBMIT_WAIT         0x02
+
 /* Initialize the ring */
 int ring_init(int num_entries, long base_address, int flags) {
     return io_uring_queue_init((unsigned) num_entries, RING_PTR, (unsigned) flags);
-//
-//    if (rc == 0) {
-//        io_uring_dontfork(RING_PTR);
-//    }
-//
-//    return rc;
 }
 
 /* Shutdown the ring */
@@ -73,6 +71,24 @@ int ring_peek_batch_sqe(long base_address, long submissions_address, long space)
     }
 
     return count;
+}
+
+int ring_direct_submit(long base_address, long submission_entries, int count, int flags) {
+    unsigned char* filled_entries = (unsigned char*) submission_entries;
+
+    for (int i = 0; i < count; i++, filled_entries += SQ_ENTRY_SIZE) {
+        struct io_uring_sqe* entry = io_uring_get_sqe(RING_PTR);
+
+        memcpy(entry, filled_entries, SQ_ENTRY_SIZE);
+    }
+
+    if (flags & SUBMIT_IMMEDIATE) {
+        int wait_cnt = (flags & SUBMIT_WAIT) ? count : 0;
+
+        return io_uring_submit_and_wait(RING_PTR, wait_cnt);
+    }
+
+    return 0;
 }
 
 /* Submit filled entries and wait for at lest specified number of available events */

@@ -131,8 +131,8 @@ public class ExchangeEntry<R> {
     }
 
     @SuppressWarnings("unchecked")
-    public void fillTimeout(SQEntry clear) {
-        AsyncOperation.LINK_TIMEOUT.fillSubmissionEntry((ExchangeEntry<Unit>) this, clear);
+    public void fillTimeout(SQEntry entry) {
+        AsyncOperation.LINK_TIMEOUT.fillSubmissionEntry((ExchangeEntry<Unit>) this, entry);
     }
 
     public ExchangeEntry<R> processCompletion(CQEntry entry, Proactor proactor) {
