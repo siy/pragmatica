@@ -19,6 +19,9 @@ package org.pragmatica.io.async.util;
 
 import org.pragmatica.io.async.util.raw.RawMemory;
 
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+
 /**
  * Sequential (with position) reader/writer of {@link OffHeapSlice}.
  */
@@ -26,29 +29,32 @@ public final class SliceAccessor {
     private static final byte[] EMPTY_ARRAY = {};
     private final OffHeapSlice slice;
     private int position;
+    private final int offset;
 
-    private SliceAccessor(OffHeapSlice slice) {
+    private SliceAccessor(OffHeapSlice slice, int offset) {
         this.slice = slice;
+        this.offset = offset;
         this.position = 0;
     }
 
     public static SliceAccessor forSlice(OffHeapSlice slice) {
-        return new SliceAccessor(slice);
+        return new SliceAccessor(slice, 0);
     }
 
     private long addressForPositionAdjustedBy(int width) {
         var baseAddress = validateAddressFor(width);
+
         position += width;
 
         return baseAddress;
     }
 
     private long validateAddressFor(int width) {
-        if (position + width > slice.size()) {
+        if (position + offset + width > slice.size()) {
             throw new IllegalStateException("Attempt to read past the end of slice. Size: "
-                                            + slice.size() + ", Position: " + position + ", Width: " + width);
+                                            + slice.size() + ", Position: " + (position + offset) + ", Width: " + width);
         }
-        return slice.address() + position;
+        return slice.address() + position + offset;
     }
 
     public short getShortInNetOrder() {
@@ -88,7 +94,7 @@ public final class SliceAccessor {
     }
 
     public int availableForRead() {
-        return slice.used() - position;
+        return slice.used() - position - offset;
     }
 
     public byte peekByte() {
@@ -105,6 +111,26 @@ public final class SliceAccessor {
             return EMPTY_ARRAY;
         }
         return RawMemory.getByteArray(addressForPositionAdjustedBy(length), length);
+    }
+
+    public String remainingAsString() {
+        return remainingAsString(StandardCharsets.UTF_8);
+    }
+
+    public String remainingAsString(Charset charset) {
+        return new String(getRemainingBytes(), charset);
+    }
+
+    public String getString(int length) {
+        return getString(length, StandardCharsets.UTF_8);
+    }
+
+    public String getString(int length, Charset charset) {
+        return new String(getBytes(length), charset);
+    }
+
+    public SliceAccessor remainingAsSlice() {
+        return new SliceAccessor(slice, position + offset);
     }
 
     public SliceAccessor putShortInNetOrder(short value) {
@@ -163,7 +189,7 @@ public final class SliceAccessor {
     }
 
     public SliceAccessor updateSlice() {
-        slice.used(position);
+        slice.used(position + offset);
         return this;
     }
 

@@ -25,7 +25,6 @@ public sealed interface Units {
     int _1KiB = 1024;
     int _1MiB = _1KiB * _1KiB;
     int _1GiB = _1MiB * _1KiB;
-    int _1TiB = _1MiB * _1MiB;
 
     record unused() implements Units {}
 }

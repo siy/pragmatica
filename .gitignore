@@ -1,6 +1,7 @@
 .DS_Store
 
 target
+dependency-reduced-pom.xml
 
 ### STS ###
 .apt_generated
