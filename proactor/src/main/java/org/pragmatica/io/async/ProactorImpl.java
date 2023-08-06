@@ -53,7 +53,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import static org.pragmatica.io.async.uring.exchange.AsyncOperation.*;
-import static org.pragmatica.io.async.uring.exchange.ExchangeEntryPool.exchangeEntryPool;
+import static org.pragmatica.io.async.uring.exchange.ExchangeEntryPool.arrayPool;
 import static org.pragmatica.io.async.uring.struct.offheap.OffHeapIoVector.withReadBuffers;
 import static org.pragmatica.io.async.uring.struct.offheap.OffHeapIoVector.withWriteBuffers;
 import static org.pragmatica.io.async.uring.struct.raw.SQEntry.IORING_FSYNC_DATASYNC;
@@ -79,13 +79,9 @@ class ProactorImpl implements Proactor {
         this.uringApi = uringApi;
         this.pool = pool;
 
-//        uringApi.submit(pool.<Duration>acquire()
-//                            .operation(TIMEOUT)
-//                            .completion(this::heartbeat).setDelayTime(HEARTBEAT_INTERVAL));
-
         this.sharedAllocator = sharedAllocator.register(uringApi);
         this.executor = Executors.newSingleThreadExecutor(factory);
-        this.executor.submit(this::processCompletions);
+        this.executor.submit(this::processIO);
     }
 
     private void heartbeat(Result<Duration> result, Proactor proactor) {
@@ -93,7 +89,7 @@ class ProactorImpl implements Proactor {
     }
 
     static ProactorImpl proactor(int queueSize, Set<UringSetupFlags> openFlags, ChunkedAllocator sharedAllocator, ThreadFactory factory) {
-        var pool = exchangeEntryPool();
+        var pool = arrayPool();
         var api = UringApi.uringApi(queueSize, openFlags, pool)
                           .fold(ProactorImpl::fail, Functions::id);
 
@@ -119,11 +115,16 @@ class ProactorImpl implements Proactor {
         }
     }
 
-    private void processCompletions() {
+    private void processIO() {
         while (!shutdown.get()) {
             try {
-                uringApi.processSubmissions();
-                uringApi.processCompletions(this);
+                int count = uringApi.processSubmissions();
+                count += uringApi.processCompletions(this);
+
+                if (count == 0) {
+                    Thread.yield();
+                }
+
             } catch (Exception e) {
                 LOG.debug("processCompletions caught (and ignored) exception: ", e);
             }
@@ -133,22 +134,20 @@ class ProactorImpl implements Proactor {
 
     @Override
     public void nop(BiConsumer<Result<Unit>, Proactor> completion) {
-        uringApi.submit(pool.<Unit>acquire()
-                            .operation(NOP)
+        uringApi.submit(pool.acquire(NOP)
                             .completion(completion));
     }
 
     @Override
     public void delay(BiConsumer<Result<Duration>, Proactor> completion, Timeout timeout) {
-        uringApi.submit(pool.<Duration>acquire()
-                            .operation(TIMEOUT)
-                            .completion(completion).setDelayTime(timeout));
+        uringApi.submit(pool.acquire(TIMEOUT)
+                            .completion(completion)
+                            .setDelayTime(timeout));
     }
 
     @Override
     public void close(BiConsumer<Result<Unit>, Proactor> completion, FileDescriptor fd, Option<Timeout> timeout) {
-        uringApi.submit(pool.<Unit>acquire()
-                            .operation(CLOSE)
+        uringApi.submit(pool.acquire(CLOSE)
                             .completion(completion)
                             .descriptor(fd)
                             .setOperationTimeout(timeout));
@@ -157,8 +156,7 @@ class ProactorImpl implements Proactor {
     @Override
     public void read(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fd, OffHeapSlice buffer,
                      OffsetT offset, Option<Timeout> timeout) {
-        uringApi.submit(pool.<SizeT>acquire()
-                            .operation(READ)
+        uringApi.submit(pool.acquire(READ)
                             .completion(completion)
                             .descriptor(fd)
                             .buffer(buffer)
@@ -169,8 +167,7 @@ class ProactorImpl implements Proactor {
     @Override
     public void write(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fd, OffHeapSlice buffer,
                       OffsetT offset, Option<Timeout> timeout) {
-        uringApi.submit(pool.<SizeT>acquire()
-                            .operation(WRITE)
+        uringApi.submit(pool.acquire(WRITE)
                             .completion(completion)
                             .descriptor(fd)
                             .buffer(buffer)
@@ -180,8 +177,7 @@ class ProactorImpl implements Proactor {
 
     @Override
     public void splice(BiConsumer<Result<SizeT>, Proactor> completion, SpliceDescriptor descriptor, Option<Timeout> timeout) {
-        uringApi.submit(pool.<SizeT>acquire()
-                            .operation(SPLICE)
+        uringApi.submit(pool.acquire(SPLICE)
                             .completion(completion)
                             .spliceDescriptor(descriptor)
                             .setOperationTimeout(timeout));
@@ -190,8 +186,7 @@ class ProactorImpl implements Proactor {
     @Override
     public void open(BiConsumer<Result<FileDescriptor>, Proactor> completion, Path path, Set<OpenFlags> flags,
                      Set<FilePermission> mode, Option<Timeout> timeout) {
-        uringApi.submit(pool.<FileDescriptor>acquire()
-                            .operation(OPENAT)
+        uringApi.submit(pool.acquire(OPENAT)
                             .completion(completion)
                             .rawPath(OffHeapCString.cstring(path.toString()))
                             .openFlags(Bitmask.combine(flags))
@@ -216,8 +211,7 @@ class ProactorImpl implements Proactor {
     @Override
     public <T extends InetAddress> void accept(BiConsumer<Result<ConnectionContext<T>>, Proactor> completion,
                                                FileDescriptor socket, Set<SocketFlag> flags, T address) {
-        uringApi.submit(pool.<ConnectionContext<T>>acquire()
-                            .operation((AsyncOperation<ConnectionContext<T>>) (AsyncOperation) ACCEPT)
+        uringApi.submit(pool.acquire((AsyncOperation<ConnectionContext<T>>) (AsyncOperation) ACCEPT)
                             .completion(completion)
                             .descriptor(socket)
                             .acceptFlags(Bitmask.combine(flags))
@@ -234,8 +228,7 @@ class ProactorImpl implements Proactor {
             return;
         }
 
-        uringApi.submit(pool.<FileDescriptor>acquire()
-                            .operation(CONNECT)
+        uringApi.submit(pool.acquire(CONNECT)
                             .completion(completion)
                             .destinationAddress(destinationAddress)
                             .descriptor(socket)
@@ -246,8 +239,7 @@ class ProactorImpl implements Proactor {
     public void stat(BiConsumer<Result<FileStat>, Proactor> completion,
                      Path path, Set<StatFlag> flags, Set<StatMask> mask, Option<Timeout> timeout) {
         //Reset EMPTY_PATH and force use the path.
-        uringApi.submit(pool.<FileStat>acquire()
-                            .operation(STATX)
+        uringApi.submit(pool.acquire(STATX)
                             .completion(completion)
                             .descriptor(AT_FDCWD)
                             .statFlags(Bitmask.combine(flags) & ~StatFlag.EMPTY_PATH.mask())
@@ -259,8 +251,7 @@ class ProactorImpl implements Proactor {
     public void stat(BiConsumer<Result<FileStat>, Proactor> completion, FileDescriptor fileDescriptor, Set<StatFlag> flags,
                      Set<StatMask> mask, Option<Timeout> timeout) {
         //Set EMPTY_PATH and force use of file descriptor.
-        uringApi.submit(pool.<FileStat>acquire()
-                            .operation(STATX)
+        uringApi.submit(pool.acquire(STATX)
                             .completion(completion)
                             .descriptor(fileDescriptor)
                             .statFlags(Bitmask.combine(flags) | StatFlag.EMPTY_PATH.mask())
@@ -272,8 +263,7 @@ class ProactorImpl implements Proactor {
     @Override
     public void readVector(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fileDescriptor, OffsetT offset,
                            Option<Timeout> timeout, OffHeapSlice... buffers) {
-        uringApi.submit(pool.<SizeT>acquire()
-                            .operation(READV)
+        uringApi.submit(pool.acquire(READV)
                             .completion(completion)
                             .descriptor(fileDescriptor)
                             .offset(offset)
@@ -284,8 +274,7 @@ class ProactorImpl implements Proactor {
     @Override
     public void writeVector(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fileDescriptor, OffsetT offset,
                             Option<Timeout> timeout, OffHeapSlice... buffers) {
-        uringApi.submit(pool.<SizeT>acquire()
-                            .operation(WRITEV)
+        uringApi.submit(pool.acquire(WRITEV)
                             .completion(completion)
                             .descriptor(fileDescriptor)
                             .offset(offset)
@@ -296,8 +285,7 @@ class ProactorImpl implements Proactor {
     @Override
     public void fileSync(BiConsumer<Result<Unit>, Proactor> completion, FileDescriptor fileDescriptor,
                          boolean syncMetadata, Option<Timeout> timeout) {
-        uringApi.submit(pool.<Unit>acquire()
-                            .operation(FSYNC)
+        uringApi.submit(pool.acquire(FSYNC)
                             .completion(completion)
                             .descriptor(fileDescriptor)
                             .syncFlags(syncMetadata ? 0 : IORING_FSYNC_DATASYNC)
@@ -307,8 +295,7 @@ class ProactorImpl implements Proactor {
     @Override
     public void fileAlloc(BiConsumer<Result<Unit>, Proactor> completion, FileDescriptor fileDescriptor,
                           Set<FileAllocFlags> allocFlags, OffsetT offset, long len, Option<Timeout> timeout) {
-        uringApi.submit(pool.<Unit>acquire()
-                            .operation(FALLOCATE)
+        uringApi.submit(pool.acquire(FALLOCATE)
                             .completion(completion).descriptor(fileDescriptor)
                             .allocFlags(Bitmask.combine(allocFlags))
                             .offset(offset)
@@ -319,8 +306,7 @@ class ProactorImpl implements Proactor {
     @Override
     public void readFixed(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fd, FixedBuffer buffer,
                           OffsetT offset, Option<Timeout> timeout) {
-        uringApi.submit(pool.<SizeT>acquire()
-                            .operation(READ_FIXED)
+        uringApi.submit(pool.acquire(READ_FIXED)
                             .completion(completion)
                             .descriptor(fd)
                             .fixedBuffer(buffer)
@@ -331,7 +317,7 @@ class ProactorImpl implements Proactor {
     @Override
     public void writeFixed(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fd, FixedBuffer buffer,
                            OffsetT offset, Option<Timeout> timeout) {
-        uringApi.submit(pool.<SizeT>acquire()
+        uringApi.submit(pool.acquire(WRITE_FIXED)
                             .completion(completion)
                             .descriptor(fd)
                             .fixedBuffer(buffer)
@@ -342,8 +328,7 @@ class ProactorImpl implements Proactor {
     @Override
     public void send(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fd, OffHeapSlice buffer,
                      Set<MessageFlags> msgFlags, Option<Timeout> timeout) {
-        uringApi.submit(pool.<SizeT>acquire()
-                            .operation(SEND)
+        uringApi.submit(pool.acquire(SEND)
                             .completion(completion)
                             .buffer(buffer)
                             .descriptor(fd)
@@ -354,8 +339,7 @@ class ProactorImpl implements Proactor {
     @Override
     public void recv(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fd, OffHeapSlice buffer,
                      Set<MessageFlags> msgFlags, Option<Timeout> timeout) {
-        uringApi.submit(pool.<SizeT>acquire()
-                            .operation(RECV)
+        uringApi.submit(pool.acquire(RECV)
                             .completion(completion)
                             .buffer(buffer)
                             .descriptor(fd)

@@ -139,4 +139,16 @@ public class SQEntry extends AbstractExternalRawStructure<SQEntry> {
     public SQEntry userData(final long data) {
         return putLong(SubmitQueueEntryOffsets.user_data, data);
     }
+
+    public SQEntry bufPad(final long data) {
+        return putLong(SubmitQueueEntryOffsets.buf_pad, data);
+    }
+
+    public SQEntry headPad(final long data) {
+        return putLong(SubmitQueueEntryOffsets.head_pad, data);
+    }
+
+    public SQEntry lenPad(final long data) {
+        return putLong(SubmitQueueEntryOffsets.len_pad, data);
+    }
 }

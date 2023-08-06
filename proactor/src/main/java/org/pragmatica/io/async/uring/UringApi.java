@@ -16,6 +16,7 @@
 
 package org.pragmatica.io.async.uring;
 
+import org.jctools.queues.MpscArrayQueue;
 import org.pragmatica.io.async.Proactor;
 import org.pragmatica.io.async.SystemError;
 import org.pragmatica.io.async.common.SizeT;
@@ -35,7 +36,6 @@ import org.pragmatica.lang.Unit;
 
 import java.util.Queue;
 import java.util.Set;
-import java.util.concurrent.ArrayBlockingQueue;
 
 /**
  * Low-level IO URING API
@@ -52,8 +52,7 @@ public class UringApi {
     private final SQEntry sqEntry;
     private final int entriesCount;
     private final ExchangeEntryPool pool;
-    private final Queue<ExchangeEntry<?>> queue = new ArrayBlockingQueue<>(MIN_QUEUE_SIZE * MIN_QUEUE_SIZE);
-
+    private final Queue<ExchangeEntry<?>> queue = new MpscArrayQueue<>(MIN_QUEUE_SIZE * MIN_QUEUE_SIZE);
     private boolean closed = false;
     private int maxQueueLen = 0;
     private int maxSQBatchSize = 0;
@@ -142,7 +141,7 @@ public class UringApi {
 //        return new UringApiStats(maxQueueLen, maxSQBatchSize, maxCQBatchSize, pool.maxRetries(), pool.maxUsed(), pool.size());
     }
 
-    public void processCompletions(Proactor proactor) {
+    public int processCompletions(Proactor proactor) {
         long ready = UringNative.peekBatchAndAdvanceCQE(ringBuffer.address(), completionBuffer.address(), completionBuffer.size() / ENTRY_SIZE);
 
         this.maxCQBatchSize = Math.max(maxCQBatchSize, (int) ready);
@@ -151,10 +150,14 @@ public class UringApi {
             cqEntry.reposition(RawMemory.getLong(address));
             pool.completeRequest(cqEntry, proactor);
         }
+        return (int) ready;
     }
 
-    public void processSubmissions() {
-        submissionEntriesBuffer.clear();
+    public int processSubmissions() {
+        if (queue.isEmpty()) {
+            return 0;
+        }
+
         var address = submissionEntriesBuffer.address();
         int filled = 0;
 
@@ -177,7 +180,6 @@ public class UringApi {
 
             if (entry.hasTimeout()) {
                 sqEntry.reposition(address);
-
                 entry.fillTimeout(sqEntry);
 
                 address += SubmitQueueEntryOffsets.SIZE;
@@ -188,11 +190,11 @@ public class UringApi {
         this.maxSQBatchSize = Math.max(maxSQBatchSize, filled);
 
         UringNative.submit(ringBuffer.address(), submissionEntriesBuffer.address(), filled, SubmissionFlags.IMMEDIATE.mask());
+        return filled;
     }
 
-    //FIXME: operation timeouts are not working
     public void submit(ExchangeEntry<?> entry) {
-        queue.add(entry);
+        queue.offer(entry);
         this.maxQueueLen = Math.max(maxQueueLen, queue.size());
     }
 

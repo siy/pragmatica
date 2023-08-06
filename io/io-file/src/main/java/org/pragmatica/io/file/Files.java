@@ -25,7 +25,6 @@ import org.pragmatica.io.async.file.FilePermission;
 import org.pragmatica.io.async.file.OpenFlags;
 import org.pragmatica.io.async.util.OffHeapSlice;
 import org.pragmatica.io.codec.UTF8Decoder;
-import org.pragmatica.io.file.protocol.BlockReaderProtocol;
 import org.pragmatica.io.file.protocol.LineReaderProtocol;
 import org.pragmatica.lang.Option;
 import org.pragmatica.lang.Promise;

@@ -39,14 +39,14 @@ public class NopThroughputTest {
     void testPeakThroughput() throws InterruptedException {
         var list = new ConcurrentLinkedQueue<SingleTask>();
         var shutdown = new AtomicBoolean(false);
-        var multiplicationFactor = 50;
+        var multiplicationFactor = 100;
         var cores = Runtime.getRuntime().availableProcessors();
         var tasks = cores * multiplicationFactor;
         var latch = new CountDownLatch(tasks);
 
         IntStream.range(0, tasks).forEach(ndx -> runNop(ndx, list, shutdown, latch));
 
-        Thread.sleep(3_000);
+        Thread.sleep(8_000);
         shutdown.set(true);
         latch.await(15, TimeUnit.SECONDS);
 
@@ -61,6 +61,7 @@ public class NopThroughputTest {
         System.out.printf("Total time: %.2fs\nTotal ops count: %d\nPerformance: %.2fM IOPS total, %.2fM IOPS per core (%d)\n",
                           time, totalCount, speed, speed / cores, latch.getCount());
         Proactor.stats().forEach(System.out::println);
+        Thread.sleep(1_000);
     }
 
     private void runNop(int id, ConcurrentLinkedQueue<SingleTask> list, AtomicBoolean shutdown, CountDownLatch latch) {

@@ -27,11 +27,13 @@ public interface SubmitQueueEntryOffsets {
     RawProperty flags = RawProperty.raw(1, 1);
     RawProperty ioprio = RawProperty.raw(2, 2);
     RawProperty fd = RawProperty.raw(4, 4);
+    RawProperty head_pad = RawProperty.raw(0, 8);
     RawProperty off = RawProperty.raw(8, 8);
     RawProperty addr2 = RawProperty.raw(8, 8);
     RawProperty addr = RawProperty.raw(16, 8);
     RawProperty splice_off_in = RawProperty.raw(16, 8);
     RawProperty len = RawProperty.raw(24, 4);
+    RawProperty len_pad = RawProperty.raw(24, 8);
     RawProperty rw_flags = RawProperty.raw(28, 4);
     RawProperty fsync_flags = RawProperty.raw(28, 4);
     RawProperty poll_events = RawProperty.raw(28, 2);
@@ -49,4 +51,5 @@ public interface SubmitQueueEntryOffsets {
     RawProperty buf_group = RawProperty.raw(40, 2);
     RawProperty personality = RawProperty.raw(42, 2);
     RawProperty splice_fd_in = RawProperty.raw(44, 4);
+    RawProperty buf_pad = RawProperty.raw(40, 8);
 }

@@ -22,7 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static org.pragmatica.io.net.Listener.listener;
-import static org.pragmatica.io.net.protocols.FixedBuffersEchoProtocol.acceptEchoProtocol;
+import static org.pragmatica.io.net.protocols.EchoProtocol.acceptEchoProtocol;
 import static org.pragmatica.io.net.tcp.ListenConfig.listenConfig;
 import static org.pragmatica.lang.Option.empty;
 

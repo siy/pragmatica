@@ -38,6 +38,7 @@ import static org.pragmatica.lang.Unit.unitResult;
  */
 public interface AsyncOperation<R> {
     Result<R> parseCompletion(ExchangeEntry<R> exchangeEntry, int result, int flags);
+
     SQEntry fillSubmissionEntry(ExchangeEntry<R> exchangeEntry, SQEntry sqEntry);
 
     AsyncOperation<Unit> NOP = new AsyncOperation<>() {
@@ -100,8 +101,8 @@ public interface AsyncOperation<R> {
             return sqEntry.userData(exchangeEntry.key())
                           .opcode(Opcode.FSYNC)
                           .flags(exchangeEntry.flags())
-                          .syncFlags(exchangeEntry.syncFlags())
-                          .fd(exchangeEntry.descriptor().descriptor());
+                          .fd(exchangeEntry.descriptor().descriptor())
+                          .syncFlags(exchangeEntry.syncFlags());
         }
     };
 
@@ -116,8 +117,8 @@ public interface AsyncOperation<R> {
         public SQEntry fillSubmissionEntry(ExchangeEntry<SizeT> exchangeEntry, SQEntry sqEntry) {
             return sqEntry.userData(exchangeEntry.key())
                           .opcode(Opcode.READ_FIXED)
-                          .fd(exchangeEntry.descriptor().descriptor())
                           .flags(exchangeEntry.flags())
+                          .fd(exchangeEntry.descriptor().descriptor())
                           .addr(exchangeEntry.fixedBuffer().address())
                           .len(exchangeEntry.fixedBuffer().size())
                           .off(exchangeEntry.offset().value())
@@ -135,8 +136,8 @@ public interface AsyncOperation<R> {
         public SQEntry fillSubmissionEntry(ExchangeEntry<SizeT> exchangeEntry, SQEntry sqEntry) {
             return sqEntry.userData(exchangeEntry.key())
                           .opcode(Opcode.WRITE_FIXED)
-                          .fd(exchangeEntry.descriptor().descriptor())
                           .flags(exchangeEntry.flags())
+                          .fd(exchangeEntry.descriptor().descriptor())
                           .addr(exchangeEntry.fixedBuffer().address())
                           .len(exchangeEntry.fixedBuffer().used())
                           .off(exchangeEntry.offset().value())
@@ -169,8 +170,8 @@ public interface AsyncOperation<R> {
 
             return sqEntry.userData(exchangeEntry.key())
                           .opcode(Opcode.TIMEOUT)
-                          .addr(exchangeEntry.delayTime().address())
                           .fd(-1)
+                          .addr(exchangeEntry.delayTime().address())
                           .len(1)
                           .off(1);
         }
@@ -206,8 +207,8 @@ public interface AsyncOperation<R> {
         public SQEntry fillSubmissionEntry(ExchangeEntry<Unit> exchangeEntry, SQEntry sqEntry) {
             return sqEntry.userData(exchangeEntry.key())
                           .opcode(Opcode.LINK_TIMEOUT)
-                          .addr(exchangeEntry.operationTimeout().address())
                           .fd(-1)
+                          .addr(exchangeEntry.operationTimeout().address())
                           .len(1);
         }
     };
@@ -224,8 +225,8 @@ public interface AsyncOperation<R> {
         public SQEntry fillSubmissionEntry(ExchangeEntry<FileDescriptor> exchangeEntry, SQEntry sqEntry) {
             return sqEntry.userData(exchangeEntry.key())
                           .opcode(Opcode.CONNECT)
-                          .fd(exchangeEntry.descriptor().descriptor())
                           .flags(exchangeEntry.flags())
+                          .fd(exchangeEntry.descriptor().descriptor())
                           .addr(exchangeEntry.destinationAddress().sockAddrPtr())
                           .off(exchangeEntry.destinationAddress().sockAddrSize());
         }
@@ -243,10 +244,10 @@ public interface AsyncOperation<R> {
             return sqEntry.userData(exchangeEntry.key())
                           .opcode(Opcode.FALLOCATE)
                           .flags(exchangeEntry.flags())
+                          .fd(exchangeEntry.descriptor().descriptor())
                           .addr(exchangeEntry.len())
                           .len(exchangeEntry.allocFlags())
-                          .off(exchangeEntry.offset().value())
-                          .fd(exchangeEntry.descriptor().descriptor());
+                          .off(exchangeEntry.offset().value());
         }
     };
     //
@@ -307,7 +308,6 @@ public interface AsyncOperation<R> {
                           .len(exchangeEntry.statMask())
                           .off(exchangeEntry.fileStat().address())
                           .statxFlags(exchangeEntry.statFlags());
-
         }
     };
     AsyncOperation<SizeT> READ = new AsyncOperation<>() {
@@ -321,8 +321,8 @@ public interface AsyncOperation<R> {
         public SQEntry fillSubmissionEntry(ExchangeEntry<SizeT> exchangeEntry, SQEntry sqEntry) {
             return sqEntry.userData(exchangeEntry.key())
                           .opcode(Opcode.READ)
-                          .fd(exchangeEntry.descriptor().descriptor())
                           .flags(exchangeEntry.flags())
+                          .fd(exchangeEntry.descriptor().descriptor())
                           .addr(exchangeEntry.buffer().address())
                           .len(exchangeEntry.buffer().size())
                           .off(exchangeEntry.offset().value());
@@ -339,12 +339,11 @@ public interface AsyncOperation<R> {
         public SQEntry fillSubmissionEntry(ExchangeEntry<SizeT> exchangeEntry, SQEntry sqEntry) {
             return sqEntry.userData(exchangeEntry.key())
                           .opcode(Opcode.WRITE)
-                          .fd(exchangeEntry.descriptor().descriptor())
                           .flags(exchangeEntry.flags())
+                          .fd(exchangeEntry.descriptor().descriptor())
                           .addr(exchangeEntry.buffer().address())
                           .len(exchangeEntry.buffer().used())
                           .off(exchangeEntry.offset().value());
-
         }
     };
     //
@@ -361,8 +360,8 @@ public interface AsyncOperation<R> {
         public SQEntry fillSubmissionEntry(ExchangeEntry<SizeT> exchangeEntry, SQEntry sqEntry) {
             return sqEntry.userData(exchangeEntry.key())
                           .opcode(Opcode.SEND)
-                          .fd(exchangeEntry.descriptor().descriptor())
                           .flags(exchangeEntry.flags())
+                          .fd(exchangeEntry.descriptor().descriptor())
                           .msgFlags(exchangeEntry.msgFlags())
                           .addr(exchangeEntry.buffer().address())
                           .len(exchangeEntry.buffer().used());
@@ -380,12 +379,11 @@ public interface AsyncOperation<R> {
         public SQEntry fillSubmissionEntry(ExchangeEntry<SizeT> exchangeEntry, SQEntry sqEntry) {
             return sqEntry.userData(exchangeEntry.key())
                           .opcode(Opcode.RECV)
-                          .fd(exchangeEntry.descriptor().descriptor())
                           .flags(exchangeEntry.flags())
+                          .fd(exchangeEntry.descriptor().descriptor())
                           .msgFlags(exchangeEntry.msgFlags())
                           .addr(exchangeEntry.buffer().address())
                           .len(exchangeEntry.buffer().size());
-
         }
     };
     //

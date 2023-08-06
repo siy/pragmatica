@@ -59,7 +59,7 @@ public class ExchangeEntry<R> {
     private SpliceDescriptor spliceDescriptor;
 
     private AsyncOperation<R> operation;
-    private volatile BiConsumer<Result<R>, Proactor> completion;
+    private BiConsumer<Result<R>, Proactor> completion;
     private long startNanos;
     private long len;
     private int openMode;
@@ -127,11 +127,19 @@ public class ExchangeEntry<R> {
     }
 
     public SQEntry fill(SQEntry entry) {
+        entry.headPad(0L) // 0-7
+             .lenPad(0L)  // 24-31
+             .bufPad(0L); // 40-47
+
         return operation().fillSubmissionEntry(this, entry);
     }
 
+    //TODO: test timeouts
     @SuppressWarnings("unchecked")
     public void fillTimeout(SQEntry entry) {
+        entry.headPad(0L) // 0-7
+             .lenPad(0L)  // 24-31
+             .bufPad(0L); // 40-47
         AsyncOperation.LINK_TIMEOUT.fillSubmissionEntry((ExchangeEntry<Unit>) this, entry);
     }
 
