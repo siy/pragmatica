@@ -6,8 +6,6 @@ import org.pragmatica.io.async.uring.struct.raw.CQEntry;
 public interface ExchangeEntryPool {
     <T> ExchangeEntry<T> acquire(AsyncOperation<T> operation);
 
-    int size();
-
     <T> ExchangeEntry<T> lookup(int key);
 
     void clear();
@@ -16,9 +14,5 @@ public interface ExchangeEntryPool {
 
     static ExchangeEntryPool arrayPool() {
         return new ArrayExchangeEntryPool();
-    }
-
-    static ExchangeEntryPool jcPool() {
-        return new JCExchangeEntryPool();
     }
 }

@@ -351,8 +351,4 @@ class ProactorImpl implements Proactor {
     public Result<FixedBuffer> allocateFixedBuffer(int size) {
         return sharedAllocator.allocate(size);
     }
-
-    public UringApi.UringApiStats stats() {
-        return uringApi.stats();
-    }
 }

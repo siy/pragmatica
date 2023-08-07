@@ -60,8 +60,6 @@ public class NopThroughputTest {
 
         System.out.printf("Total time: %.2fs\nTotal ops count: %d\nPerformance: %.2fM IOPS total, %.2fM IOPS per core (%d)\n",
                           time, totalCount, speed, speed / cores, latch.getCount());
-        Proactor.stats().forEach(System.out::println);
-        Thread.sleep(1_000);
     }
 
     private void runNop(int id, ConcurrentLinkedQueue<SingleTask> list, AtomicBoolean shutdown, CountDownLatch latch) {

@@ -80,8 +80,6 @@ public sealed interface EchoProtocol<T extends InetAddress> extends ConnectionPr
             public Unit apply(Result.Cause failure) {
                 if (LOG.isInfoEnabled()) {
                     LOG.info("I/O error: {}", failure);
-
-                    Proactor.stats().forEach(s -> Proactor.stats().forEach(System.err::println));
                 }
 
                 proactor.close(this::logClosing, socket);

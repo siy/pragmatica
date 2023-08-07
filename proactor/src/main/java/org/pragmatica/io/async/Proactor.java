@@ -587,10 +587,6 @@ public interface Proactor {
         return ProactorHolder.INSTANCE.get();
     }
 
-    static List<UringApi.UringApiStats> stats() {
-        return ProactorHolder.INSTANCE.stats();
-    }
-
     /**
      * Shutdown current Proactor instance.
      */
@@ -627,12 +623,6 @@ public interface Proactor {
 
         Proactor get() {
             return proactors.get(counter.incrementAndGet() % proactors.size());
-        }
-
-        List<UringApi.UringApiStats> stats() {
-            return proactors.stream()
-                            .map(ProactorImpl::stats)
-                            .toList();
         }
 
         public void shutdown() {

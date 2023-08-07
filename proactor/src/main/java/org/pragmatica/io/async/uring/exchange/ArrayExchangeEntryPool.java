@@ -49,8 +49,6 @@ public class ArrayExchangeEntryPool implements ExchangeEntryPool {
     private final AtomicInteger probeCount = new AtomicInteger(0);
     private final transient Object lock = new Object();
     private final AtomicInteger usedCounter = new AtomicInteger(0);
-    //    private final AtomicInteger maxUsedCounter = new AtomicInteger(0);
-//    private final AtomicInteger maxRetries = new AtomicInteger(0);
     private transient volatile ExchangeEntryCell[] array;
 
     private ExchangeEntryCell[] getArray() {
@@ -83,38 +81,28 @@ public class ArrayExchangeEntryPool implements ExchangeEntryPool {
     }
 
     @Override
-    public int size() {
-        return getArray().length;
-    }
-
-    @Override
     @SuppressWarnings("unchecked")
     public <T> ExchangeEntry<T> lookup(int key) {
-        return (ExchangeEntry<T>) ArrayExchangeEntryPool.elementAt(getArray(), key).entry;
+        return (ExchangeEntry<T>) elementAt(getArray(), key).entry;
     }
 
     @Override
     @SuppressWarnings("unchecked")
     public <T> ExchangeEntry<T> acquire(AsyncOperation<T> operation) {
         var array = getArray();
-        var maxRetries = size() - usedCounter.get();
+        var maxRetries = getArray().length - usedCounter.get();
+        var index = probeCount.incrementAndGet() & (array.length - 1);
 
-        for (int i = 0; i < maxRetries; i++) {
-            var index = probeCount.incrementAndGet() & (array.length - 1);
-            var element = ArrayExchangeEntryPool.elementAt(array, index);
+        for (int i = 0; i < maxRetries; i++, index++) {
+            var element = elementAt(array, index);
 
             if (element.inUse.get()) {
                 continue;
             }
 
             if (element.inUse.compareAndSet(false, true)) {
-//                usedCounter.incrementAndGet();
-//                while (!this.maxUsedCounter.compareAndSet(this.maxUsedCounter.get(), this.usedCounter.get())) {
-//                    // spin
-//                }
-//                while (!this.maxRetries.compareAndSet(this.maxRetries.get(), Math.max(this.maxRetries.get(), i))) {
-//                    // spin
-//                }
+                usedCounter.incrementAndGet();
+
                 return ((ExchangeEntry<T>) element.entry).operation(operation);
             }
         }
@@ -122,6 +110,7 @@ public class ArrayExchangeEntryPool implements ExchangeEntryPool {
         synchronized (lock) {
             var es = getArray();
             var len = es.length;
+
             es = Arrays.copyOf(es, len * 2);
             populate(es);
             setArray(es);
@@ -131,7 +120,7 @@ public class ArrayExchangeEntryPool implements ExchangeEntryPool {
     }
 
     private <T> void release(ExchangeEntry<T> entry) {
-        ArrayExchangeEntryPool.elementAt(getArray(), entry.key()).inUse.lazySet(false);
+        elementAt(getArray(), entry.key()).inUse.lazySet(false);
         this.usedCounter.decrementAndGet();
     }
 
@@ -145,14 +134,6 @@ public class ArrayExchangeEntryPool implements ExchangeEntryPool {
             }
         }
     }
-
-//    public int maxRetries() {
-//        return maxRetries.get();
-//    }
-
-//    public int maxUsed() {
-//        return maxUsedCounter.get();
-//    }
 
     @Override
     public void completeRequest(CQEntry cqEntry, Proactor proactor) {

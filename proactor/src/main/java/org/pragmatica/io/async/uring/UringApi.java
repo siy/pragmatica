@@ -54,9 +54,6 @@ public class UringApi {
     private final ExchangeEntryPool pool;
     private final Queue<ExchangeEntry<?>> queue = new MpscArrayQueue<>(MIN_QUEUE_SIZE * MIN_QUEUE_SIZE);
     private boolean closed = false;
-    private int maxQueueLen = 0;
-    private int maxSQBatchSize = 0;
-    private int maxCQBatchSize = 0;
 
     private UringApi(int numEntries, ExchangeEntryPool pool) {
         this.pool = pool;
@@ -129,22 +126,8 @@ public class UringApi {
         closed = true;
     }
 
-    public void waitForCompletions(int count) {
-        UringNative.submitAndWait(ringBuffer.address(), count);
-    }
-
-    public record UringApiStats(int maxQueueLen, int maxSQBatchSize, int maxCQBatchSize, int poolSize) {}
-//    public record UringApiStats(int maxQueueLen, int maxSQBatchSize, int maxCQBatchSize, int maxRetries, int maxUsed, int poolSize) {}
-
-    public UringApiStats stats() {
-        return new UringApiStats(maxQueueLen, maxSQBatchSize, maxCQBatchSize, pool.size());
-//        return new UringApiStats(maxQueueLen, maxSQBatchSize, maxCQBatchSize, pool.maxRetries(), pool.maxUsed(), pool.size());
-    }
-
     public int processCompletions(Proactor proactor) {
         long ready = UringNative.peekBatchAndAdvanceCQE(ringBuffer.address(), completionBuffer.address(), completionBuffer.size() / ENTRY_SIZE);
-
-        this.maxCQBatchSize = Math.max(maxCQBatchSize, (int) ready);
 
         for (long i = 0, address = completionBuffer.address(); i < ready; i++, address += ENTRY_SIZE) {
             cqEntry.reposition(RawMemory.getLong(address));
@@ -187,15 +170,12 @@ public class UringApi {
             }
         }
 
-        this.maxSQBatchSize = Math.max(maxSQBatchSize, filled);
-
         UringNative.submit(ringBuffer.address(), submissionEntriesBuffer.address(), filled, SubmissionFlags.IMMEDIATE.mask());
         return filled;
     }
 
     public void submit(ExchangeEntry<?> entry) {
         queue.offer(entry);
-        this.maxQueueLen = Math.max(maxQueueLen, queue.size());
     }
 
     public static Result<FileDescriptor> socket(AddressFamily af, SocketType type, Set<SocketFlag> flags, Set<SocketOption> options) {
