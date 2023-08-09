@@ -28,9 +28,9 @@ import org.pragmatica.io.async.uring.struct.offheap.OffHeapIoVector;
 import org.pragmatica.io.async.uring.struct.offheap.OffHeapSocketAddress;
 import org.pragmatica.io.async.uring.struct.raw.CQEntry;
 import org.pragmatica.io.async.uring.struct.raw.SQEntry;
+import org.pragmatica.io.async.uring.struct.shape.CompletionQueueEntryOffsets;
 import org.pragmatica.io.async.uring.struct.shape.SubmitQueueEntryOffsets;
 import org.pragmatica.io.async.util.OffHeapSlice;
-import org.pragmatica.io.async.util.raw.RawMemory;
 import org.pragmatica.lang.Result;
 import org.pragmatica.lang.Unit;
 
@@ -45,8 +45,7 @@ public class UringApi {
     private static final int ENTRY_SIZE = 8;    // each entry is a 64-bit pointer
 
     private final OffHeapSlice ringBuffer;
-    private final OffHeapSlice completionBuffer;
-    private final OffHeapSlice submissionBuffer;
+    private final OffHeapSlice completionEntriesBuffer;
     private final OffHeapSlice submissionEntriesBuffer;
     private final CQEntry cqEntry;
     private final SQEntry sqEntry;
@@ -61,9 +60,8 @@ public class UringApi {
                             MIN_QUEUE_SIZE : 1 << (32 - Integer.numberOfLeadingZeros(numEntries - 1));
 
         this.ringBuffer = OffHeapSlice.fixedSize(UringNative.SIZE);
-        this.submissionBuffer = OffHeapSlice.fixedSize(entriesCount * ENTRY_SIZE);
         this.submissionEntriesBuffer = OffHeapSlice.fixedSize(entriesCount * SubmitQueueEntryOffsets.SIZE);
-        this.completionBuffer = OffHeapSlice.fixedSize(entriesCount * 2 * ENTRY_SIZE);
+        this.completionEntriesBuffer = OffHeapSlice.fixedSize(entriesCount * 2 * CompletionQueueEntryOffsets.SIZE);
         this.cqEntry = CQEntry.at(0);
         this.sqEntry = SQEntry.at(0);
     }
@@ -118,29 +116,28 @@ public class UringApi {
         }
 
         UringNative.exit(ringBuffer.address());
-        submissionBuffer.close();
         submissionEntriesBuffer.close();
-        completionBuffer.close();
+        completionEntriesBuffer.close();
         ringBuffer.close();
         pool.clear();
         closed = true;
     }
 
     public int processCompletions(Proactor proactor) {
-        long ready = UringNative.peekBatchAndAdvanceCQE(ringBuffer.address(), completionBuffer.address(), completionBuffer.size() / ENTRY_SIZE);
+        long ready = UringNative.copyCQES(ringBuffer.address(), completionEntriesBuffer.address(), completionEntriesBuffer.size() / CompletionQueueEntryOffsets.SIZE);
 
-        for (long i = 0, address = completionBuffer.address(); i < ready; i++, address += ENTRY_SIZE) {
-            cqEntry.reposition(RawMemory.getLong(address));
+        for (long i = 0, address = completionEntriesBuffer.address(); i < ready; i++, address += CompletionQueueEntryOffsets.SIZE) {
+            cqEntry.reposition(address);
             pool.completeRequest(cqEntry, proactor);
         }
         return (int) ready;
     }
 
     public int processSubmissions() {
-        if (queue.isEmpty()) {
-            return 0;
-        }
-
+//        if (queue.isEmpty()) {
+//            return 0;
+//        }
+//
         var address = submissionEntriesBuffer.address();
         int filled = 0;
 

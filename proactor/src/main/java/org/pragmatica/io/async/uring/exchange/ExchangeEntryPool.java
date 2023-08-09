@@ -15,4 +15,8 @@ public interface ExchangeEntryPool {
     static ExchangeEntryPool arrayPool() {
         return new ArrayExchangeEntryPool();
     }
+
+    static ExchangeEntryPool hybridPool() {
+        return new HybridExchangeEntryPool();
+    }
 }

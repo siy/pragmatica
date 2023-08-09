@@ -49,11 +49,13 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.LockSupport;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import static org.pragmatica.io.async.uring.exchange.AsyncOperation.*;
 import static org.pragmatica.io.async.uring.exchange.ExchangeEntryPool.arrayPool;
+import static org.pragmatica.io.async.uring.exchange.ExchangeEntryPool.hybridPool;
 import static org.pragmatica.io.async.uring.struct.offheap.OffHeapIoVector.withReadBuffers;
 import static org.pragmatica.io.async.uring.struct.offheap.OffHeapIoVector.withWriteBuffers;
 import static org.pragmatica.io.async.uring.struct.raw.SQEntry.IORING_FSYNC_DATASYNC;
@@ -72,8 +74,8 @@ class ProactorImpl implements Proactor {
     private final ExchangeEntryPool pool;
     private final ChunkedAllocator sharedAllocator;
     private final ExecutorService executor;
-    private final AtomicBoolean shutdown = new AtomicBoolean(false);
-    private final CountDownLatch shutdownLatch = new CountDownLatch(1);
+    private boolean shutdown = false;
+    private final CountDownLatch shutdownLatch = new CountDownLatch(2);
 
     private ProactorImpl(UringApi uringApi, ChunkedAllocator sharedAllocator, ExchangeEntryPool pool, ThreadFactory factory) {
         this.uringApi = uringApi;
@@ -89,7 +91,7 @@ class ProactorImpl implements Proactor {
     }
 
     static ProactorImpl proactor(int queueSize, Set<UringSetupFlags> openFlags, ChunkedAllocator sharedAllocator, ThreadFactory factory) {
-        var pool = arrayPool();
+        var pool = hybridPool();
         var api = UringApi.uringApi(queueSize, openFlags, pool)
                           .fold(ProactorImpl::fail, Functions::id);
 
@@ -102,27 +104,31 @@ class ProactorImpl implements Proactor {
 
     @Override
     public void shutdown() {
-        if (shutdown.compareAndSet(false, true)) {
-            try {
-                uringApi.shutdown();
-                shutdownLatch.await();
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            } finally {
-                executor.shutdown();
-                LOG.debug("Proactor shutdown completed");
-            }
+        if (shutdown) {
+            return;
+        }
+
+        shutdown = true;
+        try {
+            uringApi.shutdown();
+            shutdownLatch.await();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        } finally {
+            executor.shutdown();
+            LOG.debug("Proactor shutdown completed");
         }
     }
 
     private void processIO() {
-        while (!shutdown.get()) {
+        while (!shutdown) {
             try {
                 int count = uringApi.processSubmissions();
                 count += uringApi.processCompletions(this);
 
                 if (count == 0) {
                     Thread.yield();
+//                    LockSupport.parkNanos(10);
                 }
 
             } catch (Exception e) {

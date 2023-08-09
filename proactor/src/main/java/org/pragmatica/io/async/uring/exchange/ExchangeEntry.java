@@ -25,7 +25,6 @@ import org.pragmatica.io.async.file.FileDescriptor;
 import org.pragmatica.io.async.file.SpliceDescriptor;
 import org.pragmatica.io.async.net.ProtocolVersion;
 import org.pragmatica.io.async.uring.struct.offheap.*;
-import org.pragmatica.io.async.uring.struct.raw.CQEntry;
 import org.pragmatica.io.async.uring.struct.raw.SQEntry;
 import org.pragmatica.io.async.uring.struct.raw.SQEntryFlags;
 import org.pragmatica.io.async.util.OffHeapSlice;
@@ -78,10 +77,6 @@ public class ExchangeEntry<R> {
 
     public static <R> ExchangeEntry<R> exchangeEntry(final int key) {
         return new ExchangeEntry<>(key);
-    }
-
-    public BiConsumer<Result<R>, Proactor> completion() {
-        return completion;
     }
 
     private void cleanup() {
@@ -143,14 +138,11 @@ public class ExchangeEntry<R> {
         AsyncOperation.LINK_TIMEOUT.fillSubmissionEntry((ExchangeEntry<Unit>) this, entry);
     }
 
-    public ExchangeEntry<R> processCompletion(CQEntry entry, Proactor proactor) {
-        completion().accept(parseCompletionOutcome(entry.res(), entry.flags()), proactor);
+    public ExchangeEntry<R> processCompletion(int res, int flags, Proactor proactor) {
+        var result = operation().parseCompletion(this, res, flags);
+        completion.accept(result, proactor);
         cleanup();
         return this;
-    }
-
-    public Result<R> parseCompletionOutcome(int res, int flags) {
-        return operation().parseCompletion(this, res, flags);
     }
 
     public ExchangeEntry<R> completion(BiConsumer<Result<R>, Proactor> completion) {

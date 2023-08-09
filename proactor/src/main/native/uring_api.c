@@ -13,6 +13,7 @@
 
 #define RING_PTR        ((struct io_uring *) base_address)
 #define CQE_BATCH_PTR   ((struct io_uring_cqe **) completions_address)
+#define CQE_ARRAY_PTR   ((struct io_uring_cqe *) completions_address)
 #define COUNT           ((unsigned) count)
 
 #define SQ_ENTRY_SIZE       48
@@ -48,6 +49,32 @@ int ring_peek_batch_and_advance_cqe(long base_address, long completions_address,
     }
 
     return rc;
+}
+
+int ring_copy_cqes(long base_address, long completions_address, int count) {
+    struct io_uring *ring = RING_PTR;
+    struct io_uring_cqe *cqe = CQE_ARRAY_PTR;
+
+    unsigned ready = io_uring_cq_ready(ring);
+
+    if (!ready) {
+        return 0;
+    }
+
+    unsigned head = *ring->cq.khead;
+    unsigned mask = ring->cq.ring_mask;
+
+    count = count > ready ? ready : count;
+
+    unsigned last = head + count;
+
+    for (;head != last; head++) {
+        *cqe++ = ring->cq.cqes[head & mask];
+    }
+
+    io_uring_cq_advance(ring, count);
+
+    return count;
 }
 
 /* Get next available submission entry (0L if queue full) */

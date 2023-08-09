@@ -42,6 +42,7 @@ final class UringNative {
     private static MethodHandle initHandle;
     private static MethodHandle exitHandle;
     private static MethodHandle peekBatchCQEHandle;
+    private static MethodHandle copyCQESHandle;
     private static MethodHandle cqAdvanceHandle;
     private static MethodHandle peekBatchAndAdvanceCQEHandle;
     private static MethodHandle getSQEHandle;
@@ -61,6 +62,7 @@ final class UringNative {
             initHandle = prepare(lookup, "ring_init", FunctionDescriptor.of(JAVA_INT, JAVA_INT, JAVA_LONG, JAVA_INT));
             exitHandle = prepare(lookup, "ring_exit", FunctionDescriptor.ofVoid(JAVA_LONG));
             peekBatchCQEHandle = prepare(lookup, "ring_peek_batch_cqe", FunctionDescriptor.of(JAVA_INT, JAVA_LONG, JAVA_LONG, JAVA_LONG));
+            copyCQESHandle = prepare(lookup, "ring_copy_cqes", FunctionDescriptor.of(JAVA_INT, JAVA_LONG, JAVA_LONG, JAVA_INT));
             cqAdvanceHandle = prepare(lookup, "ring_cq_advance", FunctionDescriptor.ofVoid(JAVA_LONG, JAVA_LONG));
             peekBatchAndAdvanceCQEHandle = prepare(lookup,
                                                    "ring_peek_batch_and_advance_cqe",
@@ -105,6 +107,15 @@ final class UringNative {
     public static int peekBatchCQE(long base_address, long completions_address, long count) {
         try {
             return (int) peekBatchCQEHandle.invokeExact(base_address, completions_address, count);
+        } catch (Throwable e) {
+            LOG.error("Attempt to invoke method peek_batch_cqe failed", e);
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static int copyCQES(long base_address, long completions_address, int count) {
+        try {
+            return (int) copyCQESHandle.invokeExact(base_address, completions_address, count);
         } catch (Throwable e) {
             LOG.error("Attempt to invoke method peek_batch_cqe failed", e);
             throw new RuntimeException(e);
