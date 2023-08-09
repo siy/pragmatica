@@ -41,7 +41,6 @@ public class ArrayExchangeEntryPool implements ExchangeEntryPool {
         private ExchangeEntryCell(int index) {
             this.entry = exchangeEntry(index);
         }
-
     }
 
     private static final int INITIAL_POOL_SIZE = 2048;
@@ -91,16 +90,17 @@ public class ArrayExchangeEntryPool implements ExchangeEntryPool {
     public <T> ExchangeEntry<T> acquire(AsyncOperation<T> operation) {
         var array = getArray();
         var maxRetries = getArray().length - usedCounter.get();
-        var index = probeCount.incrementAndGet() & (array.length - 1);
+        var mask = array.length - 1;
+        var index = probeCount.incrementAndGet() & mask;
 
         for (int i = 0; i < maxRetries; i++, index++) {
-            var element = elementAt(array, index);
+            var element = elementAt(array, index & mask);
 
-            if (element.inUse.get()) {
+            if (element.inUse.getOpaque()) {
                 continue;
             }
 
-            if (element.inUse.compareAndSet(false, true)) {
+            if (element.inUse.weakCompareAndSetAcquire(false, true)) {
                 usedCounter.incrementAndGet();
 
                 return ((ExchangeEntry<T>) element.entry).operation(operation);
