@@ -48,14 +48,11 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.locks.LockSupport;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import static org.pragmatica.io.async.uring.exchange.AsyncOperation.*;
-import static org.pragmatica.io.async.uring.exchange.ExchangeEntryPool.arrayPool;
-import static org.pragmatica.io.async.uring.exchange.ExchangeEntryPool.hybridPool;
+import static org.pragmatica.io.async.uring.exchange.ExchangeEntryPool.exchangeEntryPool;
 import static org.pragmatica.io.async.uring.struct.offheap.OffHeapIoVector.withReadBuffers;
 import static org.pragmatica.io.async.uring.struct.offheap.OffHeapIoVector.withWriteBuffers;
 import static org.pragmatica.io.async.uring.struct.raw.SQEntry.IORING_FSYNC_DATASYNC;
@@ -86,12 +83,8 @@ class ProactorImpl implements Proactor {
         this.executor.submit(this::processIO);
     }
 
-    private void heartbeat(Result<Duration> result, Proactor proactor) {
-        proactor.delay(this::heartbeat, HEARTBEAT_INTERVAL);
-    }
-
     static ProactorImpl proactor(int queueSize, Set<UringSetupFlags> openFlags, ChunkedAllocator sharedAllocator, ThreadFactory factory) {
-        var pool = hybridPool();
+        var pool = exchangeEntryPool();
         var api = UringApi.uringApi(queueSize, openFlags, pool)
                           .fold(ProactorImpl::fail, Functions::id);
 

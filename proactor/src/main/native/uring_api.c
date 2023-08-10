@@ -21,34 +21,13 @@
 #define SUBMIT_WAIT         0x02
 
 /* Initialize the ring */
-int ring_init(int num_entries, long base_address, int flags) {
+int ring_open(int num_entries, long base_address, int flags) {
     return io_uring_queue_init((unsigned) num_entries, RING_PTR, (unsigned) flags);
 }
 
 /* Shutdown the ring */
-void ring_exit(long base_address) {
+void ring_close(long base_address) {
     io_uring_queue_exit(RING_PTR);
-}
-
-/* Retrieve batch of ready completions */
-int ring_peek_batch_cqe(long base_address, long completions_address, long count) {
-    return io_uring_peek_batch_cqe(RING_PTR, CQE_BATCH_PTR, COUNT);
-}
-
-/* Advance completion queue */
-void ring_cq_advance(long base_address, long count) {
-    io_uring_cq_advance(RING_PTR, COUNT);
-}
-
-/* Retrieve batch of ready completions and advance completion queue */
-int ring_peek_batch_and_advance_cqe(long base_address, long completions_address, long count) {
-    int rc = io_uring_peek_batch_cqe(RING_PTR, CQE_BATCH_PTR, COUNT);
-
-    if (rc > 0) {
-        io_uring_cq_advance(RING_PTR, rc);
-    }
-
-    return rc;
 }
 
 int ring_copy_cqes(long base_address, long completions_address, int count) {
@@ -77,29 +56,6 @@ int ring_copy_cqes(long base_address, long completions_address, int count) {
     return count;
 }
 
-/* Get next available submission entry (0L if queue full) */
-long ring_get_sqe(long base_address) {
-    return (long) io_uring_get_sqe(RING_PTR);
-}
-
-/* Get array of available submissions entries */
-int ring_peek_batch_sqe(long base_address, long submissions_address, long space) {
-    int count = 0;
-    struct io_uring_sqe** buffer = (struct io_uring_sqe **) submissions_address;
-
-    for(count = 0; count < space; count++) {
-        struct io_uring_sqe* entry = io_uring_get_sqe(RING_PTR);
-
-        if (!entry) {
-            break;
-        }
-
-        buffer[count] = entry;
-    }
-
-    return count;
-}
-
 int ring_direct_submit(long base_address, long submission_entries, int count, int flags) {
     unsigned char* filled_entries = (unsigned char*) submission_entries;
 
@@ -116,11 +72,6 @@ int ring_direct_submit(long base_address, long submission_entries, int count, in
     }
 
     return 0;
-}
-
-/* Submit filled entries and wait for at lest specified number of available events */
-long ring_submit_and_wait(long base_address, int count) {
-    return io_uring_submit_and_wait(RING_PTR, COUNT);
 }
 
 /* Perform register operation */

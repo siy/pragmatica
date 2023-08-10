@@ -1,7 +1,6 @@
 package org.pragmatica.io.async.uring.exchange;
 
 import org.pragmatica.io.async.Proactor;
-import org.pragmatica.io.async.uring.struct.raw.CQEntry;
 
 public interface ExchangeEntryPool {
     <T> ExchangeEntry<T> acquire(AsyncOperation<T> operation);
@@ -10,13 +9,9 @@ public interface ExchangeEntryPool {
 
     void clear();
 
-    void completeRequest(CQEntry cqEntry, Proactor proactor);
+    void completeRequest(long key, int res, int flags, Proactor proactor);
 
-    static ExchangeEntryPool arrayPool() {
-        return new ArrayExchangeEntryPool();
-    }
-
-    static ExchangeEntryPool hybridPool() {
+    static ExchangeEntryPool exchangeEntryPool() {
         return new HybridExchangeEntryPool();
     }
 }

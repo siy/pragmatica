@@ -42,8 +42,6 @@ import java.util.Set;
  */
 public class UringApi {
     public static final int MIN_QUEUE_SIZE = 128;
-    private static final int ENTRY_SIZE = 8;    // each entry is a 64-bit pointer
-
     private final OffHeapSlice ringBuffer;
     private final OffHeapSlice completionEntriesBuffer;
     private final OffHeapSlice submissionEntriesBuffer;
@@ -128,16 +126,12 @@ public class UringApi {
 
         for (long i = 0, address = completionEntriesBuffer.address(); i < ready; i++, address += CompletionQueueEntryOffsets.SIZE) {
             cqEntry.reposition(address);
-            pool.completeRequest(cqEntry, proactor);
+            pool.completeRequest(cqEntry.userData(), cqEntry.res(), cqEntry.flags(), proactor);
         }
         return (int) ready;
     }
 
     public int processSubmissions() {
-//        if (queue.isEmpty()) {
-//            return 0;
-//        }
-//
         var address = submissionEntriesBuffer.address();
         int filled = 0;
 

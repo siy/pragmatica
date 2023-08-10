@@ -17,10 +17,10 @@
 package org.pragmatica.io.async.uring.exchange;
 
 import org.pragmatica.io.async.Proactor;
-import org.pragmatica.io.async.uring.struct.raw.CQEntry;
 
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.VarHandle;
 import java.util.Arrays;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static org.pragmatica.io.async.uring.exchange.ExchangeEntry.exchangeEntry;
 
@@ -35,10 +35,25 @@ public class HybridExchangeEntryPool implements ExchangeEntryPool {
         }
     }
 
-    private final AtomicReference<ExchangeEntryCell> head = new AtomicReference<>();
+    long p00, p01, p02, p03, p04, p05, p06, p07;
+    @SuppressWarnings("FieldMayBeFinal")
+    private volatile ExchangeEntryCell head = null;
+
+    private static final VarHandle HEAD;
+    static {
+        try {
+            HEAD = MethodHandles.lookup()
+                                .findVarHandle(HybridExchangeEntryPool.class,
+                                               "head",
+                                               ExchangeEntryCell.class);
+        } catch (ReflectiveOperationException e) {
+            throw new ExceptionInInitializerError(e);
+        }
+    }
 
     private static final int INITIAL_POOL_SIZE = 2048;
 
+    long p10, p11, p12, p13, p14, p15, p16, p17;
     private transient volatile ExchangeEntryCell[] array;
     private final transient Object lock = new Object();
 
@@ -111,14 +126,14 @@ public class HybridExchangeEntryPool implements ExchangeEntryPool {
         ExchangeEntryCell newHead;
 
         do {
-            oldHead = head.get();
+            oldHead = head;
 
             if (oldHead == null) {
                 return null;
             }
 
             newHead = oldHead.next;
-        } while (!head.compareAndSet(oldHead, newHead));
+        } while (!HEAD.compareAndSet(this, oldHead, newHead));
 
         return oldHead;
     }
@@ -127,9 +142,9 @@ public class HybridExchangeEntryPool implements ExchangeEntryPool {
         ExchangeEntryCell oldHead;
 
         do {
-            oldHead = head.get();
+            oldHead = head;
             newHead.next = oldHead;
-        } while (!head.compareAndSet(oldHead, newHead));
+        } while (!HEAD.compareAndSet(this, oldHead, newHead));
     }
 
     @Override
@@ -144,12 +159,7 @@ public class HybridExchangeEntryPool implements ExchangeEntryPool {
     }
 
     @Override
-    public void completeRequest(CQEntry cqEntry, Proactor proactor) {
-        int key = (int) cqEntry.userData();
-        var entry = lookup(key);
-
-        entry.processCompletion(cqEntry.res(), cqEntry.flags(), proactor);
-
-        release(entry);
+    public void completeRequest(long key, int res, int flags, Proactor proactor) {
+        release(lookup((int) key).processCompletion(res, flags, proactor));
     }
 }

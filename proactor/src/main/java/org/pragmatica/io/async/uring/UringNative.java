@@ -41,13 +41,7 @@ final class UringNative {
 
     private static MethodHandle initHandle;
     private static MethodHandle exitHandle;
-    private static MethodHandle peekBatchCQEHandle;
     private static MethodHandle copyCQESHandle;
-    private static MethodHandle cqAdvanceHandle;
-    private static MethodHandle peekBatchAndAdvanceCQEHandle;
-    private static MethodHandle getSQEHandle;
-    private static MethodHandle peekBatchSQEHandle;
-    private static MethodHandle submitAndWaitHandle;
     private static MethodHandle submitHandle;
     private static MethodHandle registerHandle;
     private static MethodHandle socketHandle;
@@ -59,31 +53,25 @@ final class UringNative {
 
             var lookup = SymbolLookup.loaderLookup();
 
-            initHandle = prepare(lookup, "ring_init", FunctionDescriptor.of(JAVA_INT, JAVA_INT, JAVA_LONG, JAVA_INT));
-            exitHandle = prepare(lookup, "ring_exit", FunctionDescriptor.ofVoid(JAVA_LONG));
-            peekBatchCQEHandle = prepare(lookup, "ring_peek_batch_cqe", FunctionDescriptor.of(JAVA_INT, JAVA_LONG, JAVA_LONG, JAVA_LONG));
+            initHandle = prepare(lookup, "ring_open", FunctionDescriptor.of(JAVA_INT, JAVA_INT, JAVA_LONG, JAVA_INT));
+            exitHandle = prepare(lookup, "ring_close", FunctionDescriptor.ofVoid(JAVA_LONG));
             copyCQESHandle = prepare(lookup, "ring_copy_cqes", FunctionDescriptor.of(JAVA_INT, JAVA_LONG, JAVA_LONG, JAVA_INT));
-            cqAdvanceHandle = prepare(lookup, "ring_cq_advance", FunctionDescriptor.ofVoid(JAVA_LONG, JAVA_LONG));
-            peekBatchAndAdvanceCQEHandle = prepare(lookup,
-                                                   "ring_peek_batch_and_advance_cqe",
-                                                   FunctionDescriptor.of(JAVA_INT, JAVA_LONG, JAVA_LONG, JAVA_LONG));
-            getSQEHandle = prepare(lookup, "ring_get_sqe", FunctionDescriptor.of(JAVA_LONG, JAVA_LONG));
-            peekBatchSQEHandle = prepare(lookup, "ring_peek_batch_sqe", FunctionDescriptor.of(JAVA_INT, JAVA_LONG, JAVA_LONG, JAVA_LONG));
             submitHandle = prepare(lookup, "ring_direct_submit", FunctionDescriptor.of(JAVA_INT, JAVA_LONG, JAVA_LONG, JAVA_INT, JAVA_INT));
-            submitAndWaitHandle = prepare(lookup, "ring_submit_and_wait", FunctionDescriptor.of(JAVA_LONG, JAVA_LONG, JAVA_INT));
             registerHandle = prepare(lookup, "ring_register", FunctionDescriptor.of(JAVA_INT, JAVA_LONG, JAVA_INT, JAVA_LONG, JAVA_LONG));
             socketHandle = prepare(lookup, "ring_socket", FunctionDescriptor.of(JAVA_INT, JAVA_INT, JAVA_INT, JAVA_INT));
             listenHandle = prepare(lookup, "ring_listen", FunctionDescriptor.of(JAVA_INT, JAVA_INT, JAVA_LONG, JAVA_INT, JAVA_INT));
         } catch (final Exception e) {
-            LOG.error("Error while loading JNI library for Uring class: ", e);
+            LOG.error("Error while loading native library: ", e);
             System.exit(-1);
         }
     }
 
-    private static MethodHandle prepare(SymbolLookup lookup, String symbol, FunctionDescriptor descriptor) throws Exception {
-        var address = lookup.find(symbol).orElseThrow(IllegalStateException::new);
+    private static MethodHandle prepare(SymbolLookup lookup, String symbol, FunctionDescriptor descriptor) {
+        var address = lookup.find(symbol)
+                            .orElseThrow(IllegalStateException::new);
 
-        return Linker.nativeLinker().downcallHandle(address, descriptor, Linker.Option.isTrivial());
+        return Linker.nativeLinker()
+                     .downcallHandle(address, descriptor, Linker.Option.isTrivial());
     }
 
     public static int init(int num_entries, long base_address, int flags) {
@@ -104,66 +92,11 @@ final class UringNative {
         }
     }
 
-    public static int peekBatchCQE(long base_address, long completions_address, long count) {
-        try {
-            return (int) peekBatchCQEHandle.invokeExact(base_address, completions_address, count);
-        } catch (Throwable e) {
-            LOG.error("Attempt to invoke method peek_batch_cqe failed", e);
-            throw new RuntimeException(e);
-        }
-    }
-
     public static int copyCQES(long base_address, long completions_address, int count) {
         try {
             return (int) copyCQESHandle.invokeExact(base_address, completions_address, count);
         } catch (Throwable e) {
             LOG.error("Attempt to invoke method peek_batch_cqe failed", e);
-            throw new RuntimeException(e);
-        }
-    }
-
-    public static void cqAdvance(long base_address, long count) {
-        try {
-            cqAdvanceHandle.invokeExact(base_address, count);
-        } catch (Throwable e) {
-            LOG.error("Attempt to invoke method cq_advance failed", e);
-            throw new RuntimeException(e);
-        }
-    }
-
-    public static int peekBatchAndAdvanceCQE(long base_address, long completions_address, long count) {
-        try {
-            return (int) peekBatchAndAdvanceCQEHandle.invokeExact(base_address, completions_address, count);
-        } catch (Throwable e) {
-            LOG.error("Attempt to invoke method peek_batch_and_advance_cqe failed",
-                      e);
-            throw new RuntimeException(e);
-        }
-    }
-
-    public static long getSQE(long base_address) {
-        try {
-            return (long) getSQEHandle.invokeExact(base_address);
-        } catch (Throwable e) {
-            LOG.error("Attempt to invoke method get_sqe failed", e);
-            throw new RuntimeException(e);
-        }
-    }
-
-    public static int peekBatchSQE(long base_address, long submissions_address, long space) {
-        try {
-            return (int) peekBatchSQEHandle.invokeExact(base_address, submissions_address, space);
-        } catch (Throwable e) {
-            LOG.error("Attempt to invoke method peek_batch_sqe failed", e);
-            throw new RuntimeException(e);
-        }
-    }
-
-    public static long submitAndWait(long base_address, int count) {
-        try {
-            return (long) submitAndWaitHandle.invokeExact(base_address, count);
-        } catch (Throwable e) {
-            LOG.error("Attempt to invoke method submit_and_wait failed", e);
             throw new RuntimeException(e);
         }
     }
