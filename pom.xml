@@ -12,6 +12,7 @@
         <module>proactor</module>
         <module>io</module>
         <module>examples</module>
+        <module>jctools</module>
     </modules>
 
     <packaging>pom</packaging>
@@ -59,6 +60,12 @@
             <dependency>
                 <groupId>org.pragmatica</groupId>
                 <artifactId>proactor</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.pragmatica</groupId>
+                <artifactId>jctools</artifactId>
                 <version>${project.version}</version>
             </dependency>
 

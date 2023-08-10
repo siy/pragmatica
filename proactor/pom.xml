@@ -40,6 +40,12 @@
             <artifactId>core</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>org.pragmatica</groupId>
+            <artifactId>jctools</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
         <!-- Logging -->
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -78,12 +84,6 @@
             <artifactId>jmh-generator-annprocess</artifactId>
             <version>1.32</version>
             <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.jctools</groupId>
-            <artifactId>jctools-core</artifactId>
-            <version>4.0.1</version>
         </dependency>
     </dependencies>
 
