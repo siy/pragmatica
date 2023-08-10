@@ -17,6 +17,7 @@
 package org.pragmatica.io;
 
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.pragmatica.io.async.Timeout;
 import org.pragmatica.io.async.common.OffsetT;
@@ -107,6 +108,7 @@ class ProactorTest {
         waitForResult(closeResult);
     }
 
+    @Disabled
     @Test
     void externalHostCanBeConnectedAndRead() throws UnknownHostException {
         var addr = java.net.Inet4Address.getByName("www.github.com");
