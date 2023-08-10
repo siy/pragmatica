@@ -126,7 +126,10 @@ public class UringApi {
 
         for (long i = 0, address = completionEntriesBuffer.address(); i < ready; i++, address += CompletionQueueEntryOffsets.SIZE) {
             cqEntry.reposition(address);
-            pool.completeRequest(cqEntry.userData(), cqEntry.res(), cqEntry.flags(), proactor);
+            long key = cqEntry.userData();
+            int res = cqEntry.res();
+            int flags = cqEntry.flags();
+            pool.completeRequest(key, res, flags, proactor);
         }
         return (int) ready;
     }

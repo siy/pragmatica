@@ -156,4 +156,12 @@ public final class RawMemory {
     public static void unpark(Object thread) {
         instance.unpark(thread);
     }
+
+    public static long fieldOffset(Class<?> clazz, String name) {
+        return instance.objectFieldOffset(clazz, name);
+    }
+
+    public static boolean compareAndSetReference(Object obj, long offset, Object expected, Object value) {
+        return instance.compareAndSetReference(obj, offset, expected, value);
+    }
 }

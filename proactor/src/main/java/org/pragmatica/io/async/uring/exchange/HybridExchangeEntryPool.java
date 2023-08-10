@@ -17,9 +17,8 @@
 package org.pragmatica.io.async.uring.exchange;
 
 import org.pragmatica.io.async.Proactor;
+import org.pragmatica.io.async.util.raw.RawMemory;
 
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.VarHandle;
 import java.util.Arrays;
 
 import static org.pragmatica.io.async.uring.exchange.ExchangeEntry.exchangeEntry;
@@ -39,17 +38,7 @@ public class HybridExchangeEntryPool implements ExchangeEntryPool {
     @SuppressWarnings("FieldMayBeFinal")
     private volatile ExchangeEntryCell head = null;
 
-    private static final VarHandle HEAD;
-    static {
-        try {
-            HEAD = MethodHandles.lookup()
-                                .findVarHandle(HybridExchangeEntryPool.class,
-                                               "head",
-                                               ExchangeEntryCell.class);
-        } catch (ReflectiveOperationException e) {
-            throw new ExceptionInInitializerError(e);
-        }
-    }
+    private static final long HEAD_OFFSET = RawMemory.fieldOffset(HybridExchangeEntryPool.class, "head");
 
     private static final int INITIAL_POOL_SIZE = 2048;
 
@@ -133,7 +122,7 @@ public class HybridExchangeEntryPool implements ExchangeEntryPool {
             }
 
             newHead = oldHead.next;
-        } while (!HEAD.compareAndSet(this, oldHead, newHead));
+        } while (!RawMemory.compareAndSetReference(this, HEAD_OFFSET, oldHead, newHead));
 
         return oldHead;
     }
@@ -144,7 +133,7 @@ public class HybridExchangeEntryPool implements ExchangeEntryPool {
         do {
             oldHead = head;
             newHead.next = oldHead;
-        } while (!HEAD.compareAndSet(this, oldHead, newHead));
+        } while (!RawMemory.compareAndSetReference(this, HEAD_OFFSET, oldHead, newHead));
     }
 
     @Override
@@ -160,6 +149,8 @@ public class HybridExchangeEntryPool implements ExchangeEntryPool {
 
     @Override
     public void completeRequest(long key, int res, int flags, Proactor proactor) {
-        release(lookup((int) key).processCompletion(res, flags, proactor));
+        var entry = lookup((int) key);
+        entry.processCompletion(res, flags, proactor);
+        release(entry);
     }
 }

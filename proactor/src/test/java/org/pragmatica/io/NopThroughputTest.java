@@ -33,7 +33,7 @@ import java.util.stream.IntStream;
 import static org.pragmatica.lang.Unit.unitResult;
 
 public class NopThroughputTest {
-    record SingleTask(int id, AtomicLong count, AtomicLong start, AtomicLong stop) {}
+    record SingleTask(int id, long[] count, AtomicLong start, AtomicLong stop) {}
 
     @Test
     void testPeakThroughput() throws InterruptedException {
@@ -47,13 +47,13 @@ public class NopThroughputTest {
         IntStream.range(0, tasks).forEach(ndx -> runNop(ndx, list, shutdown, latch));
 
         Thread.sleep(15_000);
-        shutdown.set(true);
+        shutdown.setRelease(true);
         latch.await(15, TimeUnit.SECONDS);
 
         var minTime = list.stream().mapToLong(task -> task.start().get()).min().orElseThrow();
         var maxTime = list.stream().mapToLong(task -> task.stop().get()).max().orElseThrow();
         var totalTime = maxTime - minTime;
-        var totalCount = list.stream().mapToLong(task -> task.count().get()).sum();
+        var totalCount = list.stream().mapToLong(task -> task.count()[0]).sum();
 
         var time = ((double) totalTime) / 1e9;
         var speed = ((double) totalCount) / time / 1e6;
@@ -63,7 +63,7 @@ public class NopThroughputTest {
     }
 
     private void runNop(int id, ConcurrentLinkedQueue<SingleTask> list, AtomicBoolean shutdown, CountDownLatch latch) {
-        var task = new SingleTask(id, new AtomicLong(0), new AtomicLong(System.nanoTime()), new AtomicLong(0));
+        var task = new SingleTask(id, new long[1], new AtomicLong(System.nanoTime()), new AtomicLong(0));
 
         list.offer(task);
 
@@ -76,11 +76,11 @@ public class NopThroughputTest {
 
         @Override
         public void accept(Result<Unit> ignored, Proactor proactor) {
-            if (shutdown.get()) {
+            if (shutdown.getAcquire()) {
                 task.stop().set(System.nanoTime());
                 latch.countDown();
             } else {
-                task.count().incrementAndGet();
+                task.count()[0]++;
                 proactor.nop(this);
             }
         }
