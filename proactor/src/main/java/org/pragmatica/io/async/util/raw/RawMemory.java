@@ -136,25 +136,12 @@ public final class RawMemory {
         return instance.allocateMemory(amount);
     }
 
-    public static long reallocate(long address, long newAmount) {
-        return instance.reallocateMemory(address, newAmount);
-    }
-
     public static void dispose(long address) {
         instance.freeMemory(address);
     }
 
     public static void clear(long address, long size) {
         instance.setMemory(address, size, (byte) 0);
-    }
-
-    // Thread management
-    public static void park(boolean isAbsolute, long time) {
-        instance.park(isAbsolute, time);
-    }
-
-    public static void unpark(Object thread) {
-        instance.unpark(thread);
     }
 
     public static long fieldOffset(Class<?> clazz, String name) {
