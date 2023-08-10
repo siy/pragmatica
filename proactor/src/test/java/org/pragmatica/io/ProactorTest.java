@@ -17,7 +17,6 @@
 package org.pragmatica.io;
 
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.pragmatica.io.async.Timeout;
 import org.pragmatica.io.async.common.OffsetT;
@@ -106,23 +105,18 @@ class ProactorTest {
                       .onSuccess(fd -> proactor().close((closeResult::set), fd, empty()));
 
         waitForResult(closeResult);
-
-        closeResult.get()
-                   .onSuccess(unit -> System.out.println("Close successful " + unit));
-//                   .onFailure(ProactorTest::fail);
     }
 
-    @Disabled
     @Test
     void externalHostCanBeConnectedAndRead() throws UnknownHostException {
-        var addr = java.net.Inet4Address.getByName("www.google.com");
+        var addr = java.net.Inet4Address.getByName("www.github.com");
         var address = InetAddress.inet4Address(addr.getAddress())
                                  .fold(ProactorTest::throwIfError,
                                        inetAddress -> SocketAddress.socketAddress(InetPort.inetPort(80), inetAddress));
 
         System.out.println("Address: " + address);
 
-        var preparedText = OffHeapSlice.fromBytes("GET /\n".getBytes(StandardCharsets.US_ASCII));
+        var preparedText = OffHeapSlice.fromBytes("GET / HTTP/1.1\nHost: github.com\nAccept: */*\n\n".getBytes(StandardCharsets.US_ASCII));
         var buffer = proactor().allocateFixedBuffer(768).fold(ProactorTest::throwIfError, Functions::id);
 
         try {
