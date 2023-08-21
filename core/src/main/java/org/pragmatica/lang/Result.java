@@ -26,6 +26,7 @@ import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 import static org.pragmatica.lang.Tuple.*;
 
@@ -235,6 +236,16 @@ public sealed interface Result<T> permits Success, Failure {
      */
     default boolean isFailure() {
         return fold(Functions::toTrue, Functions::toFalse);
+    }
+
+    /**
+     * Stream current instance. For failure instance empty stream is created. For success instance the stream with single element is returned. The
+     * element is the value stored in current instance.
+     *
+     * @return created stream
+     */
+    default Stream<T> stream() {
+        return fold(__ -> Stream.empty(), Stream::of);
     }
 
     /**
