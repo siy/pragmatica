@@ -71,9 +71,10 @@ public class DomainNameResolver implements AsyncCloseable {
         this.sockets = serverList
             .stream()
             .map(inetAddress -> socketAddress(DNS_PORT, inetAddress))
-            .map(address -> PromiseIO.udpSocket().flatMap(fd -> PromiseIO.connect(fd, address)).join())
-            .filter(Result::isSuccess)
-            .map(res -> res.fold(err -> null, id()))
+            .map(address -> PromiseIO.udpSocket()
+                                     .flatMap(fd -> PromiseIO.connect(fd, address))
+                                     .join())
+            .flatMap(Result::stream)
             .toList();
 
         if (sockets.isEmpty()) {
@@ -146,9 +147,9 @@ public class DomainNameResolver implements AsyncCloseable {
         var responseBuffer = OffHeapSlice.fixedSize(4096);
 
         PromiseIO.write(socket, requestBuffer)
-            .flatMap(() -> PromiseIO.read(socket, responseBuffer))
-            .onResultDo(() -> decodeResponse(responseBuffer, promise, domainName))
-            .onResultDo(responseBuffer::close);
+                 .flatMap(() -> PromiseIO.read(socket, responseBuffer))
+                 .onResultDo(() -> decodeResponse(responseBuffer, promise, domainName))
+                 .onResultDo(responseBuffer::close);
 
         return promise;
     }
@@ -167,8 +168,7 @@ public class DomainNameResolver implements AsyncCloseable {
             .answerRecords()
             .stream()
             .map(ResourceRecord::toDomainAddress)
-            .filter(Result::isSuccess)
-            .map(res -> res.fold(err -> null, id()))
+            .flatMap(Result::stream)
             .map(address -> address.replaceDomain(domainName))
             .findFirst()
             .map(Result::success)
