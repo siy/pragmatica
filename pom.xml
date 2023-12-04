@@ -9,10 +9,10 @@
     <version>0.1.0-SNAPSHOT</version>
     <modules>
         <module>core</module>
-        <module>proactor</module>
+<!--        <module>proactor</module>-->
         <module>io</module>
         <module>examples</module>
-        <module>jctools</module>
+<!--        <module>jctools</module>-->
     </modules>
 
     <packaging>pom</packaging>
@@ -59,37 +59,13 @@
 
             <dependency>
                 <groupId>org.pragmatica</groupId>
-                <artifactId>proactor</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>org.pragmatica</groupId>
-                <artifactId>jctools</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>org.pragmatica</groupId>
-                <artifactId>io-net</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>org.pragmatica</groupId>
-                <artifactId>io-util</artifactId>
+                <artifactId>io-api</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
             <dependency>
                 <groupId>org.pragmatica</groupId>
                 <artifactId>io-dns</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>org.pragmatica</groupId>
-                <artifactId>io-protocol</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
@@ -157,69 +133,44 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-surefire-plugin</artifactId>
-                    <version>3.0.0-M5</version>
+                    <version>3.2.2</version>
                     <configuration>
                         <excludedGroups>Infinite, Benchmark</excludedGroups>
-                        <reuseForks>false</reuseForks>
-                        <argLine>
-                            --add-opens java.base/jdk.internal.misc=ALL-UNNAMED
-                            --add-exports java.base/jdk.internal.misc=ALL-UNNAMED
-                            --enable-native-access=ALL-UNNAMED
-                            ${java.enable-preview}
-                            -Xmx1024m
-                        </argLine>
+                        <argLine>${java.enable-preview}</argLine>
                     </configuration>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>
                     <version>3.11.0</version>
+                    <configuration>
+                        <showDeprecation>true</showDeprecation>
+                        <showWarnings>true</showWarnings>
+                        <source>${java.release}</source>
+                        <target>${java.release}</target>
+                        <compilerArgs>
+                            <arg>-g:none</arg> <!-- enables use of "_" as a variable/parameter name -->
+                            <arg>${java.enable-preview}</arg>
+                        </compilerArgs>
+                    </configuration>
                 </plugin>
                 <plugin>
                     <groupId>org.codehaus.mojo</groupId>
                     <artifactId>versions-maven-plugin</artifactId>
-                    <version>2.5</version>
+                    <version>2.16.0</version>
+                    <configuration>
+                        <generateBackupPoms>false</generateBackupPoms>
+                    </configuration>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-failsafe-plugin</artifactId>
-                    <version>2.22.1</version>
+                    <version>3.1.2</version>
                     <configuration>
-                        <argLine>--enable-preview</argLine>
+                        <argLine>${java.enable-preview}</argLine>
                     </configuration>
                 </plugin>
             </plugins>
         </pluginManagement>
-
-        <plugins>
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>versions-maven-plugin</artifactId>
-                <configuration>
-                    <generateBackupPoms>false</generateBackupPoms>
-                </configuration>
-            </plugin>
-
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <configuration>
-                    <showDeprecation>true</showDeprecation>
-                    <showWarnings>true</showWarnings>
-                    <source>${java.release}</source>
-                    <target>${java.release}</target>
-                    <compilerArgs>
-                        <arg>${java.enable-preview}</arg>
-                        <arg>--add-exports</arg>
-                        <arg>java.base/jdk.internal.misc=ALL-UNNAMED</arg>
-                    </compilerArgs>
-                </configuration>
-            </plugin>
-
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-failsafe-plugin</artifactId>
-            </plugin>
-        </plugins>
     </build>
 </project>

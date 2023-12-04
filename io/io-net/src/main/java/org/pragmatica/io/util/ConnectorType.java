@@ -15,7 +15,7 @@
  *
  */
 
-package org.pragmatica.io.util;
+package org.pragmatica.io.utils;
 
 public enum ConnectorType {
     UDP,

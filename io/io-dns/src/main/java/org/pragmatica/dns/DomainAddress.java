@@ -17,10 +17,10 @@
 
 package org.pragmatica.dns;
 
-import org.pragmatica.io.async.net.InetAddress;
-import org.pragmatica.io.async.net.InetPort;
-import org.pragmatica.io.util.ClientConnector;
-import org.pragmatica.io.util.ConnectorType;
+import org.pragmatica.io.net.InetAddress;
+import org.pragmatica.io.net.InetPort;
+import org.pragmatica.io.utils.ClientConnector;
+import org.pragmatica.io.utils.ConnectorType;
 
 import java.time.Duration;
 

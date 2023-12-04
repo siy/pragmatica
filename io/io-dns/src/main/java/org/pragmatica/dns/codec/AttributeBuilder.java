@@ -21,8 +21,8 @@ import org.pragmatica.dns.DnsAttributes;
 import org.pragmatica.dns.DomainData;
 import org.pragmatica.dns.ServiceData;
 import org.pragmatica.dns.SoaData;
-import org.pragmatica.io.async.net.InetAddress;
-import org.pragmatica.io.async.net.InetAddress.Inet4Address;
+import org.pragmatica.io.net.InetAddress;
+import org.pragmatica.io.net.InetAddress.Inet4Address;
 
 public class AttributeBuilder {
     private InetAddress ip = Inet4Address.INADDR_ANY;

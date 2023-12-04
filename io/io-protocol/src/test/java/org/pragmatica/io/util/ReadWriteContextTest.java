@@ -15,7 +15,7 @@
  *
  */
 
-package org.pragmatica.io.util;
+package org.pragmatica.io.utils;
 
 import org.junit.jupiter.api.Test;
 import org.pragmatica.dns.DomainNameResolver;

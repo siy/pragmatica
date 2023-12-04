@@ -19,8 +19,8 @@ package org.pragmatica.dns.codec;
 
 
 import org.pragmatica.dns.ResourceRecord;
-import org.pragmatica.io.async.net.InetAddress.Inet4Address;
-import org.pragmatica.io.async.util.SliceAccessor;
+import org.pragmatica.io.net.InetAddress.Inet4Address;
+import org.pragmatica.io.utils.SliceAccessor;
 import org.pragmatica.lang.Result;
 
 import java.util.Arrays;
@@ -29,8 +29,8 @@ import java.util.Comparator;
 import static org.pragmatica.dns.codec.DnsIoErrors.INVALID_RECORD_TYPE;
 import static org.pragmatica.dns.codec.DnsIoErrors.TOO_SHORT_INPUT;
 import static org.pragmatica.dns.codec.Encoding.*;
-import static org.pragmatica.io.async.net.InetAddress.inet4Address;
-import static org.pragmatica.io.async.net.InetAddress.inet6Address;
+import static org.pragmatica.io.net.InetAddress.inet4Address;
+import static org.pragmatica.io.net.InetAddress.inet6Address;
 import static org.pragmatica.lang.Option.option;
 import static org.pragmatica.lang.Result.all;
 import static org.pragmatica.lang.Result.success;

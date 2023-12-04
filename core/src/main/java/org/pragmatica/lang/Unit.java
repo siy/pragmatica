@@ -16,6 +16,8 @@
 
 package org.pragmatica.lang;
 
+import org.pragmatica.lang.io.CoreError;
+
 import java.util.function.Supplier;
 
 /**
@@ -105,7 +107,16 @@ public final class Unit implements Tuple.Tuple0 {
     }
 
     @Override
-    public <T> T map(Supplier<T> mapper) {
-        return mapper.get();
+    public <T> T map(Functions.Fn0<T> mapper) {
+        return mapper.apply();
+    }
+
+    @Override
+    public <T> Result<T> lift(Functions.ThrowingFn0<T> mapper) {
+        try {
+            return Result.success(mapper.apply());
+        } catch (Throwable throwable) {
+            return new CoreError.Exception(throwable).result();
+        }
     }
 }

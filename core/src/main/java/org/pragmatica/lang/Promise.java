@@ -48,12 +48,12 @@ public interface Promise<T> {
     Promise<T> resolve(Result<T> value);
 
     /**
-     * Resolve current instance with {@link CoreError#CANCELLED} error.
+     * Resolve current instance with {@link CoreError.Cancelled} error.
      *
      * @return Current instance
      */
     default Promise<T> cancel() {
-        return resolve(CoreError.CANCELLED.result());
+        return resolve(new CoreError.Cancelled("Promise cancelled").result());
     }
 
     boolean isResolved();
@@ -65,7 +65,7 @@ public interface Promise<T> {
      *
      * @return Transformed instance
      */
-    <U> Promise<U> map(FN1<U, ? super T> mapper);
+    <U> Promise<U> map(Fn1<U, ? super T> mapper);
 
     /**
      * Transform current instance by replacing stored value with one returned by provided supplier.
@@ -75,7 +75,7 @@ public interface Promise<T> {
      * @return Transformed instance
      */
     default <U> Promise<U> map(Supplier<U> mapper) {
-        return map(__ -> mapper.get());
+        return map(_ -> mapper.get());
     }
 
     /**
@@ -85,7 +85,7 @@ public interface Promise<T> {
      *
      * @return Composed instance
      */
-    <U> Promise<U> flatMap(FN1<Promise<U>, ? super T> mapper);
+    <U> Promise<U> flatMap(Fn1<Promise<U>, ? super T> mapper);
 
     /**
      * Transform current instance by replacing stored result with one returned by provided supplier.
@@ -95,10 +95,10 @@ public interface Promise<T> {
      * @return Transformed instance
      */
     default <U> Promise<U> flatMap(Supplier<Promise<U>> mapper) {
-        return flatMap(__ -> mapper.get());
+        return flatMap(_ -> mapper.get());
     }
 
-    Promise<T> mapError(FN1<Cause, Cause> mapper);
+    Promise<T> mapError(Fn1<Cause, Cause> mapper);
 
 
     /**
@@ -169,7 +169,7 @@ public interface Promise<T> {
      * @return Current instance
      */
     default Promise<T> onResultDo(Runnable action) {
-        return onResult(__ -> action.run());
+        return onResult(_ -> action.run());
     }
 
     /**
@@ -342,11 +342,11 @@ public interface Promise<T> {
      */
     @SafeVarargs
     static <T> Promise<T> anySuccess(Promise<T>... promises) {
-        return anySuccess(Result.failure(CoreError.CANCELLED), promises);
+        return anySuccess(Result.failure(new CoreError.Cancelled("Other Promise instance succeeded")), promises);
     }
 
     static <T> Promise<T> anySuccess(List<Promise<T>> promises) {
-        return anySuccess(Result.failure(CoreError.CANCELLED), promises);
+        return anySuccess(Result.failure(new CoreError.Cancelled("Other Promise instance succeeded")), promises);
     }
 
     /**
@@ -562,11 +562,11 @@ public interface Promise<T> {
 
         Promise<Tuple.Tuple1<T1>> id();
 
-        default <R> Promise<R> map(FN1<R, T1> mapper) {
+        default <R> Promise<R> map(Fn1<R, T1> mapper) {
             return id().map(tuple -> tuple.map(mapper));
         }
 
-        default <R> Promise<R> flatMap(FN1<Promise<R>, T1> mapper) {
+        default <R> Promise<R> flatMap(Fn1<Promise<R>, T1> mapper) {
             return id().flatMap(tuple -> tuple.map(mapper));
         }
 
@@ -581,11 +581,11 @@ public interface Promise<T> {
 
         Promise<Tuple.Tuple2<T1, T2>> id();
 
-        default <R> Promise<R> map(FN2<R, T1, T2> mapper) {
+        default <R> Promise<R> map(Fn2<R, T1, T2> mapper) {
             return id().map(tuple -> tuple.map(mapper));
         }
 
-        default <R> Promise<R> flatMap(FN2<Promise<R>, T1, T2> mapper) {
+        default <R> Promise<R> flatMap(Fn2<Promise<R>, T1, T2> mapper) {
             return id().flatMap(tuple -> tuple.map(mapper));
         }
 
@@ -600,11 +600,11 @@ public interface Promise<T> {
 
         Promise<Tuple.Tuple3<T1, T2, T3>> id();
 
-        default <R> Promise<R> map(FN3<R, T1, T2, T3> mapper) {
+        default <R> Promise<R> map(Fn3<R, T1, T2, T3> mapper) {
             return id().map(tuple -> tuple.map(mapper));
         }
 
-        default <R> Promise<R> flatMap(FN3<Promise<R>, T1, T2, T3> mapper) {
+        default <R> Promise<R> flatMap(Fn3<Promise<R>, T1, T2, T3> mapper) {
             return id().flatMap(tuple -> tuple.map(mapper));
         }
 
@@ -619,11 +619,11 @@ public interface Promise<T> {
 
         Promise<Tuple.Tuple4<T1, T2, T3, T4>> id();
 
-        default <R> Promise<R> map(FN4<R, T1, T2, T3, T4> mapper) {
+        default <R> Promise<R> map(Fn4<R, T1, T2, T3, T4> mapper) {
             return id().map(tuple -> tuple.map(mapper));
         }
 
-        default <R> Promise<R> flatMap(FN4<Promise<R>, T1, T2, T3, T4> mapper) {
+        default <R> Promise<R> flatMap(Fn4<Promise<R>, T1, T2, T3, T4> mapper) {
             return id().flatMap(tuple -> tuple.map(mapper));
         }
 
@@ -638,11 +638,11 @@ public interface Promise<T> {
 
         Promise<Tuple.Tuple5<T1, T2, T3, T4, T5>> id();
 
-        default <R> Promise<R> map(FN5<R, T1, T2, T3, T4, T5> mapper) {
+        default <R> Promise<R> map(Fn5<R, T1, T2, T3, T4, T5> mapper) {
             return id().map(tuple -> tuple.map(mapper));
         }
 
-        default <R> Promise<R> flatMap(FN5<Promise<R>, T1, T2, T3, T4, T5> mapper) {
+        default <R> Promise<R> flatMap(Fn5<Promise<R>, T1, T2, T3, T4, T5> mapper) {
             return id().flatMap(tuple -> tuple.map(mapper));
         }
 
@@ -657,11 +657,11 @@ public interface Promise<T> {
 
         Promise<Tuple.Tuple6<T1, T2, T3, T4, T5, T6>> id();
 
-        default <R> Promise<R> map(FN6<R, T1, T2, T3, T4, T5, T6> mapper) {
+        default <R> Promise<R> map(Fn6<R, T1, T2, T3, T4, T5, T6> mapper) {
             return id().map(tuple -> tuple.map(mapper));
         }
 
-        default <R> Promise<R> flatMap(FN6<Promise<R>, T1, T2, T3, T4, T5, T6> mapper) {
+        default <R> Promise<R> flatMap(Fn6<Promise<R>, T1, T2, T3, T4, T5, T6> mapper) {
             return id().flatMap(tuple -> tuple.map(mapper));
         }
 
@@ -676,11 +676,11 @@ public interface Promise<T> {
 
         Promise<Tuple.Tuple7<T1, T2, T3, T4, T5, T6, T7>> id();
 
-        default <R> Promise<R> map(FN7<R, T1, T2, T3, T4, T5, T6, T7> mapper) {
+        default <R> Promise<R> map(Fn7<R, T1, T2, T3, T4, T5, T6, T7> mapper) {
             return id().map(tuple -> tuple.map(mapper));
         }
 
-        default <R> Promise<R> flatMap(FN7<Promise<R>, T1, T2, T3, T4, T5, T6, T7> mapper) {
+        default <R> Promise<R> flatMap(Fn7<Promise<R>, T1, T2, T3, T4, T5, T6, T7> mapper) {
             return id().flatMap(tuple -> tuple.map(mapper));
         }
 
@@ -695,11 +695,11 @@ public interface Promise<T> {
 
         Promise<Tuple.Tuple8<T1, T2, T3, T4, T5, T6, T7, T8>> id();
 
-        default <R> Promise<R> map(FN8<R, T1, T2, T3, T4, T5, T6, T7, T8> mapper) {
+        default <R> Promise<R> map(Fn8<R, T1, T2, T3, T4, T5, T6, T7, T8> mapper) {
             return id().map(tuple -> tuple.map(mapper));
         }
 
-        default <R> Promise<R> flatMap(FN8<Promise<R>, T1, T2, T3, T4, T5, T6, T7, T8> mapper) {
+        default <R> Promise<R> flatMap(Fn8<Promise<R>, T1, T2, T3, T4, T5, T6, T7, T8> mapper) {
             return id().flatMap(tuple -> tuple.map(mapper));
         }
 
@@ -714,17 +714,17 @@ public interface Promise<T> {
 
         Promise<Tuple.Tuple9<T1, T2, T3, T4, T5, T6, T7, T8, T9>> id();
 
-        default <R> Promise<R> map(FN9<R, T1, T2, T3, T4, T5, T6, T7, T8, T9> mapper) {
+        default <R> Promise<R> map(Fn9<R, T1, T2, T3, T4, T5, T6, T7, T8, T9> mapper) {
             return id().map(tuple -> tuple.map(mapper));
         }
 
-        default <R> Promise<R> flatMap(FN9<Promise<R>, T1, T2, T3, T4, T5, T6, T7, T8, T9> mapper) {
+        default <R> Promise<R> flatMap(Fn9<Promise<R>, T1, T2, T3, T4, T5, T6, T7, T8, T9> mapper) {
             return id().flatMap(tuple -> tuple.map(mapper));
         }
 
     }
 
-    private static <R> Promise<R> setup(FNx<R> transformer, Promise<?>... promises) {
+    private static <R> Promise<R> setup(FnX<R> transformer, Promise<?>... promises) {
         var promise = Promise.<R>promise();
         var collector = resultCollector(promises.length, values -> promise.success(transformer.apply(values)));
 
@@ -781,7 +781,7 @@ public interface Promise<T> {
         }
 
         @Override
-        public <U> Promise<U> map(FN1<U, ? super T> mapper) {
+        public <U> Promise<U> map(Fn1<U, ? super T> mapper) {
             if (value != null) {
                 return new PromiseImpl<>(value.map(mapper));
             }
@@ -794,7 +794,7 @@ public interface Promise<T> {
         }
 
         @Override
-        public Promise<T> mapError(FN1<Cause, Cause> mapper) {
+        public Promise<T> mapError(Fn1<Cause, Cause> mapper) {
             if (value != null) {
                 return new PromiseImpl<>(value.mapError(mapper));
             }
@@ -808,7 +808,7 @@ public interface Promise<T> {
 
         @SuppressWarnings("unchecked")
         @Override
-        public <U> Promise<U> flatMap(FN1<Promise<U>, ? super T> mapper) {
+        public <U> Promise<U> flatMap(Fn1<Promise<U>, ? super T> mapper) {
             if (value != null) {
                 return value.fold(f -> new PromiseImpl<>((Result<U>) value), mapper);
             }
@@ -922,7 +922,7 @@ public interface Promise<T> {
                 Thread.onSpinWait();
 
                 if (System.nanoTime() - start > delayNanos) {
-                    return CoreError.TIMEOUT.result();
+                    return new CoreError.Timeout("Result.join(timeout) expired while waiting for completion of current instance").result();
                 }
             }
 
@@ -930,7 +930,7 @@ public interface Promise<T> {
                 var currentNanoTime = System.nanoTime();
 
                 if (currentNanoTime - start > delayNanos) {
-                    return CoreError.TIMEOUT.result();
+                    return new CoreError.Timeout("Result.join(timeout) expired while waiting for completion of dependencies").result();
                 }
 
                 action.dependency.join(currentNanoTime - start);

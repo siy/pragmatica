@@ -15,7 +15,7 @@
  *
  */
 
-package org.pragmatica.io.util;
+package org.pragmatica.io.utils;
 
 import org.pragmatica.io.AsyncCloseable;
 import org.pragmatica.io.PromiseIO;

@@ -47,8 +47,8 @@ public sealed interface Result<T> permits Success, Failure {
      * @return transformed value (in case of success) or current instance (in case of failure)
      */
     @SuppressWarnings("unchecked")
-    default <R> Result<R> map(FN1<R, ? super T> mapper) {
-        return fold(__ -> (Result<R>) this, r -> success(mapper.apply(r)));
+    default <R> Result<R> map(Fn1<R, ? super T> mapper) {
+        return fold(_ -> (Result<R>) this, r -> success(mapper.apply(r)));
     }
 
     /**
@@ -61,11 +61,11 @@ public sealed interface Result<T> permits Success, Failure {
      */
     @SuppressWarnings("unchecked")
     default <R> Result<R> replace(Supplier<R> supplier) {
-        return fold(__ -> (Result<R>) this, __ -> success(supplier.get()));
+        return fold(_ -> (Result<R>) this, _ -> success(supplier.get()));
     }
 
-    default Result<T> mapError(FN1<Cause, ? super Cause> mapper) {
-        return fold(cause -> mapper.apply(cause).result(), __ -> this);
+    default Result<T> mapError(Fn1<Cause, ? super Cause> mapper) {
+        return fold(cause -> mapper.apply(cause).result(), _ -> this);
     }
 
     /**
@@ -77,8 +77,8 @@ public sealed interface Result<T> permits Success, Failure {
      * @return transformed value (in case of success) or current instance (in case of failure)
      */
     @SuppressWarnings("unchecked")
-    default <R> Result<R> flatMap(FN1<Result<R>, ? super T> mapper) {
-        return fold(__ -> (Result<R>) this, mapper);
+    default <R> Result<R> flatMap(Fn1<Result<R>, ? super T> mapper) {
+        return fold(_ -> (Result<R>) this, mapper);
     }
 
     /**
@@ -91,7 +91,7 @@ public sealed interface Result<T> permits Success, Failure {
      */
     @SuppressWarnings("unchecked")
     default <R> Result<R> flatReplace(Supplier<Result<R>> mapper) {
-        return fold(__ -> (Result<R>) this, __ -> mapper.get());
+        return fold(_ -> (Result<R>) this, _ -> mapper.get());
     }
 
     /**
@@ -245,7 +245,7 @@ public sealed interface Result<T> permits Success, Failure {
      * @return created stream
      */
     default Stream<T> stream() {
-        return fold(__ -> Stream.empty(), Stream::of);
+        return fold(_ -> Stream.empty(), Stream::of);
     }
 
     /**
@@ -270,7 +270,7 @@ public sealed interface Result<T> permits Success, Failure {
      *
      * @return current instance if predicate returns {@code true} or {@link Failure} instance if predicate returns {@code false}
      */
-    default Result<T> filter(FN1<Cause, T> causeMapper, Predicate<T> predicate) {
+    default Result<T> filter(Fn1<Cause, T> causeMapper, Predicate<T> predicate) {
         return fold(v -> this, v -> predicate.test(v) ? this : failure(causeMapper.apply(v)));
     }
 
@@ -282,7 +282,7 @@ public sealed interface Result<T> permits Success, Failure {
      * @return value stored in current instance (in case of success) or replacement value.
      */
     default T or(T replacement) {
-        return fold(__ -> replacement, Functions::id);
+        return fold(_ -> replacement, Functions::id);
     }
 
     /**
@@ -293,7 +293,7 @@ public sealed interface Result<T> permits Success, Failure {
      * @return value stored in current instance (in case of success) or replacement value.
      */
     default T or(Supplier<T> supplier) {
-        return fold(__ -> supplier.get(), Functions::id);
+        return fold(_ -> supplier.get(), Functions::id);
     }
 
     /**
@@ -304,7 +304,7 @@ public sealed interface Result<T> permits Success, Failure {
      * @return current instance (in case of success) or replacement instance.
      */
     default Result<T> orElse(Result<T> replacement) {
-        return fold(__ -> replacement, __ -> this);
+        return fold(_ -> replacement, _ -> this);
     }
 
     /**
@@ -316,7 +316,7 @@ public sealed interface Result<T> permits Success, Failure {
      * @return current instance (in case of success) or replacement instance.
      */
     default Result<T> orElse(Supplier<Result<T>> supplier) {
-        return fold(__ -> supplier.get(), __ -> this);
+        return fold(_ -> supplier.get(), _ -> this);
     }
 
     default Result<T> onResultDo(Runnable runnable) {
@@ -345,7 +345,7 @@ public sealed interface Result<T> permits Success, Failure {
      *
      * @return result of application of one of the mappers.
      */
-    <R> R fold(FN1<? extends R, ? super Cause> failureMapper, FN1<? extends R, ? super T> successMapper);
+    <R> R fold(Fn1<? extends R, ? super Cause> failureMapper, Fn1<? extends R, ? super T> successMapper);
 
     default Result<T> accept(Consumer<Cause> failureConsumer, Consumer<T> successConsumer) {
         return fold(
@@ -376,7 +376,7 @@ public sealed interface Result<T> permits Success, Failure {
 
     record Success<T>(T value) implements Result<T> {
         @Override
-        public <R> R fold(FN1<? extends R, ? super Cause> failureMapper, FN1<? extends R, ? super T> successMapper) {
+        public <R> R fold(Fn1<? extends R, ? super Cause> failureMapper, Fn1<? extends R, ? super T> successMapper) {
             return successMapper.apply(value);
         }
 
@@ -403,7 +403,7 @@ public sealed interface Result<T> permits Success, Failure {
 
     record Failure<T>(Cause cause) implements Result<T> {
         @Override
-        public <R> R fold(FN1<? extends R, ? super Cause> failureMapper, FN1<? extends R, ? super T> successMapper) {
+        public <R> R fold(Fn1<? extends R, ? super Cause> failureMapper, Fn1<? extends R, ? super T> successMapper) {
             return failureMapper.apply(cause);
         }
 
@@ -421,16 +421,16 @@ public sealed interface Result<T> permits Success, Failure {
      *
      * @return result of execution of the provided lambda wrapped into {@link Result}
      */
-    static <R> Result<R> lift(FN1<? extends Cause, ? super Throwable> exceptionMapper, ThrowingSupplier<R> supplier) {
+    static <R> Result<R> lift(Fn1<? extends Cause, ? super Throwable> exceptionMapper, ThrowingFn0<R> supplier) {
         try {
-            return success(supplier.get());
+            return success(supplier.apply());
         } catch (Throwable e) {
             return failure(exceptionMapper.apply(e));
         }
     }
 
-    static <R> Result<R> lift(Cause cause, ThrowingSupplier<R> supplier) {
-        return lift(__ -> cause, supplier);
+    static <R> Result<R> lift(Cause cause, ThrowingFn0<R> supplier) {
+        return lift(_ -> cause, supplier);
     }
 
     /**
@@ -669,11 +669,11 @@ public sealed interface Result<T> permits Success, Failure {
     interface Mapper1<T1> {
         Result<Tuple1<T1>> id();
 
-        default <R> Result<R> map(FN1<R, T1> mapper) {
+        default <R> Result<R> map(Fn1<R, T1> mapper) {
             return id().map(tuple -> tuple.map(mapper));
         }
 
-        default <R> Result<R> flatMap(FN1<Result<R>, T1> mapper) {
+        default <R> Result<R> flatMap(Fn1<Result<R>, T1> mapper) {
             return id().flatMap(tuple -> tuple.map(mapper));
         }
     }
@@ -692,11 +692,11 @@ public sealed interface Result<T> permits Success, Failure {
     interface Mapper2<T1, T2> {
         Result<Tuple2<T1, T2>> id();
 
-        default <R> Result<R> map(FN2<R, T1, T2> mapper) {
+        default <R> Result<R> map(Fn2<R, T1, T2> mapper) {
             return id().map(tuple -> tuple.map(mapper));
         }
 
-        default <R> Result<R> flatMap(FN2<Result<R>, T1, T2> mapper) {
+        default <R> Result<R> flatMap(Fn2<Result<R>, T1, T2> mapper) {
             return id().flatMap(tuple -> tuple.map(mapper));
         }
     }
@@ -715,11 +715,11 @@ public sealed interface Result<T> permits Success, Failure {
     interface Mapper3<T1, T2, T3> {
         Result<Tuple3<T1, T2, T3>> id();
 
-        default <R> Result<R> map(FN3<R, T1, T2, T3> mapper) {
+        default <R> Result<R> map(Fn3<R, T1, T2, T3> mapper) {
             return id().map(tuple -> tuple.map(mapper));
         }
 
-        default <R> Result<R> flatMap(FN3<Result<R>, T1, T2, T3> mapper) {
+        default <R> Result<R> flatMap(Fn3<Result<R>, T1, T2, T3> mapper) {
             return id().flatMap(tuple -> tuple.map(mapper));
         }
     }
@@ -738,11 +738,11 @@ public sealed interface Result<T> permits Success, Failure {
     interface Mapper4<T1, T2, T3, T4> {
         Result<Tuple4<T1, T2, T3, T4>> id();
 
-        default <R> Result<R> map(FN4<R, T1, T2, T3, T4> mapper) {
+        default <R> Result<R> map(Fn4<R, T1, T2, T3, T4> mapper) {
             return id().map(tuple -> tuple.map(mapper));
         }
 
-        default <R> Result<R> flatMap(FN4<Result<R>, T1, T2, T3, T4> mapper) {
+        default <R> Result<R> flatMap(Fn4<Result<R>, T1, T2, T3, T4> mapper) {
             return id().flatMap(tuple -> tuple.map(mapper));
         }
     }
@@ -761,11 +761,11 @@ public sealed interface Result<T> permits Success, Failure {
     interface Mapper5<T1, T2, T3, T4, T5> {
         Result<Tuple5<T1, T2, T3, T4, T5>> id();
 
-        default <R> Result<R> map(FN5<R, T1, T2, T3, T4, T5> mapper) {
+        default <R> Result<R> map(Fn5<R, T1, T2, T3, T4, T5> mapper) {
             return id().map(tuple -> tuple.map(mapper));
         }
 
-        default <R> Result<R> flatMap(FN5<Result<R>, T1, T2, T3, T4, T5> mapper) {
+        default <R> Result<R> flatMap(Fn5<Result<R>, T1, T2, T3, T4, T5> mapper) {
             return id().flatMap(tuple -> tuple.map(mapper));
         }
     }
@@ -784,11 +784,11 @@ public sealed interface Result<T> permits Success, Failure {
     interface Mapper6<T1, T2, T3, T4, T5, T6> {
         Result<Tuple6<T1, T2, T3, T4, T5, T6>> id();
 
-        default <R> Result<R> map(FN6<R, T1, T2, T3, T4, T5, T6> mapper) {
+        default <R> Result<R> map(Fn6<R, T1, T2, T3, T4, T5, T6> mapper) {
             return id().map(tuple -> tuple.map(mapper));
         }
 
-        default <R> Result<R> flatMap(FN6<Result<R>, T1, T2, T3, T4, T5, T6> mapper) {
+        default <R> Result<R> flatMap(Fn6<Result<R>, T1, T2, T3, T4, T5, T6> mapper) {
             return id().flatMap(tuple -> tuple.map(mapper));
         }
     }
@@ -807,11 +807,11 @@ public sealed interface Result<T> permits Success, Failure {
     interface Mapper7<T1, T2, T3, T4, T5, T6, T7> {
         Result<Tuple7<T1, T2, T3, T4, T5, T6, T7>> id();
 
-        default <R> Result<R> map(FN7<R, T1, T2, T3, T4, T5, T6, T7> mapper) {
+        default <R> Result<R> map(Fn7<R, T1, T2, T3, T4, T5, T6, T7> mapper) {
             return id().map(tuple -> tuple.map(mapper));
         }
 
-        default <R> Result<R> flatMap(FN7<Result<R>, T1, T2, T3, T4, T5, T6, T7> mapper) {
+        default <R> Result<R> flatMap(Fn7<Result<R>, T1, T2, T3, T4, T5, T6, T7> mapper) {
             return id().flatMap(tuple -> tuple.map(mapper));
         }
     }
@@ -830,11 +830,11 @@ public sealed interface Result<T> permits Success, Failure {
     interface Mapper8<T1, T2, T3, T4, T5, T6, T7, T8> {
         Result<Tuple8<T1, T2, T3, T4, T5, T6, T7, T8>> id();
 
-        default <R> Result<R> map(FN8<R, T1, T2, T3, T4, T5, T6, T7, T8> mapper) {
+        default <R> Result<R> map(Fn8<R, T1, T2, T3, T4, T5, T6, T7, T8> mapper) {
             return id().map(tuple -> tuple.map(mapper));
         }
 
-        default <R> Result<R> flatMap(FN8<Result<R>, T1, T2, T3, T4, T5, T6, T7, T8> mapper) {
+        default <R> Result<R> flatMap(Fn8<Result<R>, T1, T2, T3, T4, T5, T6, T7, T8> mapper) {
             return id().flatMap(tuple -> tuple.map(mapper));
         }
     }
@@ -853,11 +853,11 @@ public sealed interface Result<T> permits Success, Failure {
     interface Mapper9<T1, T2, T3, T4, T5, T6, T7, T8, T9> {
         Result<Tuple9<T1, T2, T3, T4, T5, T6, T7, T8, T9>> id();
 
-        default <R> Result<R> map(FN9<R, T1, T2, T3, T4, T5, T6, T7, T8, T9> mapper) {
+        default <R> Result<R> map(Fn9<R, T1, T2, T3, T4, T5, T6, T7, T8, T9> mapper) {
             return id().map(tuple -> tuple.map(mapper));
         }
 
-        default <R> Result<R> flatMap(FN9<Result<R>, T1, T2, T3, T4, T5, T6, T7, T8, T9> mapper) {
+        default <R> Result<R> flatMap(Fn9<Result<R>, T1, T2, T3, T4, T5, T6, T7, T8, T9> mapper) {
             return id().flatMap(tuple -> tuple.map(mapper));
         }
     }

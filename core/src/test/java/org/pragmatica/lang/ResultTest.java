@@ -168,7 +168,7 @@ class ResultTest {
         var flag1 = new AtomicBoolean(false);
 
         Result.<Integer>failure(Causes.cause("123")).toOption()
-              .onPresent(__ -> fail("Should not happen"))
+              .onPresent(_ -> fail("Should not happen"))
               .onEmpty(() -> flag1.set(true));
 
         assertTrue(flag1.get());

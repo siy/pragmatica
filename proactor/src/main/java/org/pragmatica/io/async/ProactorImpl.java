@@ -31,8 +31,6 @@ import org.pragmatica.io.async.uring.exchange.ExchangeEntryPool;
 import org.pragmatica.io.async.uring.struct.offheap.OffHeapCString;
 import org.pragmatica.io.async.uring.struct.offheap.OffHeapSocketAddress;
 import org.pragmatica.io.async.util.OffHeapSlice;
-import org.pragmatica.io.async.util.allocator.ChunkedAllocator;
-import org.pragmatica.io.async.util.allocator.FixedBuffer;
 import org.pragmatica.lang.Functions;
 import org.pragmatica.lang.Option;
 import org.pragmatica.lang.Result;

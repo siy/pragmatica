@@ -21,7 +21,6 @@ import org.pragmatica.io.async.Timeout;
 import org.pragmatica.io.async.common.SizeT;
 import org.pragmatica.io.async.file.FileDescriptor;
 import org.pragmatica.io.async.net.InetAddress;
-import org.pragmatica.io.async.util.allocator.FixedBuffer;
 import org.pragmatica.io.net.AcceptProtocol;
 import org.pragmatica.io.net.ConnectionProtocol;
 import org.pragmatica.io.net.ConnectionProtocolContext;

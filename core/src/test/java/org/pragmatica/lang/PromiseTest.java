@@ -31,7 +31,9 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class PromiseTest {
+public class PromiseTest {
+    private static final Result<Integer> FAULT = new CoreError.Fault("Test fault").result();
+
     @Test
     void promiseCanBeResolved() {
         var promise = Promise.<Integer>promise();
@@ -56,7 +58,9 @@ class PromiseTest {
     void promiseCanBeCancelled() {
         var promise = Promise.<Integer>promise();
 
-        Assertions.assertEquals(CoreError.CANCELLED.result(), promise.cancel().join());
+        promise.cancel().join()
+               .onFailure(this::assertIsCancelled)
+               .onSuccess(v -> fail("Promise should be cancelled"));
     }
 
     @Test
@@ -87,7 +91,7 @@ class PromiseTest {
         assertEquals(0, ref1.get());
         assertFalse(ref2.get());
 
-        promise.resolve(CoreError.FAULT.result()).join();
+        promise.resolve(FAULT).join();
 
         assertEquals(0, ref1.get());
         assertFalse(ref2.get());
@@ -104,9 +108,9 @@ class PromiseTest {
         assertNull(ref1.get());
         assertFalse(ref2.get());
 
-        promise.resolve(CoreError.FAULT.result()).join();
+        promise.resolve(FAULT).join();
 
-        Assertions.assertEquals(CoreError.FAULT, ref1.get());
+        assertIsFault(ref1.get());
         assertTrue(ref2.get());
     }
 
@@ -155,9 +159,11 @@ class PromiseTest {
         assertNull(ref1.get());
         assertFalse(ref2.get());
 
-        promise.resolve(CoreError.FAULT.result()).join();
+        promise.resolve(FAULT).join();
 
-        Assertions.assertEquals(CoreError.FAULT.result(), ref1.get());
+        ref1.get()
+            .onFailure(this::assertIsFault)
+            .onSuccess(v -> fail("Promise should be resolved with failure"));
         assertTrue(ref2.get());
     }
 
@@ -172,9 +178,9 @@ class PromiseTest {
         assertNull(ref1.get());
         assertFalse(ref2.get());
 
-        var result = promise.join(Timeout.timeout(10).millis());
-
-        Assertions.assertEquals(result, CoreError.TIMEOUT.result());
+        promise.join(Timeout.timeout(10).millis())
+               .onFailure(this::assertIsTimeout)
+               .onSuccess(v -> fail("Timeout is expected"));
 
         assertNull(ref1.get());
         assertFalse(ref2.get());
@@ -196,9 +202,9 @@ class PromiseTest {
         promise.join();
 
         //For informational purposes
-        System.out.printf("From start of promise creation to start of async execution: %.2fms\n", (ref2.get() - ref1.get())/1e6);
-        System.out.printf("From start of async execution to start of execution of attached action: %.2fms\n", (ref3.get() - ref2.get())/1e6);
-        System.out.printf("Total execution time: %2fms\n", (ref3.get() - ref1.get())/1e6);
+        System.out.printf("From start of promise creation to start of async execution: %.2fms\n", (ref2.get() - ref1.get()) / 1e6);
+        System.out.printf("From start of async execution to start of execution of attached action: %.2fms\n", (ref3.get() - ref2.get()) / 1e6);
+        System.out.printf("Total execution time: %2fms\n", (ref3.get() - ref1.get()) / 1e6);
 
         // Expect that timeout should be between requested and twice as requested
         assertTrue((ref2.get() - ref1.get()) >= Timeout.timeout(10).millis().nanoseconds());
@@ -467,5 +473,26 @@ class PromiseTest {
         latch.await();
 
         assertEquals(1, ref.get());
+    }
+
+    void assertIsFault(Result.Cause cause) {
+        switch (cause) {
+            case CoreError.Fault _ -> {}
+            default -> fail("Unexpected cause");
+        }
+    }
+
+    void assertIsTimeout(Result.Cause cause) {
+        switch (cause) {
+            case CoreError.Timeout _ -> {}
+            default -> fail("Unexpected cause");
+        }
+    }
+
+    void assertIsCancelled(Result.Cause cause) {
+        switch (cause) {
+            case CoreError.Cancelled _ -> {}
+            default -> fail("Unexpected cause");
+        }
     }
 }

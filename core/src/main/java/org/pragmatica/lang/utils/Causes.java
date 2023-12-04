@@ -17,7 +17,7 @@
 
 package org.pragmatica.lang.utils;
 
-import org.pragmatica.lang.Functions.FN1;
+import org.pragmatica.lang.Functions.Fn1;
 import org.pragmatica.lang.Option;
 import org.pragmatica.lang.Result;
 
@@ -75,7 +75,7 @@ public final class Causes {
 
     /**
      * Create a mapper which will map a value into a formatted message. Main use case for this function - creation of mappers for {@link
-     * Result#filter(FN1, Predicate)}:
+     * Result#filter(Fn1, Predicate)}:
      * <blockquote><pre>
      * filter(Causes.with1("Value {0} is below threshold"), value -> value > 321)
      * </pre></blockquote>
@@ -84,7 +84,7 @@ public final class Causes {
      *
      * @return created mapping function
      */
-    public static <T> FN1<Result.Cause, T> with1(String template) {
+    public static <T> Fn1<Result.Cause, T> with1(String template) {
         return (T input) -> cause(MessageFormat.format(template, input));
     }
 }

@@ -19,8 +19,7 @@ package org.pragmatica.dns;
 
 
 import org.pragmatica.dns.codec.*;
-import org.pragmatica.io.async.util.OffHeapSlice;
-import org.pragmatica.io.async.util.SliceAccessor;
+import org.pragmatica.io.utils.SliceAccessor;
 import org.pragmatica.lang.Result;
 
 import java.util.List;
@@ -44,10 +43,6 @@ public record DnsMessage(
     // TxID, header, header, question count, answer count, authority count, additional count
     public static final int MIN_MESSAGE_LENGTH = Short.BYTES + Byte.BYTES + Byte.BYTES + Short.BYTES + Short.BYTES + Short.BYTES + Short.BYTES;
 
-    public static Result<DnsMessage> decode(OffHeapSlice offHeapSlice) {
-        return decode(SliceAccessor.forSlice(offHeapSlice));
-    }
-
     public static Result<DnsMessage> decode(SliceAccessor sliceAccessor) {
         if (!sliceAccessor.availableBytes(MIN_MESSAGE_LENGTH)) {
             return DnsIoErrors.TOO_SHORT_INPUT.result();
@@ -63,16 +58,16 @@ public record DnsMessage(
         var additionalCount = sliceAccessor.getShortInNetOrder();
 
         return Decoding.decodeMessageType(headerByte1).map(builder::messageType)
-                       .flatMap(__ -> Decoding.decodeOpCode(headerByte1)).map(builder::opCode)
-                       .flatMap(__ -> Decoding.decodeAuthoritativeAnswer(headerByte1)).map(builder::authoritativeAnswer)
-                       .flatMap(__ -> Decoding.decodeTruncated(headerByte1)).map(builder::truncated)
-                       .flatMap(__ -> Decoding.decodeRecursionDesired(headerByte1)).map(builder::recursionDesired)
-                       .flatMap(__ -> Decoding.decodeRecursionAvailable(headerByte2)).map(builder::recursionAvailable)
-                       .flatMap(__ -> Decoding.decodeResponseCode(headerByte2)).map(builder::responseCode)
-                       .flatMap(__ -> Decoding.decodeQuestions(sliceAccessor, questionCount)).map(builder::questionRecords)
-                       .flatMap(__ -> Decoding.decodeRecords(sliceAccessor, answerCount)).map(builder::answerRecords)
-                       .flatMap(__ -> Decoding.decodeRecords(sliceAccessor, authorityCount)).map(builder::authorityRecords)
-                       .flatMap(__ -> Decoding.decodeRecords(sliceAccessor, additionalCount)).map(builder::additionalRecords)
+                       .flatMap(_ -> Decoding.decodeOpCode(headerByte1)).map(builder::opCode)
+                       .flatMap(_ -> Decoding.decodeAuthoritativeAnswer(headerByte1)).map(builder::authoritativeAnswer)
+                       .flatMap(_ -> Decoding.decodeTruncated(headerByte1)).map(builder::truncated)
+                       .flatMap(_ -> Decoding.decodeRecursionDesired(headerByte1)).map(builder::recursionDesired)
+                       .flatMap(_ -> Decoding.decodeRecursionAvailable(headerByte2)).map(builder::recursionAvailable)
+                       .flatMap(_ -> Decoding.decodeResponseCode(headerByte2)).map(builder::responseCode)
+                       .flatMap(_ -> Decoding.decodeQuestions(sliceAccessor, questionCount)).map(builder::questionRecords)
+                       .flatMap(_ -> Decoding.decodeRecords(sliceAccessor, answerCount)).map(builder::answerRecords)
+                       .flatMap(_ -> Decoding.decodeRecords(sliceAccessor, authorityCount)).map(builder::authorityRecords)
+                       .flatMap(_ -> Decoding.decodeRecords(sliceAccessor, additionalCount)).map(builder::additionalRecords)
                        .map(DnsMessageBuilder::build);
     }
 

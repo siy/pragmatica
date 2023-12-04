@@ -402,85 +402,85 @@ class OptionTest {
 
     @Test
     void allIsMissingIfAnyInputIsMissing1() {
-        Option.all(Option.empty()).id().onPresent(__ -> fail());
+        Option.all(Option.empty()).id().onPresent(_ -> fail());
     }
 
     @Test
     void allIsMissingIfAnyInputIsMissing2() {
-        Option.all(Option.empty(), Option.present(1)).id().onPresent(__ -> fail());
-        Option.all(Option.present(1), Option.empty()).id().onPresent(__ -> fail());
+        Option.all(Option.empty(), Option.present(1)).id().onPresent(_ -> fail());
+        Option.all(Option.present(1), Option.empty()).id().onPresent(_ -> fail());
     }
 
     @Test
     void allIsMissingIfAnyInputIsMissing3() {
-        Option.all(Option.empty(), Option.present(1), Option.present(1)).id().onPresent(__ -> fail());
-        Option.all(Option.present(1), Option.empty(), Option.present(1)).id().onPresent(__ -> fail());
-        Option.all(Option.present(1), Option.present(1), Option.empty()).id().onPresent(__ -> fail());
+        Option.all(Option.empty(), Option.present(1), Option.present(1)).id().onPresent(_ -> fail());
+        Option.all(Option.present(1), Option.empty(), Option.present(1)).id().onPresent(_ -> fail());
+        Option.all(Option.present(1), Option.present(1), Option.empty()).id().onPresent(_ -> fail());
     }
 
     @Test
     void allIsMissingIfAnyInputIsMissing4() {
-        Option.all(Option.empty(), Option.present(1), Option.present(1), Option.present(1)).id().onPresent(__ -> fail());
-        Option.all(Option.present(1), Option.empty(), Option.present(1), Option.present(1)).id().onPresent(__ -> fail());
-        Option.all(Option.present(1), Option.present(1), Option.empty(), Option.present(1)).id().onPresent(__ -> fail());
-        Option.all(Option.present(1), Option.present(1), Option.present(1), Option.empty()).id().onPresent(__ -> fail());
+        Option.all(Option.empty(), Option.present(1), Option.present(1), Option.present(1)).id().onPresent(_ -> fail());
+        Option.all(Option.present(1), Option.empty(), Option.present(1), Option.present(1)).id().onPresent(_ -> fail());
+        Option.all(Option.present(1), Option.present(1), Option.empty(), Option.present(1)).id().onPresent(_ -> fail());
+        Option.all(Option.present(1), Option.present(1), Option.present(1), Option.empty()).id().onPresent(_ -> fail());
     }
 
     @Test
     void allIsMissingIfAnyInputIsMissing5() {
-        Option.all(Option.empty(), Option.present(1), Option.present(1), Option.present(1), Option.present(1)).id().onPresent(__ -> fail());
-        Option.all(Option.present(1), Option.empty(), Option.present(1), Option.present(1), Option.present(1)).id().onPresent(__ -> fail());
-        Option.all(Option.present(1), Option.present(1), Option.empty(), Option.present(1), Option.present(1)).id().onPresent(__ -> fail());
-        Option.all(Option.present(1), Option.present(1), Option.present(1), Option.empty(), Option.present(1)).id().onPresent(__ -> fail());
-        Option.all(Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.empty()).id().onPresent(__ -> fail());
+        Option.all(Option.empty(), Option.present(1), Option.present(1), Option.present(1), Option.present(1)).id().onPresent(_ -> fail());
+        Option.all(Option.present(1), Option.empty(), Option.present(1), Option.present(1), Option.present(1)).id().onPresent(_ -> fail());
+        Option.all(Option.present(1), Option.present(1), Option.empty(), Option.present(1), Option.present(1)).id().onPresent(_ -> fail());
+        Option.all(Option.present(1), Option.present(1), Option.present(1), Option.empty(), Option.present(1)).id().onPresent(_ -> fail());
+        Option.all(Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.empty()).id().onPresent(_ -> fail());
     }
 
     @Test
     void allIsMissingIfAnyInputIsMissing6() {
-        Option.all(Option.empty(), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1)).id().onPresent(__ -> fail());
-        Option.all(Option.present(1), Option.empty(), Option.present(1), Option.present(1), Option.present(1), Option.present(1)).id().onPresent(__ -> fail());
-        Option.all(Option.present(1), Option.present(1), Option.empty(), Option.present(1), Option.present(1), Option.present(1)).id().onPresent(__ -> fail());
-        Option.all(Option.present(1), Option.present(1), Option.present(1), Option.empty(), Option.present(1), Option.present(1)).id().onPresent(__ -> fail());
-        Option.all(Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.empty(), Option.present(1)).id().onPresent(__ -> fail());
-        Option.all(Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.empty()).id().onPresent(__ -> fail());
+        Option.all(Option.empty(), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1)).id().onPresent(_ -> fail());
+        Option.all(Option.present(1), Option.empty(), Option.present(1), Option.present(1), Option.present(1), Option.present(1)).id().onPresent(_ -> fail());
+        Option.all(Option.present(1), Option.present(1), Option.empty(), Option.present(1), Option.present(1), Option.present(1)).id().onPresent(_ -> fail());
+        Option.all(Option.present(1), Option.present(1), Option.present(1), Option.empty(), Option.present(1), Option.present(1)).id().onPresent(_ -> fail());
+        Option.all(Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.empty(), Option.present(1)).id().onPresent(_ -> fail());
+        Option.all(Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.empty()).id().onPresent(_ -> fail());
     }
 
     @Test
     void allIsMissingIfAnyInputIsMissing7() {
         Option
-            .all(Option.empty(), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1)).id().onPresent(__ -> fail());
+            .all(Option.empty(), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1)).id().onPresent(_ -> fail());
         Option
-            .all(Option.present(1), Option.empty(), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1)).id().onPresent(__ -> fail());
+            .all(Option.present(1), Option.empty(), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1)).id().onPresent(_ -> fail());
         Option
-            .all(Option.present(1), Option.present(1), Option.empty(), Option.present(1), Option.present(1), Option.present(1), Option.present(1)).id().onPresent(__ -> fail());
+            .all(Option.present(1), Option.present(1), Option.empty(), Option.present(1), Option.present(1), Option.present(1), Option.present(1)).id().onPresent(_ -> fail());
         Option
-            .all(Option.present(1), Option.present(1), Option.present(1), Option.empty(), Option.present(1), Option.present(1), Option.present(1)).id().onPresent(__ -> fail());
+            .all(Option.present(1), Option.present(1), Option.present(1), Option.empty(), Option.present(1), Option.present(1), Option.present(1)).id().onPresent(_ -> fail());
         Option
-            .all(Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.empty(), Option.present(1), Option.present(1)).id().onPresent(__ -> fail());
+            .all(Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.empty(), Option.present(1), Option.present(1)).id().onPresent(_ -> fail());
         Option
-            .all(Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.empty(), Option.present(1)).id().onPresent(__ -> fail());
+            .all(Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.empty(), Option.present(1)).id().onPresent(_ -> fail());
         Option
-            .all(Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.empty()).id().onPresent(__ -> fail());
+            .all(Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.empty()).id().onPresent(_ -> fail());
     }
 
     @Test
     void allIsMissingIfAnyInputIsMissing8() {
         Option
-            .all(Option.empty(), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1)).id().onPresent(__ -> fail());
+            .all(Option.empty(), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1)).id().onPresent(_ -> fail());
         Option
-            .all(Option.present(1), Option.empty(), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1)).id().onPresent(__ -> fail());
+            .all(Option.present(1), Option.empty(), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1)).id().onPresent(_ -> fail());
         Option
-            .all(Option.present(1), Option.present(1), Option.empty(), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1)).id().onPresent(__ -> fail());
+            .all(Option.present(1), Option.present(1), Option.empty(), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1)).id().onPresent(_ -> fail());
         Option
-            .all(Option.present(1), Option.present(1), Option.present(1), Option.empty(), Option.present(1), Option.present(1), Option.present(1), Option.present(1)).id().onPresent(__ -> fail());
+            .all(Option.present(1), Option.present(1), Option.present(1), Option.empty(), Option.present(1), Option.present(1), Option.present(1), Option.present(1)).id().onPresent(_ -> fail());
         Option
-            .all(Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.empty(), Option.present(1), Option.present(1), Option.present(1)).id().onPresent(__ -> fail());
+            .all(Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.empty(), Option.present(1), Option.present(1), Option.present(1)).id().onPresent(_ -> fail());
         Option
-            .all(Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.empty(), Option.present(1), Option.present(1)).id().onPresent(__ -> fail());
+            .all(Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.empty(), Option.present(1), Option.present(1)).id().onPresent(_ -> fail());
         Option
-            .all(Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.empty(), Option.present(1)).id().onPresent(__ -> fail());
+            .all(Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.empty(), Option.present(1)).id().onPresent(_ -> fail());
         Option
-            .all(Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.empty()).id().onPresent(__ -> fail());
+            .all(Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.present(1), Option.empty()).id().onPresent(_ -> fail());
     }
 
     @Test

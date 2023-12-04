@@ -1,4 +1,4 @@
-package org.pragmatica.io.util;
+package org.pragmatica.io.utils;
 
 import org.pragmatica.io.async.Timeout;
 import org.pragmatica.lang.Option;

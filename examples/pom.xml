@@ -37,7 +37,7 @@
 
         <dependency>
             <groupId>org.pragmatica</groupId>
-            <artifactId>io-protocol</artifactId>
+            <artifactId>io-api</artifactId>
         </dependency>
 
         <dependency>

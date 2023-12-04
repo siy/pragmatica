@@ -20,17 +20,7 @@
 
         <dependency>
             <groupId>org.pragmatica</groupId>
-            <artifactId>proactor</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.pragmatica</groupId>
-            <artifactId>io-net</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.pragmatica</groupId>
-            <artifactId>io-util</artifactId>
+            <artifactId>io-api</artifactId>
         </dependency>
 
         <dependency>
@@ -51,4 +41,16 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
 </project>

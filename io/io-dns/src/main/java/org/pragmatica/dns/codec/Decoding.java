@@ -118,7 +118,7 @@ public final class Decoding {
 
     public static Result<List<ResourceRecord>> decodeRecords(SliceAccessor sliceAccessor, short recordCount) {
         return allOf(IntStream.range(0, recordCount)
-                              .mapToObj(__ -> decodeRecord(sliceAccessor)).toList());
+                              .mapToObj(_ -> decodeRecord(sliceAccessor)).toList());
     }
 
     private static Result<ResourceRecord> decodeRecord(SliceAccessor sliceAccessor) {
@@ -148,7 +148,7 @@ public final class Decoding {
 
     public static Result<List<QuestionRecord>> decodeQuestions(SliceAccessor sliceAccessor, short questionCount) {
         return allOf(IntStream.range(0, questionCount)
-                              .mapToObj(__ -> decodeQuestionRecord(sliceAccessor))
+                              .mapToObj(_ -> decodeQuestionRecord(sliceAccessor))
                               .toList());
     }
 

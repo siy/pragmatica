@@ -19,22 +19,13 @@ package org.pragmatica.lang.io;
 
 import org.pragmatica.lang.Result;
 
-public enum CoreError implements Result.Cause {
-    CANCELLED("Operation cancelled"),
-    TIMEOUT("Operation timed out"),
-
-    FAULT("Operation failed"),
-
-    ;
-
-    private final String message;
-
-    CoreError(String message) {
-        this.message = message;
-    }
-
-    @Override
-    public String message() {
-        return message;
+public sealed interface CoreError extends Result.Cause {
+    record Cancelled(String message) implements CoreError {}
+    record Timeout(String message) implements CoreError {}
+    record Fault(String message) implements CoreError {}
+    record Exception(String message, Throwable cause) implements CoreError {
+        public Exception(Throwable cause) {
+            this(cause.getMessage(), cause);
+        }
     }
 }

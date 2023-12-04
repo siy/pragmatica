@@ -28,8 +28,6 @@ import org.pragmatica.io.async.uring.UringSetupFlags;
 import org.pragmatica.io.async.util.DaemonThreadFactory;
 import org.pragmatica.io.async.util.OffHeapSlice;
 import org.pragmatica.io.async.util.Units;
-import org.pragmatica.io.async.util.allocator.ChunkedAllocator;
-import org.pragmatica.io.async.util.allocator.FixedBuffer;
 import org.pragmatica.lang.Option;
 import org.pragmatica.lang.Result;
 import org.pragmatica.lang.Unit;
@@ -62,7 +60,7 @@ public interface Proactor {
     void nop(BiConsumer<Result<Unit>, Proactor> completion);
 
     default void nop(Consumer<Result<Unit>> completion) {
-        nop((result, __) -> completion.accept(result));
+        nop((result, _) -> completion.accept(result));
     }
 
     /**
@@ -76,7 +74,7 @@ public interface Proactor {
     void delay(BiConsumer<Result<Duration>, Proactor> completion, Timeout timeout);
 
     default void delay(Consumer<Result<Duration>> completion, Timeout timeout) {
-        delay((result, __) -> completion.accept(result), timeout);
+        delay((result, _) -> completion.accept(result), timeout);
     }
 
     /**
@@ -91,7 +89,7 @@ public interface Proactor {
     void splice(BiConsumer<Result<SizeT>, Proactor> completion, SpliceDescriptor descriptor, Option<Timeout> timeout);
 
     default void splice(Consumer<Result<SizeT>> completion, SpliceDescriptor descriptor, Option<Timeout> timeout) {
-        splice((result, __) -> completion.accept(result), descriptor, timeout);
+        splice((result, _) -> completion.accept(result), descriptor, timeout);
     }
 
     /**
@@ -110,7 +108,7 @@ public interface Proactor {
     void read(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fd, OffHeapSlice buffer, OffsetT offset, Option<Timeout> timeout);
 
     default void read(Consumer<Result<SizeT>> completion, FileDescriptor fd, OffHeapSlice buffer, OffsetT offset, Option<Timeout> timeout) {
-        read((result, __) -> completion.accept(result), fd, buffer, offset, timeout);
+        read((result, _) -> completion.accept(result), fd, buffer, offset, timeout);
     }
 
     default void read(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fd, OffHeapSlice buffer, Option<Timeout> timeout) {
@@ -126,7 +124,7 @@ public interface Proactor {
     }
 
     default void read(Consumer<Result<SizeT>> completion, FileDescriptor fd, OffHeapSlice buffer) {
-        read((result, __) -> completion.accept(result), fd, buffer);
+        read((result, _) -> completion.accept(result), fd, buffer);
     }
 
     /**
@@ -144,7 +142,7 @@ public interface Proactor {
     void write(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fd, OffHeapSlice buffer, OffsetT offset, Option<Timeout> timeout);
 
     default void write(Consumer<Result<SizeT>> completion, FileDescriptor fd, OffHeapSlice buffer, OffsetT offset, Option<Timeout> timeout) {
-        write((result, __) -> completion.accept(result), fd, buffer, offset, timeout);
+        write((result, _) -> completion.accept(result), fd, buffer, offset, timeout);
     }
 
     default void write(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fd, OffHeapSlice buffer, Option<Timeout> timeout) {
@@ -160,7 +158,7 @@ public interface Proactor {
     }
 
     default void write(Consumer<Result<SizeT>> completion, FileDescriptor fd, OffHeapSlice buffer) {
-        write((result, __) -> completion.accept(result), fd, buffer);
+        write((result, _) -> completion.accept(result), fd, buffer);
     }
 
     /**
@@ -175,11 +173,11 @@ public interface Proactor {
     void close(BiConsumer<Result<Unit>, Proactor> completion, FileDescriptor fd, Option<Timeout> timeout);
 
     default void close(Consumer<Result<Unit>> completion, FileDescriptor fd, Option<Timeout> timeout) {
-        close((result, __) -> completion.accept(result), fd, timeout);
+        close((result, _) -> completion.accept(result), fd, timeout);
     }
 
     default void close(Consumer<Result<Unit>> completion, FileDescriptor fd) {
-        close((result, __) -> completion.accept(result), fd, empty());
+        close((result, _) -> completion.accept(result), fd, empty());
     }
 
     /**
@@ -201,7 +199,7 @@ public interface Proactor {
 
     default void open(Consumer<Result<FileDescriptor>> completion, Path path, Set<OpenFlags> flags,
                       Set<FilePermission> mode, Option<Timeout> timeout) {
-        open((result, __) -> completion.accept(result), path, flags, mode, timeout);
+        open((result, _) -> completion.accept(result), path, flags, mode, timeout);
     }
 
     /**
@@ -254,7 +252,7 @@ public interface Proactor {
 
     default <T extends InetAddress> void accept(Consumer<Result<ConnectionContext<T>>> completion,
                                                 FileDescriptor socket, Set<SocketFlag> flags, T addressType) {
-        accept((result, __) -> completion.accept(result), socket, flags, addressType);
+        accept((result, _) -> completion.accept(result), socket, flags, addressType);
     }
 
     default void acceptV4(BiConsumer<Result<ConnectionContext<InetAddress.Inet4Address>>, Proactor> completion,
@@ -293,7 +291,7 @@ public interface Proactor {
 
     default <T extends InetAddress> void connect(Consumer<Result<FileDescriptor>> completion, FileDescriptor socket,
                                                  SocketAddress<T> address, Option<Timeout> timeout) {
-        connect((result, __) -> completion.accept(result), socket, address, timeout);
+        connect((result, _) -> completion.accept(result), socket, address, timeout);
     }
 
     /**
@@ -310,7 +308,7 @@ public interface Proactor {
     void stat(BiConsumer<Result<FileStat>, Proactor> completion, Path path, Set<StatFlag> flags, Set<StatMask> mask, Option<Timeout> timeout);
 
     default void stat(Consumer<Result<FileStat>> completion, Path path, Set<StatFlag> flags, Set<StatMask> mask, Option<Timeout> timeout) {
-        stat((result, __) -> completion.accept(result), path, flags, mask, timeout);
+        stat((result, _) -> completion.accept(result), path, flags, mask, timeout);
     }
 
     /**
@@ -328,7 +326,7 @@ public interface Proactor {
     void stat(BiConsumer<Result<FileStat>, Proactor> completion, FileDescriptor fd, Set<StatFlag> flags, Set<StatMask> mask, Option<Timeout> timeout);
 
     default void stat(Consumer<Result<FileStat>> completion, FileDescriptor fd, Set<StatFlag> flags, Set<StatMask> mask, Option<Timeout> timeout) {
-        stat((result, __) -> completion.accept(result), fd, flags, mask, timeout);
+        stat((result, _) -> completion.accept(result), fd, flags, mask, timeout);
     }
 
     /**
@@ -351,7 +349,7 @@ public interface Proactor {
 
     default void readVector(Consumer<Result<SizeT>> completion, FileDescriptor fileDescriptor, OffsetT offset,
                             Option<Timeout> timeout, OffHeapSlice... buffers) {
-        readVector((result, __) -> completion.accept(result), fileDescriptor, offset, timeout, buffers);
+        readVector((result, _) -> completion.accept(result), fileDescriptor, offset, timeout, buffers);
     }
 
     default void readVector(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fileDescriptor,
@@ -401,7 +399,7 @@ public interface Proactor {
 
     default void writeVector(Consumer<Result<SizeT>> completion, FileDescriptor fileDescriptor, OffsetT offset,
                              Option<Timeout> timeout, OffHeapSlice... buffers) {
-        writeVector((result, __) -> completion.accept(result), fileDescriptor, offset, timeout, buffers);
+        writeVector((result, _) -> completion.accept(result), fileDescriptor, offset, timeout, buffers);
     }
 
     default void writeVector(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fileDescriptor,
@@ -449,7 +447,7 @@ public interface Proactor {
 
     default void fileSync(Consumer<Result<Unit>> completion, FileDescriptor fileDescriptor,
                           boolean syncMetadata, Option<Timeout> timeout) {
-        fileSync((result, __) -> completion.accept(result), fileDescriptor, syncMetadata, timeout);
+        fileSync((result, _) -> completion.accept(result), fileDescriptor, syncMetadata, timeout);
     }
 
     /**
@@ -467,7 +465,7 @@ public interface Proactor {
 
     default void fileAlloc(Consumer<Result<Unit>> completion, FileDescriptor fileDescriptor,
                            Set<FileAllocFlags> allocFlags, OffsetT offset, long len, Option<Timeout> timeout) {
-        fileAlloc((result, __) -> completion.accept(result), fileDescriptor, allocFlags, offset, len, timeout);
+        fileAlloc((result, _) -> completion.accept(result), fileDescriptor, allocFlags, offset, len, timeout);
     }
 
     /**
@@ -493,7 +491,7 @@ public interface Proactor {
     void readFixed(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fd, FixedBuffer buffer, OffsetT offset, Option<Timeout> timeout);
 
     default void readFixed(Consumer<Result<SizeT>> completion, FileDescriptor fd, FixedBuffer buffer, OffsetT offset, Option<Timeout> timeout) {
-        readFixed((result, __) -> completion.accept(result), fd, buffer, offset, timeout);
+        readFixed((result, _) -> completion.accept(result), fd, buffer, offset, timeout);
     }
 
     default void readFixed(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fd, FixedBuffer buffer, Option<Timeout> timeout) {
@@ -509,14 +507,14 @@ public interface Proactor {
     }
 
     default void readFixed(Consumer<Result<SizeT>> completion, FileDescriptor fd, FixedBuffer buffer) {
-        readFixed((result, __) -> completion.accept(result), fd, buffer);
+        readFixed((result, _) -> completion.accept(result), fd, buffer);
     }
 
 
     void writeFixed(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fd, FixedBuffer buffer, OffsetT offset, Option<Timeout> timeout);
 
     default void writeFixed(Consumer<Result<SizeT>> completion, FileDescriptor fd, FixedBuffer buffer, OffsetT offset, Option<Timeout> timeout) {
-        writeFixed((result, __) -> completion.accept(result), fd, buffer, offset, timeout);
+        writeFixed((result, _) -> completion.accept(result), fd, buffer, offset, timeout);
     }
 
     default void writeFixed(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fd, FixedBuffer buffer, Option<Timeout> timeout) {
@@ -532,7 +530,7 @@ public interface Proactor {
     }
 
     default void writeFixed(Consumer<Result<SizeT>> completion, FileDescriptor fd, FixedBuffer buffer) {
-        writeFixed((result, __) -> completion.accept(result), fd, buffer);
+        writeFixed((result, _) -> completion.accept(result), fd, buffer);
     }
 
 
@@ -547,7 +545,7 @@ public interface Proactor {
                       OffHeapSlice buffer,
                       Set<MessageFlags> msgFlags,
                       Option<Timeout> timeout) {
-        send((result, __) -> completion.accept(result), fd, buffer, msgFlags, timeout);
+        send((result, _) -> completion.accept(result), fd, buffer, msgFlags, timeout);
     }
 
     default void send(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fd, OffHeapSlice buffer, Set<MessageFlags> msgFlags) {
@@ -555,7 +553,7 @@ public interface Proactor {
     }
 
     default void send(Consumer<Result<SizeT>> completion, FileDescriptor fd, OffHeapSlice buffer, Set<MessageFlags> msgFlags) {
-        send((result, __) -> completion.accept(result), fd, buffer, msgFlags, empty());
+        send((result, _) -> completion.accept(result), fd, buffer, msgFlags, empty());
     }
 
     void recv(BiConsumer<Result<SizeT>, Proactor> completion,
@@ -569,7 +567,7 @@ public interface Proactor {
                       OffHeapSlice buffer,
                       Set<MessageFlags> msgFlags,
                       Option<Timeout> timeout) {
-        recv((result, __) -> completion.accept(result), fd, buffer, msgFlags, timeout);
+        recv((result, _) -> completion.accept(result), fd, buffer, msgFlags, timeout);
     }
 
     default void recv(BiConsumer<Result<SizeT>, Proactor> completion, FileDescriptor fd, OffHeapSlice buffer, Set<MessageFlags> msgFlags) {
@@ -577,7 +575,7 @@ public interface Proactor {
     }
 
     default void recv(Consumer<Result<SizeT>> completion, FileDescriptor fd, OffHeapSlice buffer, Set<MessageFlags> msgFlags) {
-        recv((result, __) -> completion.accept(result), fd, buffer, msgFlags, empty());
+        recv((result, _) -> completion.accept(result), fd, buffer, msgFlags, empty());
     }
 
     //recvmsg, sendmsg, read_fixed, write_fixed
@@ -614,7 +612,7 @@ public interface Proactor {
 //            var numCores = 1;
 
             proactors = IntStream.range(0, numCores)
-                                 .mapToObj(__ -> ProactorImpl.proactor(DEFAULT_QUEUE_SIZE,
+                                 .mapToObj(_ -> ProactorImpl.proactor(DEFAULT_QUEUE_SIZE,
                                                                        UringSetupFlags.defaultFlags(),
                                                                        allocator,
                                                                        factory))

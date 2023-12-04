@@ -62,7 +62,7 @@ public final class Files {
         return PromiseIO.open(path, openFlags, FilePermission.none(), timeout)
                         .flatMap(fd -> blockReaderProtocol(fd, blockSize, consumer, timeout)
                             .read()
-                            .onResult(__ -> PromiseIO.close(fd, timeout)));
+                            .onResult(_ -> PromiseIO.close(fd, timeout)));
     }
 
     /**

@@ -13,11 +13,11 @@
     <name>Asynchronous I/O Modules</name>
 
     <modules>
-        <module>io-dns</module>
-        <module>io-file</module>
-        <module>io-protocol</module>
-        <module>io-net</module>
-        <module>io-util</module>
+<!--        <module>io-dns</module>-->
+<!--        <module>io-file</module>-->
+<!--        <module>io-protocol</module>-->
+<!--        <module>io-net</module>-->
+        <module>io-api</module>
     </modules>
 
     <packaging>pom</packaging>
