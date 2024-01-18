@@ -1,3 +1,5 @@
+# WARNING: Project is put on hold for a while. All development efforts are put on [Pragmatica Lite](https://github.com/siy/pragmatica-lite).
+
 [![](https://jitpack.io/v/siy/pragmatica.svg)](https://jitpack.io/#siy/pragmatica)
 [![](https://jitci.com/gh/siy/pragmatica/svg)](https://jitci.com/gh/siy/pragmatica)
 
